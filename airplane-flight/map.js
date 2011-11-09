@@ -3,61 +3,9 @@ function L() {
      console.log.apply(console, arguments);
 }
 
-  function CustomMarker(latlng,  map) {
-    this.latlng_ = latlng;
-
-    // Once the LatLng and text are set, add the overlay to the map.  This will
-    // trigger a call to panes_changed which should in turn call draw.
-    this.setMap(map);
-  }
-
-  CustomMarker.prototype = new google.maps.OverlayView();
-
-  CustomMarker.prototype.draw = function() {
-    var me = this;
-
-    // Check if the div has been created.
-    var div = this.div_;
-    if (!div) {
-      // Create a overlay text DIV
-      div = this.div_ = document.createElement('DIV');
-      // Create the DIV representing our CustomMarker
-      div.style.border = "1px solid red";
-      div.style.position = "absolute";
-      div.style.paddingLeft = "0px";
-      //div.style.cursor = 'pointer';
-
-      var img = document.createElement("img");
-      img.src = "airplane.png";
-      div.appendChild(img);
-      //google.maps.event.addDomListener(div, "click", function(event) {
-      //  google.maps.event.trigger(me, "click");
-      //});
-
-      // Then add the overlay to the DOM
-      var panes = this.getPanes();
-      panes.overlayImage.appendChild(div);
-    }
-
-    // Position the overlay
-    var point = this.getProjection().fromLatLngToDivPixel(this.latlng_);
-    if (point) {
-      div.style.left = point.x + 'px';
-      div.style.top = point.y + 'px';
-    }
-  };
-
-  CustomMarker.prototype.remove = function() {
-    // Check if the overlay was on the map and needs to be removed.
-    if (this.div_) {
-      this.div_.parentNode.removeChild(this.div_);
-      this.div_ = null;
-    }
-  };
-
-  CustomMarker.prototype.getPosition = function() {
-   return this.latlng_;
-  };
+function distance(x1, y1, x2, y2) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+}
 
 
 //-------
@@ -80,7 +28,7 @@ function L() {
     var div = this.div_;
     if (!div) {
       // Create a overlay text DIV
-      div = this.div_ = document.createElement('DIV');
+      div = this.div_ = document.createElement('div');
       // Create the DIV representing our PointMarker
       div.style.border = "1px solid red";
       div.style.position = "absolute";
@@ -103,11 +51,63 @@ function L() {
     var point = this.getProjection().fromLatLngToDivPixel(this.latlng_);
     var point2 = this.getProjection().fromLatLngToDivPixel(this.destination);
     L('point2', point2);
-    if (point) {
-      L('point', point);
-      div.style.left = (point.x - this.left_radius) + 'px';
-      div.style.top = (point.y - this.top_radius) + 'px';
+    //if (point) {
+    L('point', point);
+    var d = distance(point.x, point.y, point2.x, point2.y);
+    L('distance', d);
+    var VELOCITY = 100.0; // pixels/second
+    var t = d / VELOCITY;
+    L('time', t);
+    div.style.left = (point.x - this.left_radius) + 'px';
+    div.style.top = (point.y - this.top_radius) + 'px';
+    this._place_point(point);
+    this._place_point(point2);
+    var d_left = point.x - point2.x;// + this.left_radius;
+    var d_top = point.y - point2.y;// + this.top_radius;
+    L('d_left', d_left);
+    L('d_top', d_top);
+
+
+    var animation = {};
+
+    if (d_left < 0) {
+      animation['left'] = '+=';
+      d_left *= -1;
+    } else {
+      animation['left'] = '-=';
     }
+    animation['left'] += parseInt(d_left) + 'px';
+
+    if (d_top < 0) {
+      animation['top'] = '+=';
+      d_top *= -1;
+    } else {
+      animation['top'] = '-=';
+    }
+    animation['top'] += parseInt(d_top) + 'px';
+
+    /* See more on http://jqueryui.com/demos/effect/#easing */
+    setTimeout(function() {
+      $(div).animate(animation, {
+         duration:t * 1000,
+          easing: 'easeInOutQuint'//'easeInOutSine'
+        });
+    }, 2*1000);
+    //}
+  };
+
+  PointMarker.prototype._place_point = function(p) {
+    var d = document.createElement('div');
+    d.style.border = '2px solid green';
+    d.style.backgroundColor = 'green';
+    d.style.position = 'absolute';
+    d.style.paddingLeft = '0px';
+    d.style.paddingTop = '0px';
+    d.style.width = '2px';
+    d.style.left = p.x + 'px';
+    d.style.top = p.y + 'px';
+    L(d);
+    this.getPanes().overlayImage.appendChild(d);
   };
 
   PointMarker.prototype.remove = function() {
@@ -145,7 +145,7 @@ function initialize() {
   };
 
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-  overlay = new PointMarker(LATLNGS.sanfran, map, 57, 43, LATLNGS.kansas);
+  overlay = new PointMarker(LATLNGS.sanfran, map, 57, 43, LATLNGS.raleigh);
 //  L(overlay);
   var flightPlanCoordinates = [LATLNGS.sanfran, LATLNGS.raleigh];
   var flightPath = new google.maps.Polyline({
