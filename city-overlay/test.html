@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>City overlay test</title>
+<!--<link href='http://fonts.googleapis.com/css?family=Gochi+Hand' rel='stylesheet' type='text/css'>-->
+<link href='http://fonts.googleapis.com/css?family=Schoolbell' rel='stylesheet' type='text/css'>
+<link href="slides.css" rel="stylesheet" type="text/css">
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#canvas {
+  height: 100%;
+}
+
+#overlay {
+  /*font-family: 'Gochi Hand', cursive;*/
+  font-family: Schoolbell, cursive;
+  position:absolute;
+  right:10%;
+  left:10%;
+  top:10%;
+  padding:10px;
+  background-color:#fff;
+  opacity:0.9;
+  -moz-border-radius:9px;
+  -webkit-border-radius:9px;
+  -moz-box-shadow: 0 0 50px #ccc;
+  -webkit-box-shadow: 0 0 50px #ccc;
+  }
+  #overlay img.flag {
+    float:right;
+  }
+
+
+#wiki-intro {
+}
+  #intro img {
+    float:right;
+    padding-left:15px;
+    padding-bottom:15px;
+  }
+
+@media print {
+  html, body {
+    height: auto;
+  }
+
+  #canvas {
+    height: 650px;
+  }
+}
+</style>
+<script src="jquery-1.7.min.js"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+</head>
+<body>
+  <div id="canvas"></div>
+  <div id="overlay">
+    <img class="flag" src="turkey-flag.png" alt="Turkey's flag">
+    <h1>Welcome to Istanbul, Turkey!</h1>
+    <p id="intro">
+      <img src="536px-Istanbul_Montage_Wikipedia.jpg">
+      <b>Istanbul</b> (<a href="/wiki/Turkish_language" title="Turkish language">Turkish</a>: <span xml:lang="tr" lang="tr"><i>İstanbul</i></span>), historically known as <a href="/wiki/Byzantium" title="Byzantium">Byzantium</a> and <a href="/wiki/Constantinople" title="Constantinople">Constantinople</a><sup id="cite_ref-4" class="reference"><a href="#cite_note-4"><span>[</span>3<span>]</span></a></sup> (see <a href="/wiki/Names_of_Istanbul" title="Names of Istanbul">names of Istanbul</a> for further information), is <a href="/wiki/List_of_cities_in_Turkey" title="List of cities in Turkey">the largest city</a> of <a href="/wiki/Turkey" title="Turkey">Turkey</a>. <a href="/wiki/Istanbul_Province" title="Istanbul Province">Istanbul metropolitan province (municipality)</a> had 13.26&nbsp;million people living in it as of December, 2010,<sup id="cite_ref-Turkey_pop_2010_2-1" class="reference"><a href="#cite_note-Turkey_pop_2010-2"><span>[</span>1<span>]</span></a></sup> which is 18% of Turkey's population and the 3rd largest <a href="/wiki/Metropolitan_area" title="Metropolitan area">metropolitan area</a> in Europe (if its Asian half is counted) after <a href="/wiki/London_metropolitan_area" title="London metropolitan area" class="mw-redirect">London</a> and <a href="/wiki/Moscow_metropolitan_area" title="Moscow metropolitan area">Moscow</a>. The city in its administrative limits had 8.8&nbsp;million residents counted in the latest Turkish census from 2000.<sup id="cite_ref-cens_3-1" class="reference"><a href="#cite_note-cens-3"><span>[</span>2<span>]</span></a></sup> Istanbul is a <a href="/wiki/Megacity" title="Megacity">megacity</a>, as well as the cultural, economic, and financial centre of <a href="/wiki/Turkey" title="Turkey">Turkey</a>. It is located on the <a href="/wiki/Bosphorus" title="Bosphorus">Bosphorus</a> Strait and encompasses the natural harbour known as the <a href="/wiki/Golden_Horn" title="Golden Horn">Golden Horn</a>, in the northwest of the country. It extends both on the European (<a href="/wiki/Thrace" title="Thrace">Thrace</a>) and on the Asian (<a href="/wiki/Anatolia" title="Anatolia">Anatolia</a>) sides of the <a href="/wiki/Bosphorus" title="Bosphorus">Bosphorus</a>, and is thereby the only metropolis in the world that is situated on two <a href="/wiki/Continent" title="Continent">continents</a>. Istanbul is a designated <a href="/wiki/World_City" title="World City" class="mw-redirect">alpha world city</a>.
+    </p>
+
+    <div id="facts" style="display:none">
+    <h2>Facts</h2>
+    <div id="slideshow">
+      <div id="slidesContainer">
+        <div class="slide">
+          <h3>Web Development Tutorial</h3>
+          <p><a href="http://sixrevisions.com/tutorials/web-development-tutorials/using-xampp-for-local-wordpress-theme-development/"><img src="img/img_slide_01.jpg" alt="An image that says Install X A M P P for wordpress." width="215" height="145" /></a>If you're into developing web apps, you should check out the tutorial called "<a href="http://sixrevisions.com/tutorials/web-development-tutorials/using-xampp-for-local-wordpress-theme-development/">Using XAMPP for Local WordPress Theme Development</a>" which shows you how to set up a local testing server for developing PHP/Perl based applications locally on your computer. The example also shows you how to set up WordPress locally!</p>
+        </div>
+        <div class="slide">
+          <h3>Grunge Brushes, Anyone?</h3>
+          <p><a href="http://sixrevisions.com/freebies/brushes/sr-grunge-free-high-resolution-photoshop-grunge-brushes/"><img src="img/img_slide_02.jpg" width="215" height="145" alt="A thumbnail image that says S R grunge photoshop brushes 6 high resolution grunge brushes by six revisions." /></a>In this layout, I used <a href="http://sixrevisions.com/freebies/brushes/sr-grunge-free-high-resolution-photoshop-grunge-brushes/">SR Grunge</a>, which is a free set of high-resolution Photoshop brushes you can download here on Six Revisions.</p>
+          <p>
+        </div>
+        <div class="slide">
+          <h3>How About Some Awesome Grunge Textures?</h3>
+          <p><a href="http://sixrevisions.com/freebies/textures/grunge-extreme-15-high-resolution-grunge-textures/"><img src="img/img_slide_03.jpg" width="215" height="145" alt="A thumbnail image that says grunge extreme 15 free high resolution grunge textures six revisions." /></a>The texture used in this web page is from the Grunge Extreme Textures freebie set by JC Parmley released here on Six Revisions.</p>
+          <p>You can head over to the <a href="http://sixrevisions.com/freebies/textures/grunge-extreme-15-high-resolution-grunge-textures/">Grunge Extreme</a> page to download the texture set or check out Six Revisions' <a href="http://sixrevisions.com/category/freebies/">freebie section</a> for even more goodies!</p>
+        </div>
+        <div class="slide">
+          <h3>'Tis the End, My Friend.</h3>
+          <p><a href="http://sixrevisions.com/tutorials/photoshop-tutorials/how-to-create-a-slick-and-clean-button-in-photoshop/"><img src="img/img_slide_04.jpg" width="215" height="145" alt="Thumbnail image that says sleek button using photoshop that links to a Photoshop tutoril." /></a>This is the last slide. Hit the left arrow control to go back to the other slides.</p>
+          <p>Alternatively, you may want to check out the tutorial on how to create a simple and cool button in Photoshop called &quot;<a href="http://sixrevisions.com/tutorials/photoshop-tutorials/how-to-create-a-slick-and-clean-button-in-photoshop/">How to Create a Slick and Clean Button in Photoshop</a>&quot; which was inspired by the <a href="http://www.campaignmonitor.com/designer/?utm_source=sixrevisions&amp;utm_medium=banner&amp;utm_term=2&amp;utm_content=0003&amp;utm_campaign=Apr09Banners">Campaign Monitor</a> web interface.</p>
+        </div>
+      </div>
+    </div>
+    </div>
+
+
+  </div>
+</body>
+
+<script type="text/javascript" src="../commons/places.js"></script>
+<script type="text/javascript" src="slides.js"></script>
+<script type="text/javascript" src="map.js"></script>
+</html>
