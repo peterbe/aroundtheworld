@@ -80,7 +80,7 @@ PointMarker.prototype.scale = function(p) {
 
     var d = distance(point.x, point.y, point2.x, point2.y);
     //L('distance', d);
-    var VELOCITY = 100.0; // pixels/second
+    var VELOCITY = 120.0; // pixels/second
     var t = d / VELOCITY;
     //L('time', t);
     div.style.left = (point.x - this.image_radius) + 'px';
@@ -119,7 +119,13 @@ PointMarker.prototype.scale = function(p) {
 
     var FW = this.image_radius * 2;
     /* See more on http://jqueryui.com/demos/effect/#easing */
+
     setTimeout(function() {
+      play_sound('jet-taking-off');
+    }, 2.5* 1000);
+
+    setTimeout(function() {
+
       $(div).animate(animation, {
          duration: t * 1000,
           easing: 'easeInOutQuint',//'easeInOutSine',
@@ -184,6 +190,10 @@ function initialize() {
     LATLNGS[k] = new google.maps.LatLng(PLACES[k][0], PLACES[k][1]);
   }
 
+  preload_sound('jet-taking-off');
+
+
+
   var myOptions = {
      zoom: 5,
     //center: myLatLng,
@@ -193,7 +203,10 @@ function initialize() {
 
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
   //overlay = new PointMarker(LATLNGS.sanfran, map, 107/2, LATLNGS.raleigh);
+
   overlay = new PointMarker(LATLNGS.raleigh, map, 107/2, LATLNGS.sanfran);
+
+//  play_sound(
   /*
   var flightPlanCoordinates = [LATLNGS.sanfran, LATLNGS.raleigh];
   var flightPath = new google.maps.Polyline({

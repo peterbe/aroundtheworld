@@ -22,17 +22,23 @@ function initialize(callback) {
   callback(map);
 }
 
+var _previous_hash;
+
 window.onload = function() {
   initialize(function() {
 
     function navigateContent(id) {
-
       $('.content-block:visible').hide();
       $(id).show();
       setupSlides();
     }
     $('a.nav').on('click', function() {
       //$('.content-block:visible').hide();
+      if (location.hash) {
+        _previous_hash = location.hash;
+      } else {
+        _previous_hash = null;
+      }
       navigateContent($(this).attr('href'));
     });
     if (location.hash && $(location.hash).size()) {

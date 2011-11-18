@@ -11,6 +11,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family:sans-serif;
 }
 
 #canvas {
@@ -26,6 +27,7 @@ html, body {
   top:10%;
   padding:10px;
   background-color:#fff;
+  min-height:200px;
   /*opacity:0.9;*/
   -moz-border-radius:9px;
   -webkit-border-radius:9px;
@@ -39,10 +41,13 @@ html, body {
 
 #intro {
 }
-  #intro img {
+  #intro p img {
     float:right;
     padding-left:15px;
     padding-bottom:15px;
+  }
+  #intro p {
+    clear:right;
   }
   #intro .content-nav {
     text-align:center;
@@ -58,16 +63,93 @@ html, body {
     height: 650px;
   }
 }
+
+#usernav {
+  position:fixed;
+  opacity:0.9;
+  top:0;
+  right:0;
+  background-color:#fff;
+  z-index:2;
+  border-left:1px solid #ccc;
+  border-bottom:1px solid #ccc;
+  border-bottom-left-radius:6px;
+  -moz-border-bottom-left-radius:6px;
+  -webkit-border-bottom-left-radius:6px;
+  }
+  #usernav ul {
+    list-style:none;
+    margin:2px;
+    padding-left:2px;
+    }
+  #usernav li {
+    display:inline;
+    font-size:0.8em;
+  }
+  #usernav li {
+    margin-right:5px;
+    }
+
+#user-miles a {
+   padding-left: 16px;
+   background: url(img/mini-airplane.png) 0 -2px no-repeat;
+}
+#user-money a {
+   padding-left: 17px;
+   background: url(img/coins/gold-1.png) 0 0 no-repeat;
+}
+
+#facts div img { float:left; padding-right:15px; padding-bottom:15px; }
+#facts a.bx-prev, #facts a.bx-next { float:right; padding-left:10px; }
+
 </style>
-<script src="jquery-1.7.min.js"></script>
+<script src="../commons/jquery-1.7.min.js"></script>
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
 </head>
 <body>
   <div id="canvas"></div>
+  <div id="usernav">
+    <ul>
+      <li><strong>Peter Bengtsson</strong></li>
+
+      <li id="user-miles">
+        <!--<a href="#miles"><img src="img/mini-airplane.png" alt="Total number of air miles travelled"></a>-->
+        <a href="#miles" class="nav">12,450 miles</a>
+      </li>
+
+      <li id="user-money">
+        <!--<a href="#money"><img src="img/coins/gold-1.png" alt="You have earned 325 coins"></a>-->
+        <a href="#money" class="nav">325 coins</a>
+      </li>
+
+      <li id="user-profile">
+        <a href="#settings" class="nav" title="Settings">settings</a>
+        <a href="/logout" title="Sign out">sign out</a>
+      </li>
+
+    </ul>
+  </div>
   <div id="overlay">
-    <img class="flag" src="turkey-flag.png" alt="Turkey's flag">
-    <h1>Welcome to Istanbul, Turkey!</h1>
+
+    <div id="settings" class="content-block" style="display:none">
+      <h2>Settings</h2>
+
+      <form action="#" method="post">
+      <div id="settings-slider">
+        <div>
+        <label>Username:</label>
+        <input name="username" value="peterbe">
+        </div>
+      </div>
+      <div><input type="submit" value="Save"></div>
+      </form>
+      <p><a href="#intro" class="nav">&larr; Back</a></p>
+    </div>
+
     <div id="intro" class="content-block">
+      <img class="flag" src="turkey-flag.png" alt="Turkey's flag">
+      <h1>Welcome to Istanbul, Turkey!</h1>
+
       <p>
       <img src="536px-Istanbul_Montage_Wikipedia.jpg">
       <b>Istanbul</b> (<a href="/wiki/Turkish_language" title="Turkish language">Turkish</a>: <span xml:lang="tr" lang="tr"><i>İstanbul</i></span>), historically known as <a href="/wiki/Byzantium" title="Byzantium">Byzantium</a> and <a href="/wiki/Constantinople" title="Constantinople">Constantinople</a><sup id="cite_ref-4" class="reference"><a href="#cite_note-4"><span>[</span>3<span>]</span></a></sup> (see <a href="/wiki/Names_of_Istanbul" title="Names of Istanbul">names of Istanbul</a> for further information), is <a href="/wiki/List_of_cities_in_Turkey" title="List of cities in Turkey">the largest city</a> of <a href="/wiki/Turkey" title="Turkey">Turkey</a>. <a href="/wiki/Istanbul_Province" title="Istanbul Province">Istanbul metropolitan province (municipality)</a> had 13.26&nbsp;million people living in it as of December, 2010,<sup id="cite_ref-Turkey_pop_2010_2-1" class="reference"><a href="#cite_note-Turkey_pop_2010-2"><span>[</span>1<span>]</span></a></sup> which is 18% of Turkey's population and the 3rd largest <a href="/wiki/Metropolitan_area" title="Metropolitan area">metropolitan area</a> in Europe (if its Asian half is counted) after <a href="/wiki/London_metropolitan_area" title="London metropolitan area" class="mw-redirect">London</a> and <a href="/wiki/Moscow_metropolitan_area" title="Moscow metropolitan area">Moscow</a>. The city in its administrative limits had 8.8&nbsp;million residents counted in the latest Turkish census from 2000.<sup id="cite_ref-cens_3-1" class="reference"><a href="#cite_note-cens-3"><span>[</span>2<span>]</span></a></sup> Istanbul is a <a href="/wiki/Megacity" title="Megacity">megacity</a>, as well as the cultural, economic, and financial centre of <a href="/wiki/Turkey" title="Turkey">Turkey</a>. It is located on the <a href="/wiki/Bosphorus" title="Bosphorus">Bosphorus</a> Strait and encompasses the natural harbour known as the <a href="/wiki/Golden_Horn" title="Golden Horn">Golden Horn</a>, in the northwest of the country. It extends both on the European (<a href="/wiki/Thrace" title="Thrace">Thrace</a>) and on the Asian (<a href="/wiki/Anatolia" title="Anatolia">Anatolia</a>) sides of the <a href="/wiki/Bosphorus" title="Bosphorus">Bosphorus</a>, and is thereby the only metropolis in the world that is situated on two <a href="/wiki/Continent" title="Continent">continents</a>. Istanbul is a designated <a href="/wiki/World_City" title="World City" class="mw-redirect">alpha world city</a>.
@@ -77,10 +159,6 @@ html, body {
       </p>
     </div>
 
-    <style>
-    #facts div img { float:left; padding-right:15px; padding-bottom:15px; }
-    a.bx-prev, a.bx-next { float:right; padding-left:10px; }
-    </style>
     <div id="facts" class="content-block" style="display:none">
       <h2>Facts</h2>
       <div id="facts-slider">
