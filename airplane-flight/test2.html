@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Airplane test flight with flight path</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map_canvas {
+  height: 100%;
+}
+
+@media print {
+  html, body {
+    height: auto;
+  }
+
+  #map_canvas {
+    height: 650px;
+  }
+}
+</style>
+<script src="jquery-1.7.min.js"></script>
+<script src="jquery-ui-1.8.16-effects.min.js"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+</head>
+<body>
+  <div id="map_canvas"></div>
+</body>
+
+<script>
+var SOUND_URLS = {
+  'jet-taking-off': 'jet-taking-off.ogg',
+  'airport-pa': 'airport-pa.ogg'
+};
+</script>
+<script type="text/javascript" src="../commons/places.js"></script>
+<script type="text/javascript" src="../commons/playsound.js"></script>
+<script type="text/javascript" src="../commons/underscore.js"></script>
+<script type="text/javascript" src="../commons/backbone.js"></script>
+<script type="text/javascript" src="airplane.js"></script>
+<script type="text/javascript" src="map.js"></script>
+<script type="text/javascript" src="flightpath.js"></script>
+</html>
