@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Airplane test flight with flight path</title>
+<style>
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map_canvas {
+  height: 100%;
+}
+
+@media print {
+  html, body {
+    height: auto;
+  }
+
+  #map_canvas {
+    height: 650px;
+  }
+}
+</style>
+<script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
+<script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+</head>
+<body>
+  <div id="map_canvas"></div>
+</body>
+
+<script type="text/javascript" src="{{ static_url('lib/underscore.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('lib/backbone.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('places.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('map.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('airplane.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('test-flightpath.js') }}"></script>
+<script>
+var PLANE_IMG_URL = '{{ static_url('images/airplane.png') }}';
+var PLANE_IMG_RADIUS = 107;
+
+window.sounds = new Soundplayer({
+  'jet-taking-off': '{{ static_url('sounds/jet-taking-off.ogg') }}',
+  'airport-pa': '{{ static_url('sounds/airport-pa.ogg') }}'
+});
+sounds.preload('airport-pa');
+</script>
+
+</html>

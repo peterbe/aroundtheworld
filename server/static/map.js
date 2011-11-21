@@ -21,23 +21,12 @@ function calculate_angle(center, p1) {
 //-------
 //------
 
-var PLACES = {
-   kansas: [39.114053, -94.6274636],
-  raleigh: [35.772096, -78.6386145],
-  sanfran: [37.7749295, -122.4194155]
-}
-var LATLNGS = {};
-
 function initialize(callback) {
-  for (var k in PLACES) {
-    LATLNGS[k] = new google.maps.LatLng(PLACES[k][0], PLACES[k][1]);
-  }
 
-  preload_sound('jet-taking-off');
+  //preload_sound('jet-taking-off');
+  sounds.preload('jet-taking-off');
 
-
-
-  var myOptions = {
+  var opts = {
      zoom: 5,
     //center: myLatLng,
     center: LATLNGS.kansas,
@@ -45,11 +34,7 @@ function initialize(callback) {
   };
 
   //var airplane;
-  var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-  //var airplane = new AirplaneMarker(LATLNGS.raleigh, map, 107/2, LATLNGS.sanfran);
-  //airplane = new AirplaneMarker(map, 107/2);
-  //L(airplane);
-
+  var map = new google.maps.Map(document.getElementById("map_canvas"), opts);
 
 
 //  play_sound(
