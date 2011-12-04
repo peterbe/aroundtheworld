@@ -36,11 +36,6 @@ html, body {
 <script type="text/javascript" src="{{ static_url('lib/underscore.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('lib/backbone.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('places.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('map.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('airplane.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('test-flightpath.js') }}"></script>
 <script>
 var PLANE_IMG_URL = '{{ static_url('images/airplane.png') }}';
 var PLANE_IMG_RADIUS = 107;
@@ -51,5 +46,17 @@ window.sounds = new Soundplayer({
 });
 sounds.preload('airport-pa');
 </script>
+
+<script type="text/javascript" src="{{ static_url('places.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('map.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('airplane.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('flightzoom.js') }}"></script>
+{% if javascript_test_file %}
+<script type="text/javascript" src="{{ static_url(javascript_test_file) }}">
+{% end %}
+<!--<script type="text/javascript" src="{{ static_url('test-flightpath.js') }}"></script>-->
+<!--<script type="text/javascript" src="{{ static_url('test-airplane.js') }}"></script>-->
+<!--<script type="text/javascript" src="{{ static_url('test-flightzoom.js') }}"></script>-->
 
 </html>

@@ -124,13 +124,26 @@ class HomeHandler(BaseHandler):
 
     def get(self):
         options = {}
+
+        options['javascript_test_file'] = self.get_argument('test', None)
         self.render('home.html', **options)
 
 @route('/flightpaths/')
 class FlightPathsHandler(BaseHandler):
 
+    def check_xsrf_cookie(self):
+        pass
+
     def get(self):
-        self.write_json([])
+        data = [{u'to': [35.772095999999998, -78.638614500000017],
+                 u'from': [37.774929499999999, -122.41941550000001]}]
+        self.write_json(data)
+
+    def post(self):
+        print repr(self.request.body)
+        data = tornado.escape.json_decode(self.request.body)
+        print data
+        self.write_json({'status': 'OK'})
 
 
 # this handler gets automatically appended last to all handlers inside app.py

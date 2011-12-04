@@ -59,10 +59,12 @@ AirplaneMarker.prototype.draw = function() {
 
 AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   L('fly()!');
+  L('flying from', latlng, destination);
   if (!this.div_jelement) {
     this.draw();
   }
   this.div_jelement.show();
+  L(this.div_jelement);
   this.latlng_ = latlng;
   this.destination = destination;
 
@@ -79,8 +81,8 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   var t = d / VELOCITY;
   this.div_.style.left = (point.x - this.image_radius) + 'px';
   this.div_.style.top = (point.y - this.image_radius) + 'px';
-  //this._place_point(point);
-  //this._place_point(point2);
+  this._place_point(point);
+  this._place_point(point2);
   var d_left = point.x - point2.x;// + this.left_radius;
   var d_top = point.y - point2.y;// + this.top_radius;
   //L('d_left', d_left);
@@ -176,13 +178,4 @@ AirplaneMarker.prototype.getPosition = function() {
 var airplane;
 mapInitialized(function(map) {
   airplane = new AirplaneMarker(map, PLANE_IMG_RADIUS / 2);
-
-  /*
-    setTimeout(function() {
-      airplane.fly(LATLNGS.raleigh, LATLNGS.sanfran, function() {
-        airplane.fly(LATLNGS.sanfran, LATLNGS.kansas);
-      });
-    }, 1000);
-*/
-
 });

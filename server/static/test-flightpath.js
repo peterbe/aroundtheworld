@@ -1,12 +1,19 @@
+var flights = new FlightPathsCollection();
+var flightsview = new FlightPathsView();
+
 mapInitialized(function(map) {
-  var flight_journeys = new FlightJourney();
-  flight_journeys.fetch();
+
+  flights.fetch({
+     success: function(){
+       flightsview.render(map);
+     }
+  });
 
   var fpath = new FlightPath({
-
-    from: LATLNGS.sanfran,
-    to: LATLNGS.raleigh
+    from: [LATLNGS.sanfran.lat(), LATLNGS.sanfran.lng()],
+    to: [LATLNGS.raleigh.lat(), LATLNGS.raleigh.lng()]
   });
+  //fpath.save();
   //L(fpath.get('from').toString());
 
 });
