@@ -21,7 +21,9 @@ AirplaneMarker.prototype.scale = function(p) {
   });
 };
 
-AirplaneMarker.prototype.draw = function() {
+AirplaneMarker.prototype.draw = function() {};
+AirplaneMarker.prototype.init = function(map) {
+  this.setMap(map);
 
   L('draw()!!');
   if (!this.div_jelement) {
@@ -45,6 +47,7 @@ AirplaneMarker.prototype.draw = function() {
       img.src = PLANE_IMG_URL;
       div.appendChild(img);
 
+
       // Then add the overlay to the DOM
       var panes = this.getPanes();
       panes.overlayImage.appendChild(div);
@@ -59,12 +62,10 @@ AirplaneMarker.prototype.draw = function() {
 
 AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   L('fly()!');
-  L('flying from', latlng, destination);
   if (!this.div_jelement) {
     this.draw();
   }
   this.div_jelement.show();
-  L(this.div_jelement);
   this.latlng_ = latlng;
   this.destination = destination;
 

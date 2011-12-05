@@ -31,7 +31,6 @@ html, body {
 </head>
 <body>
   <div id="map_canvas"></div>
-</body>
 
 <script type="text/javascript" src="{{ static_url('lib/underscore.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('lib/backbone.js') }}"></script>
@@ -53,10 +52,11 @@ sounds.preload('airport-pa');
 <script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('flightzoom.js') }}"></script>
 {% if javascript_test_file %}
-<script type="text/javascript" src="{{ static_url(javascript_test_file) }}">
+<script type="text/javascript" src="{{ static_url(javascript_test_file) }}"></script>
 {% end %}
 <!--<script type="text/javascript" src="{{ static_url('test-flightpath.js') }}"></script>-->
 <!--<script type="text/javascript" src="{{ static_url('test-airplane.js') }}"></script>-->
 <!--<script type="text/javascript" src="{{ static_url('test-flightzoom.js') }}"></script>-->
 
+</body>
 </html>
