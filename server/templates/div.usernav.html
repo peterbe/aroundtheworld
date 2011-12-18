@@ -1,0 +1,21 @@
+  <div id="usernav">
+    <ul>
+      <li><strong>{{ user_name }}</strong></li>
+
+      <li id="user-miles">
+        <!--<a href="#miles"><img src="img/mini-airplane.png" alt="Total number of air miles travelled"></a>-->
+        <a href="#miles" class="nav">{{ user_miles_total }} miles</a>
+      </li>
+
+      <li id="user-money">
+        <!--<a href="#money"><img src="img/coins/gold-1.png" alt="You have earned 325 coins"></a>-->
+        <a href="#money" class="nav">{{ user_coins_total }} coins</a>
+      </li>
+
+      <li id="user-profile">
+        <a href="#settings" class="nav" title="Settings">settings</a>
+        <a href="/logout" title="Sign out">sign out</a>
+      </li>
+
+    </ul>
+  </div>

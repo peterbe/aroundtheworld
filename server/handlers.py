@@ -49,6 +49,12 @@ class BaseHandler(tornado.web.RequestHandler):
         if not options.get('page_title'):
             options['page_title'] = settings.PROJECT_TITLE
 
+        options['user_name'] = 'Peter Bengtsson'
+        options['user_miles_total'] = '12,345'
+        options['user_coins_total'] = 325
+
+        options['javascript_test_file'] = self.get_argument('test', None)
+
         return tornado.web.RequestHandler.render(self, template, **options)
 
     def write_error(self, status_code, **kwargs):
@@ -125,8 +131,15 @@ class HomeHandler(BaseHandler):
     def get(self):
         options = {}
 
-        options['javascript_test_file'] = self.get_argument('test', None)
         self.render('home.html', **options)
+
+@route('/offline/')
+class OfflineHomeHandler(HomeHandler):
+
+    def get(self):
+        options = {}
+        options['javascript_test_file'] = self.get_argument('test', None)
+        self.render('offline.html', **options)
 
 @route('/flightpaths/')
 class FlightPathsHandler(BaseHandler):
@@ -144,6 +157,28 @@ class FlightPathsHandler(BaseHandler):
         data = tornado.escape.json_decode(self.request.body)
         print data
         self.write_json({'status': 'OK'})
+
+
+@route('/quizzing.json$')
+class QuizzingHandler(BaseHandler):
+
+    #def check_xsrf_cookie(self):
+    #    pass
+
+    def get(self):
+        data = {}
+        data['quiz_name'] = 'Mathematics Professor!'
+        data['question'] = {
+          'text': 'What is 1 + 1?',
+          'id': 'abc1234',
+          'alternatives': ['1', '2', '3', '4'],
+          'seconds': 10,
+        }
+        self.write_json(data)
+
+    def post(self):
+
+        raise NotImplementedError
 
 
 # this handler gets automatically appended last to all handlers inside app.py

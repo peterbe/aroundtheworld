@@ -1,0 +1,73 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#map_canvas {
+  height: 100%;
+}
+
+@media print {
+  html, body {
+    height: auto;
+  }
+
+  #map_canvas {
+    height: 650px;
+  }
+}
+
+#usernav {
+  position:fixed;
+  opacity:0.9;
+  top:0;
+  right:0;
+  background-color:#fff;
+  z-index:2;
+  border-left:1px solid #ccc;
+  border-bottom:1px solid #ccc;
+  border-bottom-left-radius:6px;
+  -moz-border-bottom-left-radius:6px;
+  -webkit-border-bottom-left-radius:6px;
+  }
+  #usernav ul {
+    list-style:none;
+    margin:2px;
+    padding-left:2px;
+    }
+  #usernav li {
+    display:inline;
+    font-size:0.8em;
+  }
+  #usernav li {
+    margin-right:5px;
+    }
+
+#user-miles a {
+   padding-left: 16px;
+   background: url(../images/mini-airplane.png) 0 -2px no-repeat;
+}
+#user-money a {
+   padding-left: 17px;
+   background: url(../images/coins/gold-1.png) 0 0 no-repeat;
+}
+
+
+.overlay {
+  display:none;
+  /*font-family: 'Gochi Hand', cursive;*/
+  /*font-family: Schoolbell, cursive;*/
+  position:absolute;
+  right:10%;
+  left:10%;
+  top:10%;
+  padding:10px;
+  background-color:#fff;
+  min-height:200px;
+  /*opacity:0.9;*/
+  -moz-border-radius:9px;
+  -webkit-border-radius:9px;
+  -moz-box-shadow: 0 0 50px #ccc;
+  -webkit-box-shadow: 0 0 50px #ccc;
+  }
