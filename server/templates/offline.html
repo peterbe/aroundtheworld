@@ -5,6 +5,7 @@
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>Around the world</title>
 <link rel="stylesheet" type="text/css" href="{{ static_url('css/style.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ static_url('css/plugins/quizzing.css') }}">
 <style>
 body {
   margin:0; padding:0;
@@ -21,6 +22,8 @@ body {
 <div id="map_canvas"></div>
 {% include "div.usernav.html" %}
 {% include "div.quizzing.html" %}
+{% include "div.settings.html" %}
+{% include "div.miles.html" %}
 
 <script type="text/javascript" src="{{ static_url('lib/underscore.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('lib/backbone.js') }}"></script>

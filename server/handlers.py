@@ -165,21 +165,52 @@ class QuizzingHandler(BaseHandler):
     #def check_xsrf_cookie(self):
     #    pass
 
+    def check_answer(self, question, value):
+        return value.lower() == question['correct'].lower()
+
     def get(self):
         data = {}
         data['quiz_name'] = 'Mathematics Professor!'
-        data['question'] = {
-          'text': 'What is 1 + 1?',
-          'id': 'abc1234',
-          'alternatives': ['1', '2', '3', '4'],
-          'seconds': 10,
-        }
+        from random import choice
+        data['question'] = choice(list(Questions))
+        data['question']['seconds'] = 10
         self.write_json(data)
 
     def post(self):
+        answer = self.get_argument('answer')
+        question_id = self.get_argument('id')
+        for q in Questions:
+            if question_id==q['id']:
+                question=q
 
-        raise NotImplementedError
+        data = {}
+        data['correct'] = self.check_answer(question, answer)
+        if not data['correct']:
+            data['correct_answer'] = question['correct']
+        data['points_value'] = question.get('points_value', 1)
 
+        self.write_json(data)
+
+Questions = (
+  {
+  'text': 'What is 1 + 1?',
+  'id': 'abc1234',
+  'alternatives': ['1', '2', '3', '4'],
+  'correct': '2',
+  },
+  {
+  'text': 'Who makes the web browser Firefox?',
+  'id': 'abc555',
+  'alternatives': ['Microsoft', 'Google', 'Apple', 'Mozilla'],
+  'correct': 'Mozilla',
+  },
+  {
+  'text': 'What main language to they speak in Sweden',
+  'id': 'abc444',
+  'alternatives': ['Danish', 'Finnish', 'Norveigen', 'Swedish'],
+  'correct': 'Swedish',
+  },
+)
 
 # this handler gets automatically appended last to all handlers inside app.py
 class PageNotFoundHandler(BaseHandler):

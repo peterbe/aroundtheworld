@@ -1,6 +1,6 @@
 <script>
 function loadPlugin(id) {
-  if ($.inArray(id, LOADED_PLUGINS) == -1) {
+  if ($.inArray(id, LOADED_PLUGINS) == -1 && PLUGINS[id]) {
     var s = document.createElement('script');
     s.type = 'text/javascript';
     //s.defer = true;
@@ -11,7 +11,8 @@ function loadPlugin(id) {
 }
 
 var PLUGINS = {
-  'quizzing': '{{ static_url('plugins/quizzing.js') }}'
+  'quizzing': '{{ static_url('plugins/quizzing.js') }}',
+  'settings': '{{ static_url('plugins/settings.js') }}'
 };
 var LOADED_PLUGINS = [];
 </script>

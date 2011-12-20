@@ -1,0 +1,41 @@
+#quizzing .question-attention {
+    position:relative;
+    top:-80px;
+    left:15px;
+    z-index:3;
+    margin:20px;
+    padding:20px;
+    width:350px;
+    text-align:center;
+    background-color:#fff;
+}
+
+#quizzing .pleasewait {
+    border:1px solid green;
+}
+#quizzing .tooslow {
+    border:1px solid red;
+}
+#quizzing .correct {
+    color: white;
+    font-weight: bold;
+    background-color:green;
+    border:1px solid green;
+}
+#quizzing .wrong {
+    color: white;
+    font-weight: bold;
+    background-color:red;
+    border:1px solid red;
+}
+
+#quizzing .points-total-outer {
+    float:right;
+}
+#quizzing .points-total-outer p {
+    display: inline;
+}
+#quizzing .points-total {
+    font-size:2em;
+    font-weight:bold;
+}

@@ -48,7 +48,7 @@ html, body {
    padding-left: 16px;
    background: url(../images/mini-airplane.png) 0 -2px no-repeat;
 }
-#user-money a {
+#user-coins a {
    padding-left: 17px;
    background: url(../images/coins/gold-1.png) 0 0 no-repeat;
 }
