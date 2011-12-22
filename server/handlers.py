@@ -36,6 +36,14 @@ class BaseHandler(tornado.web.RequestHandler):
             except InvalidId:  # pragma: no cover
                 return self.db.User.find_one({'username': _id})
 
+    def get_current_location(self, user=None):
+        if user is None:
+            user = self.get_current_user()
+        if user:
+            if user['current_location']:
+                return (self.db.Location
+                        .find_one({'_id': user['current_location']}))
+
     @property
     def redis(self):
         return self.application.redis
@@ -159,36 +167,63 @@ class FlightPathsHandler(BaseHandler):
         self.write_json({'status': 'OK'})
 
 
-@route('/quizzing.json$')
+@route('/quizzing.json$', name='quizzing_json')
 class QuizzingHandler(BaseHandler):
 
     #def check_xsrf_cookie(self):
     #    pass
 
-    def check_answer(self, question, value):
-        return value.lower() == question['correct'].lower()
-
     def get(self):
+        user = self.get_current_user()
+        location = self.get_current_location(user)
         data = {}
         data['quiz_name'] = 'Mathematics Professor!'
-        from random import choice
-        data['question'] = choice(list(Questions))
+        question = self._get_next_question(user, location)
+        if not question['alternatives_sorted']:
+            random.shuffle(question['alternatives'])
+        data['question'] = question
         data['question']['seconds'] = 10
         self.write_json(data)
+
+    def _get_next_question(self, user, location, allow_repeats=False):
+        filter_ = {'location': location['_id']}
+        if not allow_repeats:
+            session = (self.db.QuestionSession
+                       .find_one({'user': user['_id'],
+                                  'location': location['_id'],
+                                  'finish_date': {'$ne': None}}))
+            if session is None:
+                session = self.db.QuestionSession()
+                session['user'] = user['_id']
+                session['location'] = location['_id']
+                session.save()
+            past_question_ids = set()
+            for sq in (self.db.SessionQuestions
+                       .find({'session': session['_id']})):
+                past_question_ids.add(sq['question'])
+            if past_question_ids:
+                filter_['_id'] = {'$nin': past_question_ids}
+
+        questions = self.db.Question.find(filter_)
+        count = questions.count()
+        if not count:
+            if allow_repeats:
+                raise RunTimeError("Not enough questions")
+            return self._get_next_question(user, location, allow_repeats=True)
+
+        nth = random.randint(0, count - 1)
+        for question in questions.limit(1).skip(nth):
+            return question
 
     def post(self):
         answer = self.get_argument('answer')
         question_id = self.get_argument('id')
-        for q in Questions:
-            if question_id==q['id']:
-                question=q
-
+        question = self.db.Question.find_one({'_id': ObjectId(question_id)})
         data = {}
-        data['correct'] = self.check_answer(question, answer)
+        data['correct'] = question.check_answer(answer)
         if not data['correct']:
             data['correct_answer'] = question['correct']
         data['points_value'] = question.get('points_value', 1)
-
         self.write_json(data)
 
 Questions = (
@@ -211,6 +246,27 @@ Questions = (
   'correct': 'Swedish',
   },
 )
+
+
+@route('/miles.json$', name='miles_json')
+class MilesHandler(BaseHandler):
+
+    def get(self):
+        user = self.get_current_user()
+        miles = 12456
+        data = {}
+        data['miles_friendly'] = _commafy(miles)
+        data['percentage'] = '4%'
+        self.write_json(data)
+
+def _commafy(s):
+    r = []
+    for i, c in enumerate(reversed(str(s))):
+        if i and (not (i % 3)):
+            r.insert(0, ',')
+        r.insert(0, c)
+    return ''.join(r)
+
 
 # this handler gets automatically appended last to all handlers inside app.py
 class PageNotFoundHandler(BaseHandler):

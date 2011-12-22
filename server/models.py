@@ -49,6 +49,7 @@ class User(BaseDocument):
       'password': unicode,
       'first_name': unicode,
       'last_name': unicode,
+      'current_location': ObjectId,
     }
 
     use_autorefs = False
@@ -72,7 +73,7 @@ class User(BaseDocument):
             hashed = self.password.split('$bcrypt$')[-1].encode('utf8')
             return hashed == bcrypt.hashpw(raw_password, hashed)
         else:
-            raise NotImplementedError("No checking clear text passwords")
+            raise NotImplementedError("Not checking clear text passwords")
 
     def delete(self):
         try:
@@ -94,3 +95,61 @@ class User(BaseDocument):
             user = self.db.User.one({key:
               re.compile(re.escape(value), re.I)})
         return user
+
+
+@register
+class Location(BaseDocument):
+    __collection__ = 'locations'
+    structure = {
+      'city': unicode,
+      'country': unicode,
+      'locality': unicode,  # e.g. US states
+      'lat': float,
+      'lng': float,
+    }
+
+
+@register
+class Question(BaseDocument):
+    __collection__ = 'questions'
+    structure = {
+      'text': unicode,
+      'correct': unicode,
+      'alternatives': [unicode],
+      'alternatives_sorted': bool,
+      'author': ObjectId,
+      'points_value': int,
+    }
+
+    default_values = {
+      'alternatives_sorted': False,
+      'points_value': 1,
+    }
+
+    def check_answer(self, value):
+        return value.lower() == self['correct'].lower()
+
+@register
+class QuestionSession(BaseDocument):
+    __collection__ = 'questionsessions'
+    structure = {
+      'user': ObjectId,
+      'location': ObjectId,
+      'finish_date': datetime.datetime,
+      'start_date': datetime.datetime,
+    }
+
+    default_values = {
+      'start_date': datetime.datetime.utcnow(),
+    }
+
+
+@register
+class SessionQuestions(BaseDocument):
+    __collection__ = 'sessionquestions'
+    structure = {
+      'session': ObjectId,
+      'question': ObjectId,
+      'answer': unicode,
+      'correct': bool,
+    }

@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 
 import code, re
-import here
+try:
+    import here
+except ImportError:
+    import sys
+    import os.path as op
+    sys.path.insert(0, op.abspath(op.join(op.dirname(__file__), '..')))
+    import here
+
 
 if __name__ == '__main__':
-
-
-    from models import User, Tweeter, connection
+    from models import *
     from pymongo.objectid import InvalidId, ObjectId
 
     import settings

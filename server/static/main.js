@@ -4,9 +4,9 @@ var Loader = (function() {
        $('.overlay:visible').hide();
        if ($(hash + '.overlay').size()) {
          $(hash + '.overlay').show();
-         loadPlugin(hash.substr(1, hash.length - 1));
+         Plugins.load(hash.substr(1, hash.length - 1));
        }
-     }
+    }
   }
 })();
 

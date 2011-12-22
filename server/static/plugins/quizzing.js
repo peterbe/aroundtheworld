@@ -132,4 +132,7 @@ var Quiz = (function() {
   }
 })();
 
-Quiz.load_next();  // kick it off
+Plugins.start('quizzing', function() {
+  // called every time this plugin is loaded
+  Quiz.load_next();  // kick it off
+});
