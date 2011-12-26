@@ -2,6 +2,7 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: sans-serif;
 }
 
 #map_canvas {
@@ -43,15 +44,19 @@ html, body {
   #usernav li {
     margin-right:5px;
     }
-
-#user-miles a {
-   padding-left: 16px;
-   background: url(../images/mini-airplane.png) 0 -2px no-repeat;
-}
-#user-coins a {
-   padding-left: 17px;
-   background: url(../images/coins/gold-1.png) 0 0 no-repeat;
-}
+  #usernav .login {
+    font-size:1.2em;
+    padding:10px;
+    margin:10px;
+  }
+  #usernav .user-miles a {
+    padding-left: 16px;
+    background: url(../images/mini-airplane.png) 0 -2px no-repeat;
+  }
+  #usernav .user-coins a {
+    padding-left: 17px;
+    background: url(../images/coins/gold-1.png) 0 0 no-repeat;
+  }
 
 
 .overlay {

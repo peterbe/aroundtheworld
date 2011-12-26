@@ -20,16 +20,13 @@ body {
 </head>
 <body>
 <div id="map_canvas"></div>
-{% include "div.usernav.html" %}
-{% include "div.quizzing.html" %}
-{% include "div.settings.html" %}
-{% include "div.miles.html" %}
+{% include "_divs.html" %}
 
 <script type="text/javascript" src="{{ static_url('lib/underscore.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('lib/backbone.js') }}"></script>
+<!--<script type="text/javascript" src="{{ static_url('lib/jwerty.js') }}"></script>-->
 <script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
-{% include "sounds.js.html %}
-{% include "plugins.js.html %}
+{% include "_js_templates.html" %}
 <script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('offline_map.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('main.js') }}"></script>

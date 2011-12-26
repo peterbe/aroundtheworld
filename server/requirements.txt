@@ -2,3 +2,4 @@ redis
 tornado
 mongokit
 mock
+geopy

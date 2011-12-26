@@ -4,13 +4,14 @@ import uuid
 from pymongo.objectid import ObjectId
 import datetime
 from mongokit import Document, ValidationError
-from tornado_utils import encrypt_password
-
 from mongokit import Connection
+
+
 connection = Connection()
 def register(cls):
     connection.register([cls])
     return cls
+
 
 class BaseDocument(Document):
     structure = {
@@ -60,8 +61,17 @@ class User(BaseDocument):
     def __unicode__(self):
         return self.username
 
-    def set_password(self, raw_password):
-        self.password = encrypt_password(raw_password)
+    def get_full_name(self):
+        name = ('%s %s' % (self['first_name'], self['last_name'])).strip()
+        if not name:
+            name = self['username']
+        return name
+
+    def set_password(self, raw_password, encrypt=False):
+        if encrypt:
+            from tornado_utils import encrypt_password
+            raw_password = encrypt_password(raw_password)
+        self.password = raw_password
 
     def check_password(self, raw_password):
         """
@@ -98,15 +108,39 @@ class User(BaseDocument):
 
 
 @register
+class UserSettings(BaseDocument):
+    __collection__ = 'usersettings'
+    structure = {
+      'user': ObjectId,
+      'kilometers': bool,
+      'google': dict,
+    }
+
+    required_fields = ['user']
+    default_values = {
+      'kilometers': False
+    }
+
+
+@register
 class Location(BaseDocument):
     __collection__ = 'locations'
     structure = {
       'city': unicode,
       'country': unicode,
       'locality': unicode,  # e.g. US states
+      'code': unicode,
+      'airport_name': unicode,
       'lat': float,
       'lng': float,
     }
+
+    def __unicode__(self):
+        name = self['city']
+        if self['locality']:
+            name += ', %s' % self['locality']
+        name += ', %s' % self['country']
+        return name
 
 
 @register
@@ -119,6 +153,7 @@ class Question(BaseDocument):
       'alternatives_sorted': bool,
       'author': ObjectId,
       'points_value': int,
+      'location': ObjectId,
     }
 
     default_values = {

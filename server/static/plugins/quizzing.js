@@ -93,11 +93,11 @@ var Quiz = (function() {
      },
      show_question: function(question) {
        $('p.question span', container).remove();
-       $('ul.question li', container).remove();
-       $('ul.question', container).css('opacity', 1.0);
+       //$('ul.question li', container).remove();
+       $('.alternatives li', container).remove();
+       $('.alternatives', container).css('opacity', 1.0);
        $('.pleasewait:visible', container).hide();
        $('input[name="id"]', container).val(question.id);
-
        $('.question-attention:visible', container).hide();
        $('<span>')
          .addClass('question')
@@ -108,11 +108,16 @@ var Quiz = (function() {
        $.each(question.alternatives, function(i, each) {
          $('<a href="#">')
            .html(each)
+           .addClass('alt' + i)
+           .attr('title', 'Press ' + (i + 1) + ' to select this answer')
            .click(function () {
              Quiz.answer(each);
              return false;
            }).appendTo($('<li>')
                        .appendTo($('.alternatives', container)));
+         jwerty.key('' + (i + 1), function() {
+           $('.alt' + i, container).click();
+         });
        });
        Quiz.start_timer(question.seconds);
      },
@@ -135,4 +140,8 @@ var Quiz = (function() {
 Plugins.start('quizzing', function() {
   // called every time this plugin is loaded
   Quiz.load_next();  // kick it off
+
+  $('#quizzing .exit a')
+    .text(STATE.location.name)
+      .attr('href', '#city,' + STATE.location.code);
 });
