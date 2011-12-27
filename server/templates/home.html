@@ -4,7 +4,7 @@
 <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
 <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
 <title>Around the world</title>
-<link rel="stylesheet" type="text/css" href="{{ static_url('css/style.css') }}">
+{% include "_stylesheets.html" %}
 <script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
 <script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
 <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
@@ -19,10 +19,11 @@
 {% include "_js_templates.html" %}
 <script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('places.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('latlngcontrol.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('map.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('airplane.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('flightzoom.js') }}"></script>
+<!--<script type="text/javascript" src="{{ static_url('airplane.js') }}"></script>-->
+<!--<script type="text/javascript" src="{{ static_url('flightpath.js') }}"></script>-->
+<!--<script type="text/javascript" src="{{ static_url('flightzoom.js') }}"></script>-->
 <script type="text/javascript" src="{{ static_url('main.js') }}"></script>
 {% if javascript_test_file %}
 <script type="text/javascript" src="{{ static_url(javascript_test_file) }}"></script>

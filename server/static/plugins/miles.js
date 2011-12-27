@@ -7,6 +7,12 @@ var Miles = (function() {
          $('.percentage', container).text(response.percentage);
          $('.short-stats:hidden', container).fadeIn(400);
        });
+       if (STATE.location) {
+         $('.exit:hidden', container).show();
+         $('.exit a', container).attr('title', STATE.location.name);
+       } else {
+         $('.exit:visible', container).hide();
+       }
      }
   };
 })();

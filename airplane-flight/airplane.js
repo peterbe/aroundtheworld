@@ -107,7 +107,6 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   animation['top'] += parseInt(d_top) + 'px';
   var h = (point.x + point2.x) / 2;
 
-  var FW = this.image_radius * 2;
   /* See more on http://jqueryui.com/demos/effect/#easing */
 
   setTimeout(function() {

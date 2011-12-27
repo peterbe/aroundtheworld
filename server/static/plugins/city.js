@@ -1,21 +1,17 @@
 var City = (function() {
   var container = $('#city');
   return {
-     load: function(search) {
-       $.getJSON('/city.json', {search: search}, function(response) {
-         if (response.wrong_city) {
-           var hash = '#city,' + response.current_city
-           Loader.load_hash(hash);
-           window.location.hash = hash;
-           return;
-         }
+     load: function() {
+       $.getJSON('/city.json', function(response) {
          $('h2 strong', container).text(response.name);
        });
+       if (map && map.getZoom() < 15) {
+         map.setZoom(15);
+       }
      }
   };
 })();
 
-
-Plugins.start('city', function(city) {
-  City.load(city);
+Plugins.start('city', function() {
+  City.load();
 });

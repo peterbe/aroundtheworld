@@ -18,7 +18,12 @@ var Plugins = (function() {
            loaded_plugins.push(id);
            extra_args[id] = extra_arg;
          } else {
-           callbacks[id](extra_arg);
+           var c = callbacks[id] || null;
+           if (!c) {
+             L('TRIED TO LOAD', id);
+             L('CALLBACKS', callbacks);
+           }
+           c(extra_arg);
          }
        }
      },

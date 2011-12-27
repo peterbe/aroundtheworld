@@ -97,6 +97,8 @@ class BaseHandler(tornado.web.RequestHandler):
                   'locality': location['locality'],
                   'country': location['country'],
                   'name': unicode(location),
+                  'lat': location['lat'],
+                  'lng': location['lng'],
                 }
             else:
                 state['location'] = None
@@ -403,12 +405,39 @@ class AirportHandler(BaseHandler):
 @route('/fly.json$', name='fly')
 class FlyHandler(AirportHandler):
 
+    def get(self):
+        user = self.get_current_user()
+        route = self.get_argument('route')
+        from_, to = re.findall('[A-Z]{3}', route)
+        from_ = self.db.Location.find_one({'code': from_})
+        assert from_
+        to = self.db.Location.find_one({'code': to})
+        assert to
+        assert from_ != to
+        flight = self.db.Flight.find_one({
+          'user': user['_id'],
+          'from': from_['_id'],
+          'to': to['_id'],
+        })
+        assert flight
+        data = {
+          'from': {
+            'lat': from_['lat'], 'lng': from_['lng']
+          },
+          'to': {
+            'lat': to['lat'], 'lng': to['lng']
+          },
+        }
+        self.write_json(data)
+
     def post(self):
         _id = self.get_argument('id')
         location = self.db.Location.find_one({'_id': ObjectId(_id)})
         assert location
+        print "FLYING TO", repr(location)
         user = self.get_current_user()
         current_location = self.get_current_location(user)
+        print "CURRENTLY IN", repr(current_location)
         assert location != current_location
         distance = self.calculate_distance(current_location, location)
         price = self.calculate_price(distance.miles, user)

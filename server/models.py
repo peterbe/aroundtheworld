@@ -146,6 +146,7 @@ class Location(BaseDocument):
         name += ', %s' % self['country']
         return name
 
+
 @register
 class Flight(BaseDocument):
     __collection__ = 'flights'
@@ -156,6 +157,7 @@ class Flight(BaseDocument):
       'miles': float,
     }
     required_fields = structure.keys()
+
 
 @register
 class Question(BaseDocument):

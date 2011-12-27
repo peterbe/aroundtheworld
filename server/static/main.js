@@ -1,15 +1,20 @@
 var Loader = (function() {
   return {
      load_hash: function (hash) {
+       if (hash !== window.location.hash) {
+         window.location.hash = hash;
+       }
        var arg = hash.split(',')[1] || null;
        hash = hash.split(',')[0];
-       L(hash, arg);
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
          $(hash + '.overlay').show();
          Plugins.load(hash.substr(1, hash.length - 1), arg);
-       } else if (hash == 'fly') {
-         Plugins.load('#fly', arg);
+       } else if (hash == '#fly') {
+         $('.overlay:visible').hide();
+         Plugins.load('flying', arg);
+       } else {
+         L('ignoring: ' + hash); // xxx: console.warn(..) instead??
        }
     }
   }

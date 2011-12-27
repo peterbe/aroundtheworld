@@ -22,9 +22,7 @@ var Welcome = (function() {
              var id = $('select[name="id"] option:selected', container).attr('value');
              $.post('/location.json', {id:id}, function(response) {
                State.update();
-               var new_hash = '#city';
-               window.location.hash = new_hash;
-               Loader.load_hash(new_hash);
+               Loader.load_hash('#city');
              });
              return false;
            });
@@ -34,13 +32,6 @@ var Welcome = (function() {
          $('.welcome-back', container).show();
          var c = $('.welcome-back', container);
          $('.current-location', c).html(STATE.location.name);
-         var hash = '#city';
-         $('.overlay-changer', c)
-           .attr('href', hash)
-             .click(function() {
-               Loader.load_hash(hash);
-             });
-
        }
      }
   };

@@ -24,16 +24,14 @@ var Airport = (function() {
          if (cost > STATE.user.coins_total) {
            return false;
          }
-
          $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
            if (response.cant_afford) {
              alert("Sorry. Can't afford the ticket");
              Loader.load_hash('#airport');
            } else {
              State.update();
-             var hash = 'fly,' + response.from_code + '->' + response.to_code;
+             var hash = '#fly,' + response.from_code + '->' + response.to_code;
              Loader.load_hash(hash);
-             window.location.hash = hash;
            }
          });
          return false;
