@@ -1,13 +1,15 @@
 var Loader = (function() {
   return {
      load_hash: function (hash) {
-       L('*loading*', hash);
        var arg = hash.split(',')[1] || null;
        hash = hash.split(',')[0];
+       L(hash, arg);
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
          $(hash + '.overlay').show();
          Plugins.load(hash.substr(1, hash.length - 1), arg);
+       } else if (hash == 'fly') {
+         Plugins.load('#fly', arg);
        }
     }
   }
@@ -21,6 +23,17 @@ var State = (function() {
          $('#usernav').load('/state.html');  // lazy! FIXME: make this all javascript template instead one day
        });
      }
+  }
+})();
+
+var Utils = (function() {
+  return {
+     formatCost: function(v) {
+       return v;
+     },
+    formatMiles: function(v) {
+      return v;
+    }
   }
 })();
 

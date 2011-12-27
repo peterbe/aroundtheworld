@@ -113,12 +113,16 @@ class UserSettings(BaseDocument):
     structure = {
       'user': ObjectId,
       'kilometers': bool,
+      'coins_total': int,
+      'miles_total': float,
       'google': dict,
     }
 
     required_fields = ['user']
     default_values = {
-      'kilometers': False
+      'kilometers': False,
+      'coins_total': 0,
+      'miles_total': 0.0,
     }
 
 
@@ -142,6 +146,16 @@ class Location(BaseDocument):
         name += ', %s' % self['country']
         return name
 
+@register
+class Flight(BaseDocument):
+    __collection__ = 'flights'
+    structure = {
+      'user': ObjectId,
+      'from': ObjectId,
+      'to': ObjectId,
+      'miles': float,
+    }
+    required_fields = structure.keys()
 
 @register
 class Question(BaseDocument):

@@ -83,10 +83,11 @@ class BaseHandler(tornado.web.RequestHandler):
         state = {}
         user = self.get_current_user()
         if user:
+            user_settings = self.get_user_settings(user)
             state['user'] = {}
             state['user']['name'] = user.get_full_name()
-            state['user']['miles_total'] = 12345
-            state['user']['coins_total'] = 325
+            state['user']['miles_total'] = int(user_settings['miles_total'])
+            state['user']['coins_total'] = user_settings['coins_total']
             location = self.get_current_location(user)
             if location:
                 state['location'] = {
@@ -335,23 +336,17 @@ class CityHandler(BaseHandler):
 
     def get(self):
         data = {}
-        search = self.get_argument('search')
-        if len(search) == 24:
-            location = self.db.Location.find_one({'_id': ObjectId(search)})
-        elif len(search) == 3:
-            location = self.db.Location.find_one({'code': search.upper()})
-        else:
-            raise NotImplementedError
-        if not location:
-            raise tornado.web.HTTPError(404, search)
+        #search = self.get_argument('search')
+        #if len(search) == 24:
+        #    location = self.db.Location.find_one({'_id': ObjectId(search)})
+        #elif len(search) == 3:
+        #    location = self.db.Location.find_one({'code': search.upper()})
+        #else:
+        #    raise NotImplementedError
+        #if not location:
+        #    raise tornado.web.HTTPError(404, search)
         user = self.get_current_user()
-        current_location = self.get_current_location(user)
-        if location != current_location:
-            self.write_json({
-              'wrong_city': True,
-              'current_city': current_location['code'],
-            })
-            return
+        location = self.get_current_location(user)
 
         data['name'] = unicode(location)
         data['city'] = location['city']
@@ -381,6 +376,7 @@ class AirportHandler(BaseHandler):
             else:
                 distance_friendly = '%d miles' % distance.miles
             destination = {
+              'id': str(location['_id']),
               'code': location['code'],
               'name': unicode(location),
               'city': location['city'],
@@ -404,16 +400,49 @@ class AirportHandler(BaseHandler):
         return geopy_distance(from_, to)
 
 
+@route('/fly.json$', name='fly')
+class FlyHandler(AirportHandler):
+
+    def post(self):
+        _id = self.get_argument('id')
+        location = self.db.Location.find_one({'_id': ObjectId(_id)})
+        assert location
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        assert location != current_location
+        distance = self.calculate_distance(current_location, location)
+        price = self.calculate_price(distance.miles, user)
+        state = self.get_state()
+        if price > state['user']['coins_total']:
+            self.write_json({'cant_afford': True})
+            return
+
+        # make the transaction
+        user_settings = self.get_current_user_settings(user)
+        user_settings['coins_total'] -= price
+        user_settings['miles_total'] += distance.miles
+        user_settings.save()
+        user['current_location'] = location['_id']
+        user.save()
+        flight = self.db.Flight()
+        flight['user'] = user['_id']
+        flight['from'] = current_location['_id']
+        flight['to'] = location['_id']
+        flight['miles'] = distance.miles
+        flight.save()
+
+        data = {
+          'from_code': current_location['code'],
+          'to_code': location['code'],
+        }
+        self.write_json(data)
+
 
 @route('/state.(json|html)$', name='state')
 class StateHandler(BaseHandler):
 
     def get(self, format):
         state = self.get_state()
-        L,= self.db.Location.find().limit(1)
-        state['location'] ={
-        'id':str(L['_id']),'city':L['city'], 'locality':L['locality'],'country':L['country']
-        }
         if format == 'html':
             self.render('div.usernav.html', state=state)
         else:

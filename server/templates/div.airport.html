@@ -2,9 +2,26 @@
   <h2></h2>
 
   <p>
-    <img src="{{ static_url('images/airportsign.png') }}" alt="Airport sign" class="airportpicture">
+    <img src="{{ static_url('images/airport.png') }}" alt="Airport sign" class="Airport">
   </p>
 
+  <div class="confirm" style="display:none">
+    <p><strong>Are you sure you want to buy a ticket to <em></em>?</strong></p>
+    <p>The price is <strong class="price"></strong><br>
+    and you currently have <span class="current-coins"></span></p>
+
+
+    <form action="">
+      <input type="hidden" name="id" value="">
+      <p class="cant-afford" style="display:none">
+      Sorry you can't afford that yet. You need <strong></strong> more coins.
+      </p>
+      <input type="submit" name="yes" value="Yes! Buy the ticket">
+      <input type="button" name="cancel" value="Cancel">
+    </form>
+  </div>
+
+  <div class="choices">
   <p>
     Your choices depend on how much coins you have. You currently have
     <strong class="current-total"></strong>.
@@ -20,6 +37,7 @@
   </thead>
   </table>
 
+  </div>
 
   <a href="#city" class="overlay-changer">Go back to the city</a>
 

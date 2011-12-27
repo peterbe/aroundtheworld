@@ -52,11 +52,11 @@ if __name__ == '__main__':
         if location:
             row = [
               location['code'],
-              unicode(location),
+              #unicode(location),
             ]
         else:
             row = [
-              '', ''
+              '', #''
             ]
         row.append(question['text'])
         row.append(question['correct'])
@@ -70,7 +70,7 @@ if __name__ == '__main__':
 
     writer.writerow([
       'CODE',
-      'CITY NAME (optional)',
+      #'CITY NAME (optional)',
       'QUESTION',
       'CORRECT',
       'ALTERNATIVE 1',
