@@ -76,3 +76,5 @@ html, body {
   -moz-box-shadow: 0 0 50px #ccc;
   -webkit-box-shadow: 0 0 50px #ccc;
   }
+
+a { color:rgb(60, 60, 60); }

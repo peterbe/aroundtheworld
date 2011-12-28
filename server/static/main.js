@@ -1,6 +1,10 @@
 var Loader = (function() {
   return {
      load_hash: function (hash, blank_location_hash) {
+
+       // so that reloads works nicer
+       if (hash == '#signout') blank_location_hash = true;
+
        if (blank_location_hash) {
          window.location.hash = '';
        } else if (hash !== window.location.hash) {
@@ -18,6 +22,11 @@ var Loader = (function() {
        } else {
          L('ignoring: ' + hash); // xxx: console.warn(..) instead??
        }
+
+       // when blanking the location hash, don't bubble
+       if (blank_location_hash) return false;
+
+       return true;
     }
   }
 })();
@@ -47,7 +56,7 @@ var Utils = (function() {
 mapInitialized(function(map) {
 
   $('a.overlay-changer').click(function() {
-    Loader.load_hash($(this).attr('href'));
+    return Loader.load_hash($(this).attr('href'));
   });
 
   if (window.location.hash) {

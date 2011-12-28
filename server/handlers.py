@@ -591,7 +591,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
 
 @route(r'/logout/', name='logout')
 class AuthLogoutHandler(BaseAuthHandler):
-    def get(self):
+    def post(self):
         self.clear_all_cookies()
         self.redirect(self.get_next_url())
 
