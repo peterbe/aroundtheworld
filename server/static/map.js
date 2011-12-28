@@ -99,10 +99,13 @@ function initialize(callback) {
   //preload_sound('jet-taking-off');
   //sounds.preload('jet-taking-off');
 
-  var center = LATLNGS.kansas, zoom = 5;  // defaults
+  // somewhere in north-western Afria somewhere
+  var center = new google.maps.LatLng(26.6093, 7.1498);
+  var zoom = 3;
+
   if (STATE.location) {
     center = new google.maps.LatLng(STATE.location.lat, STATE.location.lng);
-    zoom = 15;  // known locations are slightly zoomed in
+    zoom = 15;  // known locations is zoomed in
   }
   var opts = {
      zoom: zoom,

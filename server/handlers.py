@@ -29,6 +29,12 @@ class BaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         self.write('%s(%s)' % (callback, tornado.escape.json_encode(struct)))
 
+    def get_current_ip(self):
+        ip = self.request.remote_ip
+        if ip == '127.0.0.1':
+            ip = '64.179.205.74'  # debugging, Hartwell, GA
+        return ip
+
 
     def get_current_user(self):
         _id = self.get_secure_cookie('user')
@@ -315,10 +321,30 @@ def _commafy(s):
 class LocationHandler(BaseHandler):
 
     def get(self):
+        ip_location = None
+        ip = self.get_current_ip()
+        if ip:
+            cache_key = 'iplookup-%s' % ip
+            value = self.redis.get(cache_key)
+            if value:
+                ip_location = tornado.escape.json_decode(value)
+                print ip_location
+
         locations = []
         for location in self.db.Location.find().sort('city', 1):
-            locations.append({'name': unicode(location),
-                              'id': str(location['_id'])})
+            option = {
+              'name': unicode(location),
+              'id': str(location['_id'])
+            }
+            if ip_location:
+                d = geopy_distance(
+                  (ip_location['lat'], ip_location['lng']),
+                  (location['lat'], location['lng'])
+                )
+                option['distance'] = int(d.miles)
+            locations.append(option)
+        if ip_location:
+            locations.sort(lambda x, y: cmp(x['distance'], y['distance']))
         self.write_json({'locations': locations})
 
     def post(self):
@@ -594,6 +620,43 @@ class AuthLogoutHandler(BaseAuthHandler):
     def post(self):
         self.clear_all_cookies()
         self.redirect(self.get_next_url())
+
+
+@route(r'/iplookup/', name='iplookup')
+class IPLookupHandler(BaseHandler):
+
+    @tornado.web.asynchronous
+    @tornado.gen.engine
+    def get(self):
+        ip = self.get_current_ip()
+        if not ip:
+            self.write_json({})
+            self.finish()
+            return
+
+        cache_key = 'iplookup-%s' % ip
+        value = self.redis.get(cache_key)
+        if value:
+            data = tornado.escape.json_decode(value)
+        else:
+            # see https://github.com/fiorix/freegeoip/blob/master/README.rst
+            url = 'http://freegeoip.net/json/%s' % ip
+            http_client = tornado.httpclient.AsyncHTTPClient()
+            response = yield tornado.gen.Task(http_client.fetch, url)
+            data = {}
+            if response.code == 200:
+                struct = tornado.escape.json_decode(response.body)
+                data['lat'] = struct['latitude']
+                data['lng'] = struct['longitude']
+                self.redis.setex(
+                  cache_key,
+                  tornado.escape.json_encode(data),
+                  60 * 60
+                )
+            else:
+                logging.warn("%s: %r" % (response.code, response.body))
+        self.write_json(data)
+        self.finish()
 
 
 # this handler gets automatically appended last to all handlers inside app.py

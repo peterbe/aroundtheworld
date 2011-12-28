@@ -2,6 +2,14 @@ var Welcome = (function() {
   var container = $('#welcome');
   return {
      update: function() {
+       if (map) {
+         $.getJSON('/iplookup/', function(response) {
+           if (response.lat && response.lng) {
+             map.setCenter(new google.maps.LatLng(response.lat, response.lng));
+             map.setZoom(5);
+           }
+         });
+       }
        $('.alternative', container).hide();
        if (!STATE.user) {
          $('.not-logged-in', container).show();
@@ -9,10 +17,15 @@ var Welcome = (function() {
          $('.not-chosen-location', container).show();
          $.getJSON('/location.json', function(response) {
            var c = $('select[name="id"]', container);
+           var text;
            $.each(response.locations, function(i, each) {
+             text = each.name;
+             if (each.distance) {
+               text += ' (' + Utils.formatMiles(each.distance) + ' miles from you)';
+             }
              $('<option>')
                .attr('value', each.id)
-                 .text(each.name)
+                 .text(text)
                    .appendTo(c);
            });
            c.on('change', function() {
