@@ -20,7 +20,7 @@ var Airport = (function() {
          $('.cant-afford strong', c).text(Utils.formatCost(cost - STATE.user.coins_total));
          $('input[name="yes"]', c).attr('disabled', 'disabled');
        }
-       $('form', c).submit(function() {
+       $('form', c).unbind('submit').submit(function() {
          if (cost > STATE.user.coins_total) {
            return false;
          }
@@ -51,6 +51,7 @@ var Airport = (function() {
            $('<a href="#">')
                .text(each.name)
                  .click(function() {
+                   L("Open confirm");
                    Airport.confirm(each.name, each.id, each.price);
                    return false;
                  }).appendTo($('<td>').appendTo(r));

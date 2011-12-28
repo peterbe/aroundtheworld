@@ -6,9 +6,18 @@ var Plugins = (function() {
   var extra_args = {};
   return {
      load: function(id, extra_arg) {
+       L('*load*', id, extra_arg);
        if (PLUGINS[id] && PLUGINS[id].length) {
          if ($.inArray(id, loaded_plugins) == -1) {
            $.each(PLUGINS[id], function (i, plugin_url) {
+             if (STATE.debug) {
+               if (plugin_url.search(/\?/) == -1) {
+                 plugin_url += '?';
+               } else {
+                 plugin_url += '&';
+               }
+               plugin_url += 'r=' + Math.random();
+             }
              var s = document.createElement('script');
              s.type = 'text/javascript';
              //s.defer = true;
@@ -20,10 +29,10 @@ var Plugins = (function() {
          } else {
            var c = callbacks[id] || null;
            if (!c) {
-             L('TRIED TO LOAD', id);
-             L('CALLBACKS', callbacks);
+             throw id + " doesn't have a callback";
+           } else {
+             c(extra_arg);
            }
-           c(extra_arg);
          }
        }
      },

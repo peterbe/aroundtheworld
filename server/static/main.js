@@ -1,7 +1,9 @@
 var Loader = (function() {
   return {
-     load_hash: function (hash) {
-       if (hash !== window.location.hash) {
+     load_hash: function (hash, blank_location_hash) {
+       if (blank_location_hash) {
+         window.location.hash = '';
+       } else if (hash !== window.location.hash) {
          window.location.hash = hash;
        }
        var arg = hash.split(',')[1] || null;

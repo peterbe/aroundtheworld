@@ -27,18 +27,6 @@ var FlightZoom = (function() {
          //airplane._place_point(sw);
          //L('SW', sw);
          //L('NE', ne);
-       /*
-         new google.maps.Rectangle({
-            bounds: new google.maps.LatLngBounds(sw, ne),
-           strokeColor: '#ff0000',
-           strokeWeight: 1,
-           fillColor: '#ff3300',
-           fillOpacity: 0.5
-         }).setMap(map);
-         L(map);
-        */
-       L('SW', sw);
-       L('NE', ne);
          var bounds = new google.maps.LatLngBounds(sw, ne);
          map.fitBounds(bounds);
          //L('contains sw?', bounds.contains(sw));
@@ -60,12 +48,15 @@ var FlightZoom = (function() {
 })();
 
 
+var _in_flight = false;
+
 var Flying = (function() {
   return {
      animate: function (route) {
        if (map === null) {
          throw "Can't run flying plugin without map";
        }
+       sounds.preload('jet-taking-off');
        $.getJSON('/fly.json', {route: route}, function(response) {
          var from = {lat: response.from.lat, lng: response.from.lng};
          var to = {lat: response.to.lat, lng: response.to.lng};
@@ -76,15 +67,20 @@ var Flying = (function() {
            map.setCenter(from_point);
          }
          var to_point = new google.maps.LatLng(to.lat, to.lng);
+         if (_in_flight) {  // don't think this ever happens
+           throw "ALready in flight!";
+         }
          FlightZoom.fit(map, to_point, function(bounds) {
+           _in_flight = true;
            latlngcontrol.animate(from, to, function() {
              if (map.getZoom() < 15) {
                map.setCenter(to_point);
                map.setZoom(15);
              }
-           var hash = '#city';
-           Loader.load_hash(hash);
-           $('#usernav .user-location:hidden').show('fast');
+             var hash = '#city';
+             Loader.load_hash(hash);
+             $('#usernav .user-location:hidden').show('fast');
+             _in_flight = false;
            });
 
          });

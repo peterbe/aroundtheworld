@@ -101,9 +101,8 @@ function initialize(callback) {
 
   var center = LATLNGS.kansas, zoom = 5;  // defaults
   if (STATE.location) {
-    L('STATE.location', STATE.location);
     center = new google.maps.LatLng(STATE.location.lat, STATE.location.lng);
-    zoom += 1;  // known locations are slightly zoomed in
+    zoom = 15;  // known locations are slightly zoomed in
   }
   var opts = {
      zoom: zoom,

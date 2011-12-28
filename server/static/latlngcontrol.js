@@ -1,4 +1,4 @@
-var VELOCITY = 75.0;//120.0; // pixels/second
+var VELOCITY = 95.0;//120.0; // pixels/second
 var MIN_SCALING_START = 0.3;  // minimum percentage scale
 var MIN_SCALING_FINISH = 0.05;  // minimum percentage scale
 var MAX_SCALING = 0.9;  // maximum percentage scale
@@ -34,6 +34,7 @@ function LatLngControl(map) {
   /**
    * Pointer to the HTML container.
    */
+  L('ALREADY?', document.getElementById('latlng-control'));
   this.div_ = this.createHtmlNode_();
   //this.div_jelement = $(this.div_);
 
@@ -66,16 +67,27 @@ LatLngControl.prototype.scale = function(p) {
 };
 
 LatLngControl.prototype.draw = function() {
-  L('IN draw()');
-  if (!this.get('from') || !this.get('to')) {
+  var self = this;
+  //L('IN draw()');
+  var from = self.get('from');
+  var to = self.get('to');
+  if (!from || !to) {
     // the from and to hasn't been defined yet
-    L("this.get('from') not set :(");
+    //L("this.get('from') not set :(");
     return;
   }
-  L("this.get('from')=", this.get('from'));
+  // so it only animates the draw once
+  self.set('from', null);
+  self.set('to', null);
+
+  //L("this.get('from')=", from);
+
   var panes = this.getPanes();
-  panes.overlayImage.appendChild(this.div_);
-  $(this.div_).show();
+
+  if (!$('#latlng-control').size()) {
+    // first time
+    panes.overlayImage.appendChild(this.div_);
+  }
 
   /* debugging
   var coordinates = [this.get('from'), this.get('to')];
@@ -87,17 +99,15 @@ LatLngControl.prototype.draw = function() {
      }).setMap(map);
   */
 
-  var point1 = this.getProjection().fromLatLngToContainerPixel(this.get('from'));
-  var point2 = this.getProjection().fromLatLngToContainerPixel(this.get('to'));
+  var point1 = this.getProjection().fromLatLngToContainerPixel(from);
+  var point2 = this.getProjection().fromLatLngToContainerPixel(to);
 
-  //L('(X,Y)', point1.x, point1.y);
-  //L('(X2,Y2)', point2.x, point2.y);
   if (point1 === null) {
-    L('from?', this.get('from'));
+    L('from?', from);
     throw "point1 is null!";
   }
   if (point2 === null) {
-    L('to?', this.get('from'));
+    L('to?', to);
     throw "point2 is null!";
   }
   this.rotation_angle = calculateAngle(point1, point2);
@@ -106,10 +116,22 @@ LatLngControl.prototype.draw = function() {
   var d = distance(point1.x, point1.y, point2.x, point2.y);
 
 //  L('DISTANCE', d);
-  var t = d / VELOCITY;
+  var velocity = VELOCITY;
+  if (d < 100) velocity *= 0.6; // 40% slower
+  else if (d < 200) velocity *= 0.7; // 30% slower
+  else if (d < 300) velocity *= 0.8; // 20% slower
+  else if (d < 500) velocity *= 0.9; // 10% slower
+  else if (d > 1000) velocity *= 1.1; // 10% slower
+  else if (d > 2500) velocity *= 1.2; // 20% slower
+  else if (d > 4000) velocity *= 1.3; // 30% slower
+  else if (d > 6500) velocity *= 1.4; // 40% slower
+
+  L("D", d, "V", velocity);
+  var t = d / velocity;
   this.div_.style.left = (point1.x - IMAGE_RADIUS/2) + 'px';
   this.div_.style.top = (point1.y - IMAGE_RADIUS/2) + 'px';
 //  L('POSITION', this.div_.style.left,this.div_.style.top);
+  $(this.div_).show();
 
 
   var d_left = point1.x - point2.x;// + this.left_radius;
@@ -145,11 +167,10 @@ LatLngControl.prototype.draw = function() {
   length = (right - left) / 2;
   //L('LEFT', left, 'RIGHT', right, 'H', h, 'LENGTH', length);
 
-//  setTimeout(function() {
-//    play_sound('jet-taking-off');
-//  }, 3* 1000);
+  setTimeout(function() {
+    sounds.play('jet-taking-off');
+  }, 1* 1000);
 
-  var self = this;
 
   /* See more on http://jqueryui.com/demos/effect/#easing */
   /* XXX: Consider installing
@@ -185,8 +206,6 @@ LatLngControl.prototype.draw = function() {
   };
   opts.complete = function() {
     self.scale(MIN_SCALING_FINISH);
-    self.set('from', null);
-    self.set('to', null);
     if (self.get('callback')) {
       self.get('callback')();
     }

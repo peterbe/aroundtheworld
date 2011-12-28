@@ -141,7 +141,4 @@ Plugins.start('quizzing', function() {
   // called every time this plugin is loaded
   Quiz.load_next();  // kick it off
 
-  $('#quizzing .exit a')
-    .text(STATE.location.name)
-      .attr('href', '#city,' + STATE.location.code);
 });

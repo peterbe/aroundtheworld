@@ -80,7 +80,9 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_state(self):
         """what state of play the user is in"""
-        state = {}
+        state = {
+          'debug': self.application.settings['debug']
+        }
         user = self.get_current_user()
         if user:
             user_settings = self.get_user_settings(user)
