@@ -2,11 +2,17 @@ var Welcome = (function() {
   var container = $('#welcome');
   return {
      update: function() {
-       if (map) {
+       if (map && !STATE.location) {
+         var t0 = new Date().getTime();
          $.getJSON('/iplookup/', function(response) {
            if (response.lat && response.lng) {
-             map.setCenter(new google.maps.LatLng(response.lat, response.lng));
-             map.setZoom(5);
+             var t1 = new Date().getTime();
+             // if it took a really long time, (more than 1 second)
+             // then don't bother because it would just look weird
+             if ((t1 - t0) < 1000) {
+               map.setCenter(new google.maps.LatLng(response.lat, response.lng));
+               map.setZoom(5);
+             }
            }
          });
        }

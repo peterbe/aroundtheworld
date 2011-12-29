@@ -382,6 +382,8 @@ class CityHandler(BaseHandler):
         data['city'] = location['city']
         data['locality'] = location['locality']
         data['country'] = location['country']
+        data['lat'] = location['lat']
+        data['lng'] = location['lng']
 
         self.write_json(data)
 
@@ -455,6 +457,7 @@ class FlyHandler(AirportHandler):
           'to': {
             'lat': to['lat'], 'lng': to['lng']
           },
+          'miles': self.calculate_distance(from_, to).miles,
         }
         self.write_json(data)
 
@@ -462,10 +465,10 @@ class FlyHandler(AirportHandler):
         _id = self.get_argument('id')
         location = self.db.Location.find_one({'_id': ObjectId(_id)})
         assert location
-        print "FLYING TO", repr(location)
+        #print "FLYING TO", repr(location)
         user = self.get_current_user()
         current_location = self.get_current_location(user)
-        print "CURRENTLY IN", repr(current_location)
+        #print "CURRENTLY IN", repr(current_location)
         assert location != current_location
         distance = self.calculate_distance(current_location, location)
         price = self.calculate_price(distance.miles, user)
@@ -491,6 +494,7 @@ class FlyHandler(AirportHandler):
         data = {
           'from_code': current_location['code'],
           'to_code': location['code'],
+          'price': price,
         }
         self.write_json(data)
 
@@ -633,7 +637,6 @@ class IPLookupHandler(BaseHandler):
             self.write_json({})
             self.finish()
             return
-
         cache_key = 'iplookup-%s' % ip
         value = self.redis.get(cache_key)
         if value:

@@ -61,6 +61,7 @@ html, body {
 
 .overlay {
   display:none;
+  opacity: 0.9;
   /*font-family: 'Gochi Hand', cursive;*/
   /*font-family: Schoolbell, cursive;*/
   position:absolute;

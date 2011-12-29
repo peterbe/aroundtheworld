@@ -34,7 +34,6 @@ function LatLngControl(map) {
   /**
    * Pointer to the HTML container.
    */
-  L('ALREADY?', document.getElementById('latlng-control'));
   this.div_ = this.createHtmlNode_();
   //this.div_jelement = $(this.div_);
 
@@ -71,6 +70,7 @@ LatLngControl.prototype.draw = function() {
   //L('IN draw()');
   var from = self.get('from');
   var to = self.get('to');
+  var miles = self.get('miles');  // real world miles
   if (!from || !to) {
     // the from and to hasn't been defined yet
     //L("this.get('from') not set :(");
@@ -121,16 +121,16 @@ LatLngControl.prototype.draw = function() {
   else if (d < 200) velocity *= 0.7; // 30% slower
   else if (d < 300) velocity *= 0.8; // 20% slower
   else if (d < 500) velocity *= 0.9; // 10% slower
-  else if (d > 1000) velocity *= 1.1; // 10% slower
-  else if (d > 2500) velocity *= 1.2; // 20% slower
-  else if (d > 4000) velocity *= 1.3; // 30% slower
-  else if (d > 6500) velocity *= 1.4; // 40% slower
 
-  L("D", d, "V", velocity);
+  //else if (d > 1000) velocity *= 1.1; // 10% faster
+  //else if (d > 2500) velocity *= 1.2; // 20% faster
+  //else if (d > 4000) velocity *= 1.3; // 30% faster
+  //else if (d > 6500) velocity *= 1.4; // 40% faster
+
   var t = d / velocity;
+  L("D", d, "V", velocity, "T", t);
   this.div_.style.left = (point1.x - IMAGE_RADIUS/2) + 'px';
   this.div_.style.top = (point1.y - IMAGE_RADIUS/2) + 'px';
-//  L('POSITION', this.div_.style.left,this.div_.style.top);
   $(this.div_).show();
 
 
@@ -165,10 +165,13 @@ LatLngControl.prototype.draw = function() {
   }
   halfway = (point1.x + point2.x - IMAGE_RADIUS) / 2 ;
   length = (right - left) / 2;
-  //L('LEFT', left, 'RIGHT', right, 'H', h, 'LENGTH', length);
 
   setTimeout(function() {
-    sounds.play('jet-taking-off');
+    if (t > 10) {
+      sounds.play('jet-taking-off-long');
+    } else {
+      sounds.play('jet-taking-off');
+    }
   }, 1* 1000);
 
 
@@ -272,11 +275,12 @@ LatLngControl.prototype.updatePosition = function(latLng) {
 */
 
 
-LatLngControl.prototype.animate = function(from, to, callback) {
-  from = new google.maps.LatLng(from.lat, from.lng);
-  to = new google.maps.LatLng(to.lat, to.lng);
+LatLngControl.prototype.animate = function(from, to, miles, callback) {
+//  from = new google.maps.LatLng(from.lat, from.lng);
+//  to = new google.maps.LatLng(to.lat, to.lng);
   this.set('from', from);
   this.set('to', to);
+  this.set('miles', miles);
   this.set('callback', callback);
   this.set('visible', true);
   this.draw();

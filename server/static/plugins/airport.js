@@ -1,4 +1,5 @@
 var Airport = (function() {
+  var played_sound = [];
   var container = $('#airport');
   return {
      confirm: function(name, id, cost) {
@@ -29,7 +30,8 @@ var Airport = (function() {
              alert("Sorry. Can't afford the ticket");
              Loader.load_hash('#airport');
            } else {
-             State.update();
+             //State.update();
+             State.show_coin_change(-1 * response.price, true);
              var hash = '#fly,' + response.from_code + '->' + response.to_code;
              Loader.load_hash(hash);
            }
@@ -38,6 +40,7 @@ var Airport = (function() {
        });
      },
      load: function() {
+       sounds.preload('airport-pa');
        $('.confirm:visible', container).hide();
        $('.choices:hidden', container).show();
        $.getJSON('/airport.json', function(response) {
@@ -51,7 +54,6 @@ var Airport = (function() {
            $('<a href="#">')
                .text(each.name)
                  .click(function() {
-                   L("Open confirm");
                    Airport.confirm(each.name, each.id, each.price);
                    return false;
                  }).appendTo($('<td>').appendTo(r));
@@ -65,7 +67,11 @@ var Airport = (function() {
                  .appendTo(r);
 
            $('.destinations', container).append($('<tbody>').append(r));
-         });
+         }); // $.each
+         if ($.inArray(response.airport_name, played_sound) == -1) {
+           sounds.play('airport-pa');
+           played_sound.push(response.airport_name);
+         }
        });
      }
   };

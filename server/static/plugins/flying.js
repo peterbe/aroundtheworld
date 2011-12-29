@@ -48,7 +48,6 @@ var FlightZoom = (function() {
 })();
 
 
-var _in_flight = false;
 
 var Flying = (function() {
   return {
@@ -56,36 +55,33 @@ var Flying = (function() {
        if (map === null) {
          throw "Can't run flying plugin without map";
        }
-       sounds.preload('jet-taking-off');
+       //sounds.preload('jet-taking-off');
        $.getJSON('/fly.json', {route: route}, function(response) {
          var from = {lat: response.from.lat, lng: response.from.lng};
+         from = new google.maps.LatLng(from.lat, from.lng);
          var to = {lat: response.to.lat, lng: response.to.lng};
+         to = new google.maps.LatLng(to.lat, to.lng);
+         var miles = response.miles;
          $('#usernav .user-location:visible').hide();
-         var from_point = new google.maps.LatLng(from.lat, from.lng);
-         if (map.getCenter() != from_point) {
+         if (map.getCenter() != from) {
            // extra assurance that the animation starts from the right place
-           map.setCenter(from_point);
+           map.setCenter(from);
          }
-         var to_point = new google.maps.LatLng(to.lat, to.lng);
-         if (_in_flight) {  // don't think this ever happens
-           throw "ALready in flight!";
-         }
-         FlightZoom.fit(map, to_point, function(bounds) {
-           _in_flight = true;
-           latlngcontrol.animate(from, to, function() {
+         FlightZoom.fit(map, to, function(bounds) {
+           latlngcontrol.animate(from, to, miles, function() {
+             State.show_miles_change(miles, true);
              if (map.getZoom() < 15) {
-               map.setCenter(to_point);
+               map.setCenter(to);
                map.setZoom(15);
              }
              var hash = '#city';
              Loader.load_hash(hash);
-             $('#usernav .user-location:hidden').show('fast');
-             _in_flight = false;
+             setTimeout(function() {
+               State.update();
+             }, 1000);
            });
 
          });
-         /*
-          */
        });
      }
   };
