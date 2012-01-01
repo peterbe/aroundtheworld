@@ -48,29 +48,39 @@ if __name__ == '__main__':
     import sys
     writer = UnicodeWriter(sys.stdout)
 
+    categories = dict((x['_id'], x['name'])
+                      for x in db.Category.find())
+
+    def format(v):
+        if ',' in v and v.replace(',', '').isdigit():
+            # e.g. "2,000" becomes "'2,000"
+            v = "'%s" % v
+        return v
+
     def writerow(location, question):
         if location:
             row = [
               location['code'],
-              #unicode(location),
+              location['city'],
             ]
         else:
             row = [
-              '', #''
+              '', ''
             ]
         row.append(question['text'])
-        row.append(question['correct'])
-        row.extend(question['alternatives'])
+        row.append(format(question['correct']))
+        row.extend([format(x) for x in question['alternatives']])
         for i in range(4 - len(question['alternatives'])):
             row.append('')
         row.append(question['alternatives_sorted'] and 'true' or 'false')
         row.append(str(question['points_value']))
+        row.append(categories[question['category']])
         row.append(str(question['_id']))
         writer.writerow(row)
 
     writer.writerow([
       'CODE',
-      #'CITY NAME (optional)',
+      'CITY NAME (optional)',
       'QUESTION',
       'CORRECT',
       'ALTERNATIVE 1',
@@ -79,7 +89,8 @@ if __name__ == '__main__':
       'ALTERNATIVE 4',
       'ALTS. ORDERED',
       'POINTS VALUE',
-      'ID (optional)'
+      'CATEGORY',
+      'ID (optional)',
     ])
 
     #def write_row(location, question):

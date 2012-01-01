@@ -170,31 +170,32 @@ class Question(BaseDocument):
       'author': ObjectId,
       'points_value': int,
       'location': ObjectId,
+      'category': ObjectId,
+      'published': bool,
     }
 
     default_values = {
       'alternatives_sorted': False,
       'points_value': 1,
+      'published': True,
     }
 
     def check_answer(self, value):
         return value.lower() == self['correct'].lower()
 
-#@register
-#class Answer(BaseDocument):
-#    __collection__ = 'answers'
-#    structure = {
-#      'question': ObjectId,
-#      'user': ObjectId,
-#      'answer': unicode,
-#      'correct': bool,
-#      'time': float,
-#      'points': int,
-#    }
-#    required_fields = [
-#      'question',
-#      'user',
-#    ]
+@register
+class Category(BaseDocument):
+    __collection__ = 'questioncategories'
+    structure = {
+      'name': unicode,
+      'description': unicode,
+    }
+
+    required_fields = ['name']
+
+    def __unicode__(self):
+        return self['name']
+
 
 @register
 class QuestionSession(BaseDocument):
@@ -202,6 +203,7 @@ class QuestionSession(BaseDocument):
     structure = {
       'user': ObjectId,
       'location': ObjectId,
+      'category': ObjectId,
       'finish_date': datetime.datetime,
       'start_date': datetime.datetime,
     }

@@ -5,7 +5,13 @@ var Quiz = (function() {
   var timer;
   var in_pause = false;
   var last_question = false;
+  var _category;
   return {
+     reset: function() {
+       if (timer) {
+         clearTimeout(timer);
+       }
+     },
      answer: function (value) {
        Quiz.stop_timer();
        $('.pleasewait', container).show();
@@ -85,7 +91,9 @@ var Quiz = (function() {
        } else {
          if (timedout) {
            $('.tooslow', container).show('fast');
-           Quiz.restart_timer();
+           if ($('.question:visible', container).size()) {
+             Quiz.restart_timer();
+           }
          }
        }
 
@@ -124,8 +132,10 @@ var Quiz = (function() {
     show_name: function (name) {
        $('.quiz-name', container).text(name);
      },
-    load_next: function() {
-      $.getJSON('/quizzing.json', function(response) {
+    load_next: function(category) {
+      category = category || _category;
+      _category = category;
+      $.getJSON('/quizzing.json', {category: category}, function(response) {
         if (response.quiz_name) {
           Quiz.show_name(response.quiz_name);
         }
@@ -137,8 +147,8 @@ var Quiz = (function() {
   }
 })();
 
-Plugins.start('quizzing', function() {
+Plugins.start('quizzing', function(category) {
   // called every time this plugin is loaded
-  Quiz.load_next();  // kick it off
-
+  Quiz.reset();
+  Quiz.load_next(category);  // kick it off
 });

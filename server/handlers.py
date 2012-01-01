@@ -6,6 +6,7 @@ import logging
 import time
 import traceback
 import functools
+from collections import defaultdict
 from cStringIO import StringIO
 from pprint import pprint, pformat
 import tornado.auth
@@ -272,24 +273,30 @@ class FlightPathsHandler(BaseHandler):
 class QuizzingHandler(AuthenticatedBaseHandler):
 
     def get(self):
+        category = self.get_argument('category')
+        category = category.replace('+', ' ')
+        category = self.db.Category.find_one({'name': category})
+        if not category:
+            raise tornado.web.HTTPError(404, 'Invalid category')
         user = self.get_current_user()
         location = self.get_current_location(user)
         data = {}
-        #data['quiz_name'] = 'Mathematics Professor!'
+        data['quiz_name'] = category['name']
         session = (self.db.QuestionSession
                    .find_one({'user': user['_id'],
+                              'category': category['_id'],
                               'location': location['_id'],
                               'finish_date': None}))
         if session is None:
             session = self.db.QuestionSession()
             session['user'] = user['_id']
             session['location'] = location['_id']
+            session['category'] = category['_id']
             session.save()
-
 
         for each in (self.db.SessionAnswer
                      .find({'session': session['_id']})
-                     .sort('add_date', 1)  # newest first
+                     .sort('add_date', -1)  # newest first
                      .limit(1)):
             previous_question = each
             break
@@ -303,7 +310,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                 previous_question.save()
 
         try:
-            question = self._get_next_question(session, location)
+            question = self._get_next_question(session, category, location)
         except NoQuestionsError:
             self.write_json({'error': 'NOQUESTIONS'})
             return
@@ -322,8 +329,11 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         data['question']['seconds'] = 10
         self.write_json(data)
 
-    def _get_next_question(self, session, location, allow_repeats=False):
-        filter_ = {'location': location['_id']}
+    def _get_next_question(self, session, category, location, allow_repeats=False):
+        filter_ = {
+          'location': location['_id'],
+          'category': category['_id']
+        }
 
         if not allow_repeats:
             past_question_ids = set()
@@ -338,7 +348,8 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         if not count:
             if allow_repeats:
                 raise NoQuestionsError("Not enough questions")
-            return self._get_next_question(session, location, allow_repeats=True)
+            return self._get_next_question(session, category,
+                                           location, allow_repeats=True)
 
         nth = random.randint(0, count - 1)
         for question in questions.limit(1).skip(nth):
@@ -348,6 +359,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         stop_time = datetime.datetime.utcnow()
         user = self.get_current_user()
         location = self.get_current_location(user)
+
         answer = self.get_argument('answer')
         question_id = self.get_argument('id')
         question = self.db.Question.find_one({'_id': ObjectId(question_id)})
@@ -355,7 +367,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                     .find({'user': user['_id'],
                            'location': location['_id'],
                            'finish_date': None})
-                    .sort('add_date', 1)  # newest first
+                    .sort('add_date', -1)  # newest first
                     .limit(1))
         data = {}
         data['correct'] = question.check_answer(answer)
@@ -366,7 +378,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         answer_obj, = (self.db.SessionAnswer
                        .find({'session': session['_id'],
                               'question': question['_id']})
-                       .sort('add_date', 1)  # newest first
+                       .sort('add_date', -1)  # newest first
                        .limit(1))
         answer_obj['time'] = 1.0 * (stop_time - answer_obj['add_date']).seconds
         answer_obj['answer'] = answer
@@ -456,9 +468,35 @@ class CityHandler(AuthenticatedBaseHandler):
         data['country'] = location['country']
         data['lat'] = location['lat']
         data['lng'] = location['lng']
+        data['jobs'] = self.get_jobs(user, location)
 
         self.write_json(data)
 
+    def get_jobs(self, user, location):
+        categories = defaultdict(int)
+        point_values = defaultdict(int)
+        _categories = dict((x['_id'], x)
+                           for x in self.db.Category.find())
+        for q in (self.db.Question
+                  .find({'location': location['_id'],
+                         'published': True})):
+            category = _categories[q['category']]
+            categories[category['name']] += 1
+            point_values[category['name']] += q['points_value']
+        #print categories
+        #print point_values
+        jobs = []
+        for category in _categories.values():
+            no_questions = categories[category['name']]
+            job = {
+              'type': 'quizzing',
+              'category': category['name'],
+              'description': ('%s (%s questions)' %
+                              (category['name'], no_questions)),
+            }
+            jobs.append(job)
+        jobs.sort(lambda x, y: cmp(x['description'], y['description']))
+        return jobs
 
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):

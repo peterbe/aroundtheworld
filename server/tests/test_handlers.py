@@ -22,6 +22,11 @@ class HandlersTestCase(BaseHTTPTestCase):
         newyork.save()
         self.newyork = newyork
 
+        tour_guide = self.db.Category()
+        tour_guide['name'] = u'Tour guide'
+        tour_guide.save()
+        self.tour_guide = tour_guide
+
     def _login(self, username=u'peterbe', email='mail@peterbe.com',
                client=None, location=None):
         user = self.db.User.one(dict(username=username))
@@ -46,12 +51,15 @@ class HandlersTestCase(BaseHTTPTestCase):
           self.create_signed_value('user', str(user._id))
         return user
 
-    def _create_question(self, location):
+    def _create_question(self, category, location):
         q = self.db.Question()
         q['text'] = (u'(%s) What number question is this?' %
                      (self.db.Question.find().count() + 1,))
         q['correct'] = u'one'
         q['alternatives'] = [u'one', u'two', u'three']
+        if not isinstance(category, ObjectId):
+            category = category['_id']
+        q['category'] = category
         if not isinstance(location, ObjectId):
             location = location['_id']
         q['location'] = location
@@ -78,16 +86,33 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_quizzing(self):
         assert not self.db.QuestionSession.find().count()
         url = self.reverse_url('quizzing')
-        q = self.get_struct(url)
-        self.assertEqual(q, {'error': 'NOTLOGGEDIN'})
+
+        def _get():
+            return self.get_struct(url, {'category': self.tour_guide['name']})
+
+        r = _get()
+        self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
         user = self._login(location=self.newyork)
 
-        q = self.get_struct(url)
+        r = _get()
+        self.assertEqual(r, {'error': 'NOQUESTIONS'})
+
+        hongkong = self.db.Location()
+        hongkong['city'] = u'Hong Kong'
+        hongkong.save()
+        self._create_question(self.tour_guide, hongkong)
+
+        chef = self.db.Category()
+        chef['name'] = u'Chef'
+        chef.save()
+        self._create_question(chef, self.newyork)
+
+        q = _get()
         self.assertEqual(q, {'error': 'NOQUESTIONS'})
 
-        q1 = self._create_question(self.newyork)
-        q2 = self._create_question(self.newyork)
-        r = self.get_struct(url)
+        q1 = self._create_question(self.tour_guide, self.newyork)
+        q2 = self._create_question(self.tour_guide, self.newyork)
+        r = _get()
         assert r['question']
         q = r['question']
         self.assertTrue(q['text'] in (q1['text'], q2['text']))
@@ -104,7 +129,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(sa['timedout'], None)
 
         first_q = q
-        r = self.get_struct(url)
+        r = _get()
         second_q = r['question']
         self.assertTrue(first_q != second_q)
 
