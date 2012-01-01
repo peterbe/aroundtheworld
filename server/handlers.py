@@ -4,6 +4,9 @@ import random
 import os
 import logging
 import time
+import traceback
+import functools
+from cStringIO import StringIO
 from pprint import pprint, pformat
 import tornado.auth
 import tornado.web
@@ -18,6 +21,20 @@ from geopy.distance import distance as geopy_distance
 from models import User
 import settings
 
+ONE_HOUR = 60 * 60; ONE_DAY = ONE_HOUR * 24; ONE_WEEK = ONE_DAY * 7
+
+def login_required(func):
+    @functools.wraps(func)
+    def wrapper(self, *args, **kwargs):
+        user = self.get_current_user()
+        if user is None:
+            self.write_json({'error': 'NOTLOGGEDIN'})
+        else:
+            return func(self)
+    return wrapper
+
+class NoQuestionsError(RuntimeError):
+    pass
 
 class BaseHandler(tornado.web.RequestHandler):
 
@@ -135,12 +152,21 @@ class BaseHandler(tornado.web.RequestHandler):
         if self.application.settings['debug']:
             super(BaseHandler, self).write_error(status_code, **kwargs)
         else:
+            tb = StringIO()
+            traceback.print_exception(
+              kwargs['exc_info'][0],
+              kwargs['exc_info'][1],
+              kwargs['exc_info'][2],
+              file=tb, limit=1000
+            )
             options = dict(
               status_code=status_code,
               err_type=kwargs['exc_info'][0],
               err_value=kwargs['exc_info'][1],
-              err_traceback=kwargs['exc_info'][2],
+              err_traceback=tb.getvalue(),
+              page_title=settings.PROJECT_TITLE,
             )
+
             self.render("error.html", **options)
 
     def _email_exception(self, status_code, err_type, err_val, err_traceback):
@@ -195,6 +221,14 @@ class BaseHandler(tornado.web.RequestHandler):
         return super(BaseHandler, self).render(template, **options)
 
 
+class AuthenticatedBaseHandler(BaseHandler):
+
+    def prepare(self):
+        user = self.get_current_user()
+        if not user:
+            self.write_json({'error': 'NOTLOGGEDIN'})
+            self.finish()
+
 
 @route('/')
 class HomeHandler(BaseHandler):
@@ -207,7 +241,6 @@ class HomeHandler(BaseHandler):
 
     def get(self):
         options = {}
-
         self.render('home.html', **options)
 
 @route('/offline/')
@@ -235,17 +268,51 @@ class FlightPathsHandler(BaseHandler):
         self.write_json({'status': 'OK'})
 
 
-@route('/quizzing.json$', name='quizzing_json')
-class QuizzingHandler(BaseHandler):
+@route('/quizzing.json$', name='quizzing')
+class QuizzingHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
         location = self.get_current_location(user)
         data = {}
-        data['quiz_name'] = 'Mathematics Professor!'
-        question = self._get_next_question(user, location)
+        #data['quiz_name'] = 'Mathematics Professor!'
+        session = (self.db.QuestionSession
+                   .find_one({'user': user['_id'],
+                              'location': location['_id'],
+                              'finish_date': None}))
+        if session is None:
+            session = self.db.QuestionSession()
+            session['user'] = user['_id']
+            session['location'] = location['_id']
+            session.save()
+
+
+        for each in (self.db.SessionAnswer
+                     .find({'session': session['_id']})
+                     .sort('add_date', 1)  # newest first
+                     .limit(1)):
+            previous_question = each
+            break
+        else:
+            previous_question = None
+
+        if previous_question:
+            if previous_question['answer'] is None:
+                # no answer was sent, it must have timed out
+                previous_question['timedout'] = True
+                previous_question.save()
+
+        try:
+            question = self._get_next_question(session, location)
+        except NoQuestionsError:
+            self.write_json({'error': 'NOQUESTIONS'})
+            return
         if not question['alternatives_sorted']:
             random.shuffle(question['alternatives'])
+        answer = self.db.SessionAnswer()
+        answer['question'] = question['_id']
+        answer['session'] = session['_id']
+        answer.save()
 
         data['question'] = {
           'id': str(question['_id']),
@@ -255,50 +322,64 @@ class QuizzingHandler(BaseHandler):
         data['question']['seconds'] = 10
         self.write_json(data)
 
-    def _get_next_question(self, user, location, allow_repeats=False):
+    def _get_next_question(self, session, location, allow_repeats=False):
         filter_ = {'location': location['_id']}
+
         if not allow_repeats:
-            session = (self.db.QuestionSession
-                       .find_one({'user': user['_id'],
-                                  'location': location['_id'],
-                                  'finish_date': {'$ne': None}}))
-            if session is None:
-                session = self.db.QuestionSession()
-                session['user'] = user['_id']
-                session['location'] = location['_id']
-                session.save()
             past_question_ids = set()
-            for sq in (self.db.SessionQuestions
+            for a in (self.db.SessionAnswer
                        .find({'session': session['_id']})):
-                past_question_ids.add(sq['question'])
+                past_question_ids.add(a['question'])
             if past_question_ids:
-                filter_['_id'] = {'$nin': past_question_ids}
+                filter_['_id'] = {'$nin': list(past_question_ids)}
 
         questions = self.db.Question.find(filter_)
         count = questions.count()
         if not count:
             if allow_repeats:
-                raise RunTimeError("Not enough questions")
-            return self._get_next_question(user, location, allow_repeats=True)
+                raise NoQuestionsError("Not enough questions")
+            return self._get_next_question(session, location, allow_repeats=True)
 
         nth = random.randint(0, count - 1)
         for question in questions.limit(1).skip(nth):
             return question
 
     def post(self):
+        stop_time = datetime.datetime.utcnow()
+        user = self.get_current_user()
+        location = self.get_current_location(user)
         answer = self.get_argument('answer')
         question_id = self.get_argument('id')
         question = self.db.Question.find_one({'_id': ObjectId(question_id)})
+        session, = (self.db.QuestionSession
+                    .find({'user': user['_id'],
+                           'location': location['_id'],
+                           'finish_date': None})
+                    .sort('add_date', 1)  # newest first
+                    .limit(1))
         data = {}
         data['correct'] = question.check_answer(answer)
         if not data['correct']:
             data['correct_answer'] = question['correct']
         data['points_value'] = question.get('points_value', 1)
+
+        answer_obj, = (self.db.SessionAnswer
+                       .find({'session': session['_id'],
+                              'question': question['_id']})
+                       .sort('add_date', 1)  # newest first
+                       .limit(1))
+        answer_obj['time'] = 1.0 * (stop_time - answer_obj['add_date']).seconds
+        answer_obj['answer'] = answer
+        answer_obj['correct'] = data['correct']
+        answer_obj['points'] = data['points_value']
+        answer_obj['timedout'] = False
+        answer_obj.save()
+
         self.write_json(data)
 
 
 @route('/miles.json$', name='miles_json')
-class MilesHandler(BaseHandler):
+class MilesHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
@@ -318,7 +399,7 @@ def _commafy(s):
 
 
 @route('/location.json$', name='location')
-class LocationHandler(BaseHandler):
+class LocationHandler(AuthenticatedBaseHandler):
 
     def get(self):
         ip_location = None
@@ -362,19 +443,10 @@ class LocationHandler(BaseHandler):
 
 
 @route('/city.json$', name='city')
-class CityHandler(BaseHandler):
+class CityHandler(AuthenticatedBaseHandler):
 
     def get(self):
         data = {}
-        #search = self.get_argument('search')
-        #if len(search) == 24:
-        #    location = self.db.Location.find_one({'_id': ObjectId(search)})
-        #elif len(search) == 3:
-        #    location = self.db.Location.find_one({'code': search.upper()})
-        #else:
-        #    raise NotImplementedError
-        #if not location:
-        #    raise tornado.web.HTTPError(404, search)
         user = self.get_current_user()
         location = self.get_current_location(user)
 
@@ -389,7 +461,7 @@ class CityHandler(BaseHandler):
 
 
 @route('/airport.json$', name='airport')
-class AirportHandler(BaseHandler):
+class AirportHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
@@ -500,7 +572,7 @@ class FlyHandler(AirportHandler):
 
 
 @route('/state.(json|html)$', name='state')
-class StateHandler(BaseHandler):
+class StateHandler(AuthenticatedBaseHandler):
 
     def get(self, format):
         state = self.get_state()
@@ -654,7 +726,7 @@ class IPLookupHandler(BaseHandler):
                 self.redis.setex(
                   cache_key,
                   tornado.escape.json_encode(data),
-                  60 * 60
+                  ONE_WEEK
                 )
             else:
                 logging.warn("%s: %r" % (response.code, response.body))

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Error :( | {{ page_title }}</title>
+{% include "_stylesheets.html" %}
+<style>
+body {
+  margin:0; padding:0;
+  background-image:url({{ static_url('images/mapbackground.png') }});
+  background-color:#eeff00;
+}
+.overlay { display:block; }
+</style>
+</head>
+<body>
+
+<div class="overlay">
+<h2>Error :(</h2>
+<p><strong>Error type:</strong>
+  {{ err_type }}
+</p>
+<p><strong>Error value:</strong>
+  {{ err_value }}
+</p>
+<pre>
+{{ err_traceback }}
+</pre>
+</div>
+
+</body>
+</html>

@@ -180,6 +180,22 @@ class Question(BaseDocument):
     def check_answer(self, value):
         return value.lower() == self['correct'].lower()
 
+#@register
+#class Answer(BaseDocument):
+#    __collection__ = 'answers'
+#    structure = {
+#      'question': ObjectId,
+#      'user': ObjectId,
+#      'answer': unicode,
+#      'correct': bool,
+#      'time': float,
+#      'points': int,
+#    }
+#    required_fields = [
+#      'question',
+#      'user',
+#    ]
+
 @register
 class QuestionSession(BaseDocument):
     __collection__ = 'questionsessions'
@@ -191,16 +207,24 @@ class QuestionSession(BaseDocument):
     }
 
     default_values = {
-      'start_date': datetime.datetime.utcnow(),
+      'start_date': datetime.datetime.utcnow,
     }
 
 
 @register
-class SessionQuestions(BaseDocument):
+class SessionAnswer(BaseDocument):
     __collection__ = 'sessionquestions'
     structure = {
       'session': ObjectId,
       'question': ObjectId,
       'answer': unicode,
       'correct': bool,
+      'time': float,
+      'points': int,
+      'timedout': bool,
     }
+
+    required_fields = [
+      'question',
+      'session',
+    ]
