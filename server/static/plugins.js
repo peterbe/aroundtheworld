@@ -18,10 +18,17 @@ var Plugins = (function() {
                }
                plugin_url += 'r=' + Math.random();
              }
-             var s = document.createElement('script');
-             s.type = 'text/javascript';
-             //s.defer = true;
-             s.src = plugin_url;
+             if (plugin_url.match(/\.css($|\?)/)) {
+               var s = document.createElement('link');
+               s.type = 'text/css';
+               s.rel = 'stylesheet';
+               s.href = plugin_url;
+             } else {
+               var s = document.createElement('script');
+               s.type = 'text/javascript';
+               //s.defer = true;
+               s.src = plugin_url;
+             }
              document.getElementsByTagName('head')[0].appendChild(s);
            });
            loaded_plugins.push(id);

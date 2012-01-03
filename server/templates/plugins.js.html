@@ -1,9 +1,12 @@
 <script>
 var PLUGINS = {
-  'quizzing': ['{{ static_url('lib/jwerty.js') }}',
+  'quizzing': ['{{ static_url('css/plugins/quizzing.css') }}',
+               '{{ static_url('lib/jwerty.js') }}',
                '{{ static_url('plugins/quizzing.js') }}'],
   'settings': ['{{ static_url('plugins/settings.js') }}'],
   'miles': ['{{ static_url('plugins/miles.js') }}'],
+  'coins': ['{{ static_url('css/plugins/coins.css') }}',
+            '{{ static_url('plugins/coins.js') }}'],
   'welcome': ['{{ static_url('plugins/welcome.js') }}'],
   'city': ['{{ static_url('plugins/city.js') }}'],
   'airport': ['{{ static_url('plugins/airport.js') }}'],

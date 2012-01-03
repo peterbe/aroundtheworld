@@ -28,6 +28,7 @@ var Loader = (function() {
 
        return true;
     }
+
   }
 })();
 
@@ -57,6 +58,9 @@ var State = (function() {
     },
     show_miles_change: function(delta, animated) {
       _show_change(delta, animated, '.user-miles', 'miles');
+    },
+    redirect_login: function() {
+      Loader.load_hash('#login');
     }
   }
 })();
@@ -80,7 +84,7 @@ var Utils = (function() {
        return tsep(v);
      },
     formatMiles: function(v) {
-      return v;
+      return tsep(v);
     }
   }
 })();

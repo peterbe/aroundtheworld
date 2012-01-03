@@ -79,3 +79,12 @@ html, body {
   }
 
 a { color:rgb(60, 60, 60); }
+
+.overlay-image {
+  float: right;
+  margin-right: 20px;
+}
+
+thead td {
+  font-weight: bold;
+}

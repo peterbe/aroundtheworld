@@ -10,7 +10,7 @@ var Airport = (function() {
        $('input[name="yes"]', c).removeAttr('disabled');
        $('em', c).text(name);
        $('input[name="id"]', c).val(id);
-       $('.price', c).text(Utils.formatCost(cost));
+       $('.cost', c).text(Utils.formatCost(cost));
        $('.current-coins', c).text(Utils.formatCost(STATE.user.coins_total));
        $('input[name="cancel"]', c).click(function() {
          c.hide();
@@ -31,7 +31,7 @@ var Airport = (function() {
              Loader.load_hash('#airport');
            } else {
              //State.update();
-             State.show_coin_change(-1 * response.price, true);
+             State.show_coin_change(-1 * response.cost, true);
              var hash = '#fly,' + response.from_code + '->' + response.to_code;
              Loader.load_hash(hash);
            }
@@ -54,7 +54,7 @@ var Airport = (function() {
            $('<a href="#">')
                .text(each.name)
                  .click(function() {
-                   Airport.confirm(each.name, each.id, each.price);
+                   Airport.confirm(each.name, each.id, each.cost);
                    return false;
                  }).appendTo($('<td>').appendTo(r));
            $('<td>')
@@ -62,8 +62,8 @@ var Airport = (function() {
                .text(each.distance)
                  .appendTo(r);
            $('<td>')
-             .addClass('price')
-               .text(each.price)
+             .addClass('cost')
+               .text(each.cost)
                  .appendTo(r);
 
            $('.destinations', container).append($('<tbody>').append(r));

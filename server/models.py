@@ -146,6 +146,21 @@ class Location(BaseDocument):
         name += ', %s' % self['country']
         return name
 
+    def __str__(self):
+        return str(unicode(self))
+
+    def dictify(self):
+        return {
+          'name': unicode(self),
+          'code': self['code'],
+          'airport_name': self['code'],
+          'city': self['city'],
+          'locality': self['locality'],
+          'country': self['country'],
+          'lat': self['lat'],
+          'lng': self['lng'],
+        }
+
 
 @register
 class Flight(BaseDocument):
@@ -157,6 +172,17 @@ class Flight(BaseDocument):
       'miles': float,
     }
     required_fields = structure.keys()
+
+
+@register
+class Transaction(BaseDocument):
+    __collection__ = 'transactions'
+    structure = {
+      'user': ObjectId,
+      'cost': int,
+      'flight': ObjectId,
+    }
+    required_fields = ['user', 'cost']
 
 
 @register

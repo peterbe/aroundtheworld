@@ -1,0 +1,8 @@
+
+#coins td.transaction-description {
+    font-size: 80%;
+}
+#coins td.transaction-type-flight {
+    width:16px;
+    background: url(../../images/mini-airplane.png) 0 -2px no-repeat;
+}

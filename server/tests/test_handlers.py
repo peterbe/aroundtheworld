@@ -17,6 +17,8 @@ class HandlersTestCase(BaseHTTPTestCase):
         #  twitter_authenticate_redirect
 
         newyork = self.db.Location()
+        newyork['code'] = u'JFK'
+        newyork['airport_name'] = u'John F. Kennedy International Airport'
         newyork['city'] = u'New York City'
         newyork['country'] = u'United States'
         newyork.save()
@@ -146,3 +148,150 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         r = self.post_struct(url, {'answer': q['correct'], 'id': str(q['_id'])})
         self.assertTrue(r['correct'])
+
+    def test_flying(self):
+        url = self.reverse_url('fly')
+        sanfran = self.db.Location()
+        sanfran['code'] = u'SFO'
+        sanfran['lat'] = 1.0
+        sanfran['lng'] = 2.0
+        sanfran.save()
+        self.newyork['lat'] = 3.0
+        self.newyork['lng'] = 4.0
+        self.newyork.save()
+
+        def _get(route):
+            return self.get_struct(url, {'route': route})
+
+        r = _get('JFKtoSFO')
+        self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
+        user = self._login(location=self.newyork)
+        user_settings = self.db.UserSettings()
+        user_settings['user'] = user['_id']
+        user_settings['coins_total'] = 1000
+        user_settings['miles_total'] = 0.0
+        user_settings.save()
+
+        r = _get('ABCtoSFO')
+        self.assertEqual(r, {'error': 'INVALIDAIRPORT'})
+
+        r = _get('JFKtoABC')
+        self.assertEqual(r, {'error': 'INVALIDAIRPORT'})
+
+        r = _get('JFKtoJFK')
+        self.assertEqual(r, {'error': 'INVALIDROUTE'})
+
+        r = _get('JFKtoSFO')
+        self.assertEqual(r, {'error': 'INVALIDROUTE'})
+
+        user_settings['coins_total'] = 0
+        user_settings.save()
+        def _post():
+            return self.post_struct(url, {'id': str(sanfran['_id'])})
+
+        r = _post()
+        self.assertEqual(r['error'], 'CANTAFFORD')
+
+        user_settings['coins_total'] = 1000
+        user_settings.save()
+        r = _post()
+        self.assertEqual(r['to_code'], 'SFO')
+        self.assertEqual(r['from_code'], self.newyork['code'])
+        cost = r['cost']
+
+        flight = self.db.Flight.find_one({
+          'user': user['_id'],
+          'from': self.newyork['_id'],
+          'to': sanfran['_id'],
+        })
+        self.assertTrue(flight)
+
+        user = self.db.User.find_one({'_id': user['_id']})
+        self.assertEqual(user['current_location'], sanfran['_id'])
+
+        transaction = self.db.Transaction.find_one({
+          'user': user['_id'],
+          'cost': cost,
+          'flight': flight['_id'],
+        })
+        self.assertTrue(transaction)
+
+        r = _get('JFKtoSFO')
+        self.assertEqual(r['to']['lat'], sanfran['lat'])
+        self.assertEqual(r['to']['lng'], sanfran['lng'])
+        self.assertEqual(r['from']['lat'], self.newyork['lat'])
+        self.assertEqual(r['from']['lng'], self.newyork['lng'])
+        self.assertTrue(r['miles'])
+
+    def test_coins(self):
+        url = self.reverse_url('coins')
+
+        def _get():
+            return self.get_struct(url)
+
+        r = _get()
+        self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
+
+        user = self._login(location=self.newyork)
+        user_settings = self.db.UserSettings()
+        user_settings['user'] = user['_id']
+        user_settings['coins_total'] = 1000
+        user_settings['miles_total'] = 0.0
+        user_settings.save()
+        r = _get()
+        self.assertEqual(r['transactions'], [])
+
+        sanfran = self.db.Location()
+        sanfran['code'] = u'SFO'
+        sanfran['city'] = u'San Francisco'
+        sanfran['country'] = u'United States'
+        sanfran['lat'] = 1.0
+        sanfran['lng'] = 2.0
+        sanfran.save()
+
+        stockholm = self.db.Location()
+        stockholm['code'] = u'ARN'
+        stockholm['city'] = u'Stockholm'
+        stockholm['country'] = u'Sweden'
+        stockholm['lat'] = 0.1
+        stockholm['lng'] = 0.2
+        stockholm.save()
+
+        f1 = self.db.Flight()
+        f1['user'] = user['_id']
+        f1['from'] = self.newyork['_id']
+        f1['to'] = sanfran['_id']
+        f1['miles'] = 1000.0
+        f1.save()
+
+        tx1 = self.db.Transaction()
+        tx1['user'] = user['_id']
+        tx1['cost'] = 100
+        tx1['flight'] = f1['_id']
+        tx1['add_date'] = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
+        tx1.save(update_modify_date=False)
+
+        f2 = self.db.Flight()
+        f2['user'] = user['_id']
+        f2['from'] = sanfran['_id']
+        f2['to'] = stockholm['_id']
+        f2['miles'] = 20000.0
+        f2.save()
+
+        tx2 = self.db.Transaction()
+        tx2['user'] = user['_id']
+        tx2['cost'] = 200
+        tx2['flight'] = f2['_id']
+        tx2.save()
+
+        r = _get()
+        t1 = r['transactions'][0]
+        self.assertEqual(t1['cost'], 100)
+        self.assertTrue(self.newyork['city'] in t1['description'])
+        self.assertTrue(sanfran['city'] in t1['description'])
+        t2 = r['transactions'][1]
+        self.assertEqual(t2['cost'], 200)
+        self.assertTrue(sanfran['city'] in t2['description'])
+        self.assertTrue(stockholm['city'] in t2['description'])
+
+        #self.assertEqual(r['transactions'], [])

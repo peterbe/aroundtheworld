@@ -23,6 +23,7 @@ from models import User
 import settings
 
 ONE_HOUR = 60 * 60; ONE_DAY = ONE_HOUR * 24; ONE_WEEK = ONE_DAY * 7
+FULL_DATE_FMT = '%d %b %Y'
 
 def login_required(func):
     @functools.wraps(func)
@@ -390,16 +391,76 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         self.write_json(data)
 
 
-@route('/miles.json$', name='miles_json')
+@route('/miles.json$', name='miles')
 class MilesHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
-        miles = 12456
+        user_settings = self.get_user_settings(user)
         data = {}
-        data['miles_friendly'] = _commafy(miles)
+        no_cities = 0
+        _cities = set()
+        for each in self.db.Flight.collection.find({'user': user['_id']}):
+            _cities.add(each['from'])
+            _cities.add(each['to'])
+        data['no_cities'] = len(_cities)
+        data['flights'] = self.get_flights(user)
         data['percentage'] = '4%'
         self.write_json(data)
+
+    def get_flights(self, user):
+        flights = []
+        filter_ = {'user': user['_id']}
+        _locations = {}
+        for location in self.db.Location.find():
+            _locations[location['_id']] = location.dictify()
+
+        for each in (self.db.Flight
+                     .find(filter_)
+                     .sort('add_date', 1)):  # oldest first
+            flight = {
+              'from': _locations[each['from']],
+              'to': _locations[each['to']],
+              'miles': int(each['miles']),
+              'date': each['add_date'].strftime(FULL_DATE_FMT),
+            }
+            flights.append(flight)
+        return flights
+
+
+@route('/coins.json$', name='coins')
+class CoinsHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        user = self.get_current_user()
+        data = {}
+        data['transactions'] = self.get_transactions(user)
+        self.write_json(data)
+
+    def get_transactions(self, user):
+        transactions = []
+        filter_ = {'user': user['_id']}
+        for each in (self.db.Transaction
+                     .find(filter_)
+                     .sort('add_date', 1)):  # oldest first
+            transaction = {
+              'cost': each['cost'],
+              'date': each['add_date'].strftime(FULL_DATE_FMT),
+            }
+            if each['flight']:
+                flight = self.db.Flight.find_one({'_id': each['flight']})
+                from_ = self.db.Location.find_one({'_id': flight['from']})
+                to = self.db.Location.find_one({'_id': flight['to']})
+                description = ('Flying from %s to %s (%s miles)' %
+                               (from_, to, _commafy(int(flight['miles']))))
+                type_ = 'flight'
+            else:
+                raise NotImplementedError
+            transaction['description'] = description
+            transaction['type'] = type_
+            transactions.append(transaction)
+        return transactions
+
 
 def _commafy(s):
     r = []
@@ -512,7 +573,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         for location in (self.db.Location
                           .find({'_id': {'$ne': current_location['_id']}})):
             distance = self.calculate_distance(current_location, location)
-            price = self.calculate_price(distance.miles, user)
+            cost = self.calculate_cost(distance.miles, user)
             if user_settings['kilometers']:
                 distance_friendly = '%d km' % distance.kilometers
             else:
@@ -524,7 +585,7 @@ class AirportHandler(AuthenticatedBaseHandler):
               'city': location['city'],
               'locality': location['locality'],
               'country': location['country'],
-              'price': price,
+              'cost': cost,
               'miles': distance.miles,
               'distance': distance_friendly,
             }
@@ -533,7 +594,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         data['destinations'] = destinations
         self.write_json(data)
 
-    def calculate_price(self, miles, user):
+    def calculate_cost(self, miles, user):
         return int(round(miles * .1))
 
     def calculate_distance(self, from_location, to_location):
@@ -550,16 +611,25 @@ class FlyHandler(AirportHandler):
         route = self.get_argument('route')
         from_, to = re.findall('[A-Z]{3}', route)
         from_ = self.db.Location.find_one({'code': from_})
-        assert from_
+        if not from_:
+            self.write_json({'error': 'INVALIDAIRPORT'})
+            return
         to = self.db.Location.find_one({'code': to})
-        assert to
-        assert from_ != to
+        if not to:
+            self.write_json({'error': 'INVALIDAIRPORT'})
+            return
+        if from_ == to:
+            self.write_json({'error': 'INVALIDROUTE'})
+            return
         flight = self.db.Flight.find_one({
           'user': user['_id'],
           'from': from_['_id'],
           'to': to['_id'],
         })
-        assert flight
+        if not flight:
+            self.write_json({'error': 'INVALIDROUTE'})
+            return
+
         data = {
           'from': {
             'lat': from_['lat'], 'lng': from_['lng']
@@ -581,19 +651,20 @@ class FlyHandler(AirportHandler):
         #print "CURRENTLY IN", repr(current_location)
         assert location != current_location
         distance = self.calculate_distance(current_location, location)
-        price = self.calculate_price(distance.miles, user)
+        cost = self.calculate_cost(distance.miles, user)
         state = self.get_state()
-        if price > state['user']['coins_total']:
-            self.write_json({'cant_afford': True})
+        if cost > state['user']['coins_total']:
+            self.write_json({'error': 'CANTAFFORD'})
             return
 
         # make the transaction
         user_settings = self.get_current_user_settings(user)
-        user_settings['coins_total'] -= price
+        user_settings['coins_total'] -= cost
         user_settings['miles_total'] += distance.miles
         user_settings.save()
         user['current_location'] = location['_id']
         user.save()
+
         flight = self.db.Flight()
         flight['user'] = user['_id']
         flight['from'] = current_location['_id']
@@ -601,16 +672,22 @@ class FlyHandler(AirportHandler):
         flight['miles'] = distance.miles
         flight.save()
 
+        transaction = self.db.Transaction()
+        transaction['user'] = user['_id']
+        transaction['cost'] = cost
+        transaction['flight'] = flight['_id']
+        transaction.save()
+
         data = {
           'from_code': current_location['code'],
           'to_code': location['code'],
-          'price': price,
+          'cost': cost,
         }
         self.write_json(data)
 
 
 @route('/state.(json|html)$', name='state')
-class StateHandler(AuthenticatedBaseHandler):
+class StateHandler(BaseHandler):
 
     def get(self, format):
         state = self.get_state()
