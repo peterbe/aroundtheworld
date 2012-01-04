@@ -116,6 +116,7 @@ class UserSettings(BaseDocument):
       'coins_total': int,
       'miles_total': float,
       'google': dict,
+      'disable_sound': bool,
     }
 
     required_fields = ['user']
@@ -123,6 +124,7 @@ class UserSettings(BaseDocument):
       'kilometers': False,
       'coins_total': 0,
       'miles_total': 0.0,
+      'disable_sound': False,
     }
 
 

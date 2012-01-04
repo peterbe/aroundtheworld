@@ -1,6 +1,18 @@
 <div id="settings" class="overlay">
+  <img src="{{ static_url('images/settings-icon.png') }}" alt="Settings" class="overlay-image">
   <h2>Settings</h2>
 
-Hi there.
+  <p class="saved-notification" style="display:none">
+    Settings saved!
+  </p>
+
+  <form action="" method="post">
+
+  <div class="setting">
+    <label for="id_disable_sound">Disable sound</label>
+    <input type="checkbox" id="id_disable_sound" name="disable_sound" value="yes">
+  </div>
+
+  </form>
 
 </div>

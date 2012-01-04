@@ -115,6 +115,7 @@ class BaseHandler(tornado.web.RequestHandler):
             state['user']['name'] = user.get_full_name()
             state['user']['miles_total'] = int(user_settings['miles_total'])
             state['user']['coins_total'] = user_settings['coins_total']
+            state['user']['disable_sound'] = user_settings['disable_sound']
             location = self.get_current_location(user)
             if location:
                 state['location'] = {
@@ -389,6 +390,25 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         answer_obj.save()
 
         self.write_json(data)
+
+
+@route('/settings.json$', name='settings')
+class SettingsHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        user = self.get_current_user()
+        user_settings = self.get_user_settings(user)
+        data = {}
+        data['disable_sound'] = user_settings['disable_sound']
+        self.write_json(data)
+
+    def post(self):
+        user = self.get_current_user()
+        user_settings = self.get_user_settings(user)
+        disable_sound = bool(self.get_argument('disable_sound', False))
+        user_settings['disable_sound'] = disable_sound
+        user_settings.save()
+        self.get()
 
 
 @route('/miles.json$', name='miles')

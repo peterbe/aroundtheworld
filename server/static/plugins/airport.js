@@ -68,9 +68,12 @@ var Airport = (function() {
 
            $('.destinations', container).append($('<tbody>').append(r));
          }); // $.each
-         if ($.inArray(response.airport_name, played_sound) == -1) {
-           sounds.play('airport-pa');
-           played_sound.push(response.airport_name);
+
+         if (!STATE.user.disable_sound) {
+           if ($.inArray(response.airport_name, played_sound) == -1) {
+             sounds.play('airport-pa');
+             played_sound.push(response.airport_name);
+           }
          }
        });
      }

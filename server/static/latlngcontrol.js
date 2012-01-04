@@ -166,13 +166,15 @@ LatLngControl.prototype.draw = function() {
   halfway = (point1.x + point2.x - IMAGE_RADIUS) / 2 ;
   length = (right - left) / 2;
 
-  setTimeout(function() {
-    if (t > 10) {
-      sounds.play('jet-taking-off-long');
-    } else {
-      sounds.play('jet-taking-off');
-    }
-  }, 1* 1000);
+  if (!STATE.user.disable_sound) {
+    setTimeout(function() {
+      if (t > 10) {
+        sounds.play('jet-taking-off-long');
+      } else {
+        sounds.play('jet-taking-off');
+      }
+    }, 1 * 1000);
+  }
 
 
   /* See more on http://jqueryui.com/demos/effect/#easing */
