@@ -49,6 +49,14 @@ html, body {
     padding:10px;
     margin:10px;
   }
+  #usernav .user-name a {
+    padding-left: 16px;
+    background: url(../images/mini-settings.png) 0 -2px no-repeat;
+   /* font-weight: bold;*/
+  }
+  #usernav .user-location a {
+    font-weight: bold;
+  }
   #usernav .user-miles a {
     padding-left: 16px;
     background: url(../images/mini-airplane.png) 0 -2px no-repeat;
@@ -76,6 +84,9 @@ html, body {
   -webkit-border-radius:9px;
   -moz-box-shadow: 0 0 50px #ccc;
   -webkit-box-shadow: 0 0 50px #ccc;
+  }
+  .overlay .exit {
+    margin-top: 50px;
   }
 
 a { color:rgb(60, 60, 60); }

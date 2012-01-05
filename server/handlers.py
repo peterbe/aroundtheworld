@@ -117,6 +117,7 @@ class BaseHandler(tornado.web.RequestHandler):
             state['user']['coins_total'] = user_settings['coins_total']
             state['user']['disable_sound'] = user_settings['disable_sound']
             location = self.get_current_location(user)
+
             if location:
                 state['location'] = {
                   'id': str(location['_id']),
@@ -706,15 +707,15 @@ class FlyHandler(AirportHandler):
         self.write_json(data)
 
 
-@route('/state.(json|html)$', name='state')
+@route('/state.json$', name='state')
 class StateHandler(BaseHandler):
 
-    def get(self, format):
+    def get(self):
         state = self.get_state()
-        if format == 'html':
-            self.render('div.usernav.html', state=state)
-        else:
-            self.write_json({'state': state})
+        #if format == 'html':
+        #    self.render('div.usernav.html', state=state)
+        #else:
+        self.write_json({'state': state})
 
 
 class BaseAuthHandler(BaseHandler):

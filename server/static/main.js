@@ -33,7 +33,8 @@ var Loader = (function() {
 })();
 
 var State = (function() {
-  _show_change = function(delta, animated, selector, suffix) {
+
+  function _show_change(delta, animated, selector, suffix) {
       var e = $('#usernav ' + selector + ' a');
       var b = parseInt(e.text().replace(/[^\d]/g, ''));
       if (animated) {
@@ -44,13 +45,35 @@ var State = (function() {
       } else {
         e.text(Utils.formatCost(b + delta) + ' ' + suffix);
       }
-
   }
+
+  function _render_state(state) {
+    var container = $('#usernav');
+    if (state.user) {
+      $('.user-login:visible', container).hide();
+      $('.logged-in:hidden', container).show();
+      if (state.location) {
+        $('.user-location:hidden', container).show();
+        $('.user-location a', container).text(state.location.name);
+      } else {
+        $('.user-location:visible', container).hide();
+      }
+      $('.user-name', container).text(state.user.name);
+      $('.user-miles a', container)
+        .text(Utils.formatMiles(state.user.miles_total, true));
+      $('.user-coins a', container)
+        .text(Utils.formatCost(state.user.coins_total, true));
+    } else {
+      $('.logged-in:visible', container).hide();
+      $('.user-login:hidden', container).show();
+    }
+  }
+
   return {
      update: function() {
        $.getJSON('/state.json', function(response) {
          STATE = response.state;
-         $('#usernav').load('/state.html');  // lazy! FIXME: make this all javascript template instead one day
+         _render_state(STATE);
        });
      },
     show_coin_change: function(delta, animated) {
@@ -80,10 +103,16 @@ var Utils = (function() {
   }
 
   return {
-     formatCost: function(v) {
+     formatCost: function(v, include_suffix) {
+       if (include_suffix) {
+         return tsep(v) + ' coins';
+       }
        return tsep(v);
      },
-    formatMiles: function(v) {
+    formatMiles: function(v, include_suffix) {
+      if (include_suffix) {
+        return tsep(v) + ' miles';
+      }
       return tsep(v);
     }
   }
