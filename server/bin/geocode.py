@@ -14,5 +14,12 @@ def run(search):
 if __name__ == '__main__':
     import sys
     search = ' '.join(sys.argv[1:])
-    print "SEARCH", repr(search)
-    sys.exit(run(search))
+    if search:
+        search = [search]
+    else:
+        search = [x.strip() for x in sys.stdin.read().splitlines()
+                  if x.strip()]
+    for each in search:
+        run(each)
+        print
+    #sys.exit()

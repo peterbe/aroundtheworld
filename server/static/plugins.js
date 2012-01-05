@@ -3,10 +3,11 @@ if (typeof PLUGINS !== 'object') throw "constant PLUGINS not defined";
 var Plugins = (function() {
   var loaded_plugins = [];
   var callbacks = {};
+  var stop_callbacks = [];
   var extra_args = {};
   return {
      load: function(id, extra_arg) {
-       //L('*load*', id, extra_arg);
+       L('*load*', id);
        if (PLUGINS[id] && PLUGINS[id].length) {
          if ($.inArray(id, loaded_plugins) == -1) {
            $.each(PLUGINS[id], function (i, plugin_url) {
@@ -44,12 +45,18 @@ var Plugins = (function() {
        }
      },
     start: function(id, callback) {
+      while (stop_callbacks.length) {
+        stop_callbacks.pop()();
+      }
       callbacks[id] = callback;
       var extra_arg = extra_args[id] || null;
       if (extra_arg)
         callback(extra_arg);
       else
         callback();
+    },
+    stop: function(id, callback) {
+      stop_callbacks.push(callback);
     }
   }
 })();

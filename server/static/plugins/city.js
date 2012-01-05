@@ -5,7 +5,10 @@ var City = (function() {
     $('.jobs li', container).remove();
     var c = $('.jobs', container);
     $.each(jobs, function(i, each) {
-      var hash = '#' + each.type + ',' + each.category.replace(' ','+');
+      var hash = '#' + each.type;
+      if (each.category) {
+        hash += ',' + each.category.replace(' ','+');
+      }
       $('<a>')
         .attr('href', hash)
           .text(each.description)

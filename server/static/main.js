@@ -114,6 +114,10 @@ var Utils = (function() {
         return tsep(v) + ' miles';
       }
       return tsep(v);
+    },
+    preload_image: function(url) {
+      var i = document.createElement('img');
+      i.src = url;
     }
   }
 })();

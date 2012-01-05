@@ -21,6 +21,8 @@ class HandlersTestCase(BaseHTTPTestCase):
         newyork['airport_name'] = u'John F. Kennedy International Airport'
         newyork['city'] = u'New York City'
         newyork['country'] = u'United States'
+        newyork['lat'] = 1.0
+        newyork['lng'] = -1.0
         newyork.save()
         self.newyork = newyork
 
@@ -101,6 +103,9 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         hongkong = self.db.Location()
         hongkong['city'] = u'Hong Kong'
+        hongkong['country'] = u'China'
+        hongkong['lat'] = 100.0
+        hongkong['lng'] = -100.0
         hongkong.save()
         self._create_question(self.tour_guide, hongkong)
 
@@ -153,6 +158,8 @@ class HandlersTestCase(BaseHTTPTestCase):
         url = self.reverse_url('fly')
         sanfran = self.db.Location()
         sanfran['code'] = u'SFO'
+        sanfran['city'] = u'San Francisco'
+        sanfran['country'] = u'United States'
         sanfran['lat'] = 1.0
         sanfran['lng'] = 2.0
         sanfran.save()
@@ -295,3 +302,97 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertTrue(stockholm['city'] in t2['description'])
 
         #self.assertEqual(r['transactions'], [])
+
+    def test_pinpoint(self):
+        url = self.reverse_url('pinpoint')
+        user = self._login(location=self.newyork)
+
+        def _get(data=None):
+            return self.get_struct(url, data)
+
+        def _post(data):
+            return self.post_struct(url, data)
+
+        c = self.db.PinpointCenter()
+        c['country'] = self.newyork['country']
+        c['south_west'] = [29.0, -123.0]
+        c['north_east'] = [47.0, -67.0]
+        c.save()
+
+        r = _get()
+        self.assertEqual(r['sw'], {
+          'lat': 29.0, 'lng': -123.0
+        })
+        self.assertEqual(r['ne'], {
+          'lat': 47.0, 'lng': -67.0
+        })
+
+        loc1 = self.db.Location()
+        loc1['city'] = u'Kansas City'
+        loc1['country'] = u'United States'
+        loc1['lat'] = 30.0
+        loc1['lng'] = -80.0
+        loc1.save()
+
+        loc2 = self.db.Location()
+        loc2['city'] = u'Atlanta'
+        loc2['country'] = u'United States'
+        loc2['lat'] = 35.0
+        loc2['lng'] = -85.0
+        loc2.save()
+
+        locX = self.db.Location()
+        locX['city'] = u'Tokoyo'
+        locX['country'] = u'Japan'
+        locX['lat'] = -5.0
+        locX['lng'] = 8.0
+        locX.save()
+
+        r = _get({'next': True})
+        self.assertTrue(r['question']['seconds'])
+        self.assertTrue(r['question']['name'])
+        _first_name = r['question']['name']
+        _possible_names = [x['city'] for x in
+                          self.db.Location.find(
+                            {'country': self.newyork['country']})]
+
+        _impossible_names = [x['city'] for x in
+                          self.db.Location.find(
+                            {'country': {'$ne': self.newyork['country']}})]
+        self.assertTrue(r['question']['name'] in _possible_names)
+        self.assertTrue(r['question']['name'] not in _impossible_names)
+
+        # time out on the first one, i.e. no post of an answer
+        r = _get({'next': True})
+
+        self.assertTrue(r['question']['name'] in
+                        [x for x in _possible_names if x != _first_name])
+
+        # let's send an answer this time
+        _correct = self.db.Location.find_one({'city': r['question']['name']})
+        data = {
+          'lat': _correct['lat'] + 0.1,
+          'lng': _correct['lng'] - 0.1
+        }
+        r = _post(data)
+        self.assertTrue(r['correct'])
+        self.assertEqual(r['correct_position'], {
+          'lat': _correct['lat'],
+          'lng': _correct['lng'],
+        })
+        self.assertTrue(r['miles'] < 10)
+
+        # get another question and get it wrong
+        r = _get({'next': True})
+        _correct = self.db.Location.find_one({'city': r['question']['name']})
+        data = {
+          'lat': _correct['lat'] + 1.0,
+          'lng': _correct['lng'] - 1.0
+        }
+        r = _post(data)
+        self.assertTrue(not r['correct'])
+        self.assertEqual(r['correct_position'], {
+          'lat': _correct['lat'],
+          'lng': _correct['lng'],
+        })
+        self.assertTrue(r['miles'] > 10)

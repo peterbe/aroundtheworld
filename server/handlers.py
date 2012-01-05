@@ -25,17 +25,16 @@ import settings
 ONE_HOUR = 60 * 60; ONE_DAY = ONE_HOUR * 24; ONE_WEEK = ONE_DAY * 7
 FULL_DATE_FMT = '%d %b %Y'
 
-def login_required(func):
-    @functools.wraps(func)
-    def wrapper(self, *args, **kwargs):
-        user = self.get_current_user()
-        if user is None:
-            self.write_json({'error': 'NOTLOGGEDIN'})
-        else:
-            return func(self)
-    return wrapper
+def calculate_distance(from_location, to_location):
+    from_ = (from_location['lat'], from_location['lng'])
+    to = (to_location['lat'], to_location['lng'])
+    return geopy_distance(from_, to)
+
 
 class NoQuestionsError(RuntimeError):
+    pass
+
+class NoLocationsError(RuntimeError):
     pass
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -313,12 +312,18 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                 previous_question.save()
 
         try:
-            question = self._get_next_question(session, category, location)
+            question = self._get_next_question(
+              session,
+              category,
+              location,
+              previous_question=previous_question
+            )
         except NoQuestionsError:
             self.write_json({'error': 'NOQUESTIONS'})
             return
         if not question['alternatives_sorted']:
             random.shuffle(question['alternatives'])
+
         answer = self.db.SessionAnswer()
         answer['question'] = question['_id']
         answer['session'] = session['_id']
@@ -332,11 +337,14 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         data['question']['seconds'] = 10
         self.write_json(data)
 
-    def _get_next_question(self, session, category, location, allow_repeats=False):
+    def _get_next_question(self, session, category, location,
+                           allow_repeats=False, previous_question=None):
         filter_ = {
           'location': location['_id'],
           'category': category['_id']
         }
+        if previous_question:
+            filter_['_id'] = {'$ne': previous_question['_id']}
 
         if not allow_repeats:
             past_question_ids = set()
@@ -344,6 +352,8 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                        .find({'session': session['_id']})):
                 past_question_ids.add(a['question'])
             if past_question_ids:
+                if '_id' in filter_:
+                    past_question_ids.add(filter_['_id']['$ne'])
                 filter_['_id'] = {'$nin': list(past_question_ids)}
 
         questions = self.db.Question.find(filter_)
@@ -433,7 +443,8 @@ class MilesHandler(AuthenticatedBaseHandler):
         flights = []
         filter_ = {'user': user['_id']}
         _locations = {}
-        for location in self.db.Location.find():
+        for location in (self.db.Location
+                         .find({'airport_name': {'$ne': None}})):
             _locations[location['_id']] = location.dictify()
 
         for each in (self.db.Flight
@@ -506,7 +517,9 @@ class LocationHandler(AuthenticatedBaseHandler):
                 print ip_location
 
         locations = []
-        for location in self.db.Location.find().sort('city', 1):
+        for location in (self.db.Location
+                         .find({'airport_name': {'$ne': None}})
+                         .sort('city', 1)):
             option = {
               'name': unicode(location),
               'id': str(location['_id'])
@@ -577,8 +590,153 @@ class CityHandler(AuthenticatedBaseHandler):
                               (category['name'], no_questions)),
             }
             jobs.append(job)
+
+        _center = self.db.PinpointCenter.find({'country': location['country']})
+        if _center.count():
+            _center, = _center
+            _cities = self.db.Location.find({'country': _center['country']})
+            description = 'Geographer (%d cities)' % _cities.count()
+            jobs.append({
+              'type': 'pinpoint',
+              'description': description,
+            })
+
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
+
+@route('/pinpoint.json$', name='pinpoint')
+class PinpointHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        country = current_location['country']
+        data = {}
+        filter_ = {'country': country}
+        center = self.db.PinpointCenter.find_one(filter_)
+        assert center
+
+        data['center'] = {
+          'sw': {
+            'lat': center['south_west'][0],
+            'lng': center['south_west'][1],
+          },
+          'ne': {
+            'lat': center['north_east'][0],
+            'lng': center['north_east'][1],
+          }
+        }
+
+        if self.get_argument('next', None):
+            session = self.db.PinpointSession.find_one({'user': user['_id'],
+                                                        'center': current_location['_id'],
+                                                        'finish_date': None})
+            if session is None:
+                session = self.db.PinpointSession()
+                session['user'] = user['_id']
+                session['center'] = current_location['_id']
+                session.save()
+
+            for each in (self.db.PinpointAnswer
+                         .find({'session': session['_id']})
+                         .sort('add_date', -1)  # newest first
+                         .limit(1)):
+                previous_location = each
+                break
+            else:
+                previous_location = None
+
+            if previous_location:
+                if previous_location['answer'] is None:
+                    # no answer was sent, it must have timed out
+                    previous_location['timedout'] = True
+                    previous_location.save()
+
+            try:
+                location = self._get_next_location(
+                  session,
+                  country,
+                  previous_location=previous_location,
+                )
+            except NoLocationsError:
+                self.write_json({'error': 'NOLOCATIONS'})
+                return
+
+            answer = self.db.PinpointAnswer()
+            answer['session'] = session['_id']
+            answer['location'] = location['_id']
+            answer.save()
+
+            data['question'] = {
+              'name': location['city'],
+              'id': str(location['_id']),
+              'seconds': 10
+            }
+
+        self.write_json(data)
+
+    def _get_next_location(self, session, country, allow_repeats=False,
+                           previous_location=None):
+        filter_ = {
+          'country': country,
+        }
+        if previous_location:
+            filter_['_id'] = {'$ne': previous_location['_id']}
+
+        if not allow_repeats:
+            past_location_ids = set()
+            for a in self.db.PinpointAnswer.find({'session': session['_id']}):
+                past_location_ids.add(a['location'])
+            if past_location_ids:
+                if '_id' in filter_:
+                    past_location_ids.add(filter_['_id']['$ne'])
+                filter_['_id'] = {'$nin': list(past_location_ids)}
+        locations = self.db.Location.find(filter_)
+        count = locations.count()
+        if not count:
+            if allow_repeats:
+                raise NoLocationsError("Not enough locations")
+            return self._get_next_location(session, country, allow_repeats=True)
+
+        nth = random.randint(0, count - 1)
+        for location in locations.limit(1).skip(nth):
+            return location
+
+    def post(self):
+        stop_time = datetime.datetime.utcnow()
+        user = self.get_current_user()
+        center = self.get_current_location(user)
+
+        guess = {
+          'lat': float(self.get_argument('lat')),
+          'lng': float(self.get_argument('lng'))
+        }
+        session, = (self.db.PinpointSession
+                    .find({'user': user['_id'],
+                           'center': center['_id'],
+                           'finish_date': None})
+                    .sort('add_date', -1)  # newest first
+                    .limit(1))
+        answer, = (self.db.PinpointAnswer
+                   .find({'session': session['_id']})
+                   .sort('add_date', -1)  # newest first
+                   .limit(1))
+        correct_location = self.db.Location.find_one({'_id': answer['location']})
+        assert correct_location
+        correct_position = {
+          'lat': correct_location['lat'],
+          'lng': correct_location['lng']
+        }
+        data = {}
+        #print "COMPARE"
+        #print guess
+        #print correct_position
+        distance = calculate_distance(guess, correct_position)
+        data['miles'] = int(distance.miles)
+        data['correct'] = distance.miles < 10.0
+        data['correct_position'] = correct_position
+        self.write_json(data)
+
 
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
@@ -592,8 +750,9 @@ class AirportHandler(AuthenticatedBaseHandler):
         destinations = []
         user_settings = self.get_current_user_settings(user)
         for location in (self.db.Location
-                          .find({'_id': {'$ne': current_location['_id']}})):
-            distance = self.calculate_distance(current_location, location)
+                          .find({'_id': {'$ne': current_location['_id']},
+                                 'airport_name': {'$ne': None}})):
+            distance = calculate_distance(current_location, location)
             cost = self.calculate_cost(distance.miles, user)
             if user_settings['kilometers']:
                 distance_friendly = '%d km' % distance.kilometers
@@ -618,10 +777,6 @@ class AirportHandler(AuthenticatedBaseHandler):
     def calculate_cost(self, miles, user):
         return int(round(miles * .1))
 
-    def calculate_distance(self, from_location, to_location):
-        from_ = (from_location['lat'], from_location['lng'])
-        to = (to_location['lat'], to_location['lng'])
-        return geopy_distance(from_, to)
 
 
 @route('/fly.json$', name='fly')
@@ -658,7 +813,7 @@ class FlyHandler(AirportHandler):
           'to': {
             'lat': to['lat'], 'lng': to['lng']
           },
-          'miles': self.calculate_distance(from_, to).miles,
+          'miles': calculate_distance(from_, to).miles,
         }
         self.write_json(data)
 
@@ -671,7 +826,7 @@ class FlyHandler(AirportHandler):
         current_location = self.get_current_location(user)
         #print "CURRENTLY IN", repr(current_location)
         assert location != current_location
-        distance = self.calculate_distance(current_location, location)
+        distance = calculate_distance(current_location, location)
         cost = self.calculate_cost(distance.miles, user)
         state = self.get_state()
         if cost > state['user']['coins_total']:

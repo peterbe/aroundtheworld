@@ -1,0 +1,46 @@
+#pinpoint-splash {
+    background-color:white;
+    opacity: 0.6;
+    position:absolute;
+    right:20%;
+    left:20%;
+    top:40%;
+    padding:20px;
+    background-color:#fff;
+    min-height:100px;
+    border-radius:9px;
+    -moz-border-radius:9px;
+    -webkit-border-radius:9px;
+  }
+  #pinpoint-splash h1 {
+      text-align: center;
+      font-size: 2.2em;
+      opacity: 1.0;
+  }
+#pinpoint-tucked {
+    background-color:white;
+    position:absolute;
+    opacity: 0.8;
+    top:0; left:0;
+    width:350px;
+    min-height: 20px;
+    margin: 0;
+    padding: 3px;
+    border-bottom-right-radius:5px;
+  }
+  #pinpoint-tucked p {
+      margin: 0;
+      padding: 3px;
+  }
+  #pinpoint-tucked p.timer {
+      float: right;
+  }
+  #pinpoint-tucked p.current {
+      font-weight: bold;
+  }
+
+#pinpoint button {
+    font-size:1.2em;
+    font-weight:bold;
+    margin-left:auto;
+}

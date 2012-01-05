@@ -141,6 +141,13 @@ class Location(BaseDocument):
       'lng': float,
     }
 
+    required_fields = [
+      'city',
+      'country',
+      'lat',
+      'lng',
+      ]
+
     def __unicode__(self):
         name = self['city']
         if self['locality']:
@@ -257,4 +264,47 @@ class SessionAnswer(BaseDocument):
     required_fields = [
       'question',
       'session',
+    ]
+
+
+@register
+class PinpointCenter(BaseDocument):
+    __collection__ = 'pinpointcenters'
+    structure = {
+      'country': unicode,
+      'south_west': [float],
+      'north_east': [float],
+    }
+
+    required_fields = structure.keys()
+
+
+@register
+class PinpointSession(BaseDocument):
+    __collection__ = 'pintpointsessions'
+    structure = {
+      'center': ObjectId,
+      'user': ObjectId,
+      'finish_date': datetime.datetime,
+    }
+
+    required_fields = ['center', 'user']
+
+
+@register
+class PinpointAnswer(BaseDocument):
+    __collection__ = 'pinpointanswer'
+    structure = {
+      'session': ObjectId,
+      'location': ObjectId,
+      'answer': [float],
+      'correct': bool,
+      'time': float,
+      'points': int,
+      'timedout': bool,
+    }
+
+    required_fields = [
+      'session',
+      'location',
     ]
