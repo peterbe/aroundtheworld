@@ -5,7 +5,7 @@ import coverage
 from _run_tests import TEST_MODULES
 
 COVERAGE_MODULES = [
-    'app',
+#    'app',
     'handlers',
     'models',
 ]

@@ -58,12 +58,12 @@ var Airport = (function() {
                    return false;
                  }).appendTo($('<td>').appendTo(r));
            $('<td>')
-             .addClass('distance')
-               .text(each.distance)
+             .addClass('distance').addClass('number')
+               .text(Utils.formatMiles(each.miles, true))
                  .appendTo(r);
            $('<td>')
-             .addClass('cost')
-               .text(each.cost)
+             .addClass('cost').addClass('number')
+               .text(Utils.formatCost(each.cost, true))
                  .appendTo(r);
 
            $('.destinations', container).append($('<tbody>').append(r));

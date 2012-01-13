@@ -35,16 +35,16 @@ var Loader = (function() {
 var State = (function() {
 
   function _show_change(delta, animated, selector, suffix) {
-      var e = $('#usernav ' + selector + ' a');
-      var b = parseInt(e.text().replace(/[^\d]/g, ''));
-      if (animated) {
+    var e = $('#usernav ' + selector + ' a');
+    var b = parseInt(e.text().replace(/[^\d]/g, ''));
+    if (animated) {
       e.fadeTo(400, 0.1, function() {
         e.text(Utils.formatCost(b + delta) + ' ' + suffix)
           .fadeTo(700, 1.0);
       });
-      } else {
-        e.text(Utils.formatCost(b + delta) + ' ' + suffix);
-      }
+    } else {
+      e.text(Utils.formatCost(b + delta) + ' ' + suffix);
+    }
   }
 
   function _render_state(state) {
@@ -105,15 +105,26 @@ var Utils = (function() {
   return {
      formatCost: function(v, include_suffix) {
        if (include_suffix) {
+         if (v == 1) return v + ' coin';
          return tsep(v) + ' coins';
        }
        return tsep(v);
      },
     formatMiles: function(v, include_suffix) {
+      v = parseInt(v);
       if (include_suffix) {
+        if (v == 1) return v + ' mile';
         return tsep(v) + ' miles';
       }
       return tsep(v);
+    },
+    formatPoints: function(v, include_suffix) {
+      if (include_suffix) {
+        var suffix = 'points';
+        if (v == 1) suffix = 'point';
+        return v.toFixed(1) + ' ' + suffix;
+      }
+      return v.toFixed(1);
     },
     preload_image: function(url) {
       var i = document.createElement('img');

@@ -1,6 +1,8 @@
+import random
 import datetime
 import os
 import json
+from pprint import pprint
 from urllib import urlencode
 import tornado.escape
 from pymongo.objectid import ObjectId
@@ -31,11 +33,44 @@ class HandlersTestCase(BaseHTTPTestCase):
         tour_guide.save()
         self.tour_guide = tour_guide
 
-    def _login(self, username=u'peterbe', email='mail@peterbe.com',
+    def _login(self, username=u'peterbe', email=u'mail@peterbe.com',
                client=None, location=None):
-        user = self.db.User.one(dict(username=username))
+
         if client is None:
             client = self.client
+
+        def make_google_get_authenticated_user(data):
+            def callback(self, func, **__):
+                return func(data)
+            return callback
+
+        from handlers import GoogleAuthHandler
+        GoogleAuthHandler.get_authenticated_user = \
+          make_google_get_authenticated_user({
+            'username': username,
+            'email': email,
+            'first_name': u'Peter',
+            'last_name': u'Bengtsson',
+          })
+        url = self.reverse_url('auth_google')
+        response = client.get(url, {'openid.mode':'xxx'})
+        self.assertEqual(response.code, 302)
+
+        user = self.db.User.find_one(dict(username=username))
+        assert user
+
+        if location:
+            if not isinstance(location, ObjectId):
+                location = location['_id']
+
+            user['current_location'] = location
+            user.save()
+        user_settings = self.db.UserSettings.find_one({'user': user['_id']})
+
+        return user
+
+        #if client is None:
+        #    client = self.client
         if not user:
             data = dict(username=username,
                         email=email,
@@ -51,6 +86,7 @@ class HandlersTestCase(BaseHTTPTestCase):
                     location = location['_id']
                 user['current_location'] = location
             user.save()
+
         client.cookies['user'] = \
           self.create_signed_value('user', str(user._id))
         return user
@@ -173,7 +209,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         r = _get('JFKtoSFO')
         self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
         user = self._login(location=self.newyork)
-        user_settings = self.db.UserSettings()
+        user_settings = self.db.UserSettings.find_one({'user': user['_id']})
         user_settings['user'] = user['_id']
         user_settings['coins_total'] = 1000
         user_settings['miles_total'] = 0.0
@@ -306,6 +342,7 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_pinpoint(self):
         url = self.reverse_url('pinpoint')
         user = self._login(location=self.newyork)
+        user_settings, = self.db.UserSettings.find()
 
         def _get(data=None):
             return self.get_struct(url, data)
@@ -320,10 +357,11 @@ class HandlersTestCase(BaseHTTPTestCase):
         c.save()
 
         r = _get()
-        self.assertEqual(r['sw'], {
+        center = r['center']
+        self.assertEqual(center['sw'], {
           'lat': 29.0, 'lng': -123.0
         })
-        self.assertEqual(r['ne'], {
+        self.assertEqual(center['ne'], {
           'lat': 47.0, 'lng': -67.0
         })
 
@@ -362,8 +400,20 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertTrue(r['question']['name'] in _possible_names)
         self.assertTrue(r['question']['name'] not in _impossible_names)
 
+        session, = self.db.PinpointSession.find()
+
         # time out on the first one, i.e. no post of an answer
         r = _get({'next': True})
+
+        first_a, second_a = (self.db.PinpointAnswer
+                             .find({'session': session['_id']})
+                             .sort('add_date', 1))
+        assert first_a['add_date'] < second_a['add_date']  # sorted done right
+
+        # since a new question has been requested without the previous one
+        # having an answer, the first one was simply a matter of it timing out
+        self.assertTrue(first_a['timedout'])
+        self.assertEqual(first_a['points'], 0.0)
 
         self.assertTrue(r['question']['name'] in
                         [x for x in _possible_names if x != _first_name])
@@ -372,10 +422,18 @@ class HandlersTestCase(BaseHTTPTestCase):
         _correct = self.db.Location.find_one({'city': r['question']['name']})
         data = {
           'lat': _correct['lat'] + 0.1,
-          'lng': _correct['lng'] - 0.1
+          'lng': _correct['lng'] - 0.1,
+          'time': '2.1',
         }
         r = _post(data)
-        self.assertTrue(r['correct'])
+        assert self.db.PinpointAnswer.find().count() == 2
+        # re-fetch from database
+        second_a = self.db.PinpointAnswer.find_one({'_id': second_a['_id']})
+        from handlers import PinpointHandler
+#        self.assertEqual(round(second_a['time']), PinpointHandler.SECONDS)
+        self.assertEqual(second_a['answer'], [data['lat'], data['lng']])
+        self.assertTrue(second_a['points'])
+
         self.assertEqual(r['correct_position'], {
           'lat': _correct['lat'],
           'lng': _correct['lng'],
@@ -387,12 +445,271 @@ class HandlersTestCase(BaseHTTPTestCase):
         _correct = self.db.Location.find_one({'city': r['question']['name']})
         data = {
           'lat': _correct['lat'] + 1.0,
-          'lng': _correct['lng'] - 1.0
+          'lng': _correct['lng'] - 1.0,
+          'time': '1.1',
         }
         r = _post(data)
-        self.assertTrue(not r['correct'])
+        #self.assertTrue(not r['correct'])
         self.assertEqual(r['correct_position'], {
           'lat': _correct['lat'],
           'lng': _correct['lng'],
         })
         self.assertTrue(r['miles'] > 10)
+
+        for i in range(10):
+            self._create_random_location(self.newyork)
+
+        # 4th question
+        r = _get({'next': True})
+        self.assertEqual(r['no_questions']['total'],
+                         PinpointHandler.NO_QUESTIONS)
+        self.assertEqual(r['no_questions']['number'], 4)
+
+        _correct = self.db.Location.find_one({'city': r['question']['name']})
+        data = {
+          'lat': _correct['lat'] + .1,
+          'lng': _correct['lng'] - .1,
+          'time': 3.3,
+        }
+        r = _post(data)
+        self.assertEqual(_correct['lat'], r['correct_position']['lat'])
+        self.assertEqual(_correct['lng'], r['correct_position']['lng'])
+        self.assertEqual(r['time'], 3.3)
+        self.assertTrue(r['miles'] < 10.)
+        self.assertTrue(r['points'] > 0)
+
+        _total_points = 0.0
+        _prev_location = None
+        for i in range(5, PinpointHandler.NO_QUESTIONS + 1):
+            r = _get({'next': True})
+            if _prev_location:
+                self.assertNotEqual(_prev_location, r['question']['name'])
+            _prev_location = r['question']['name']
+            assert r['no_questions']['number'] == i
+            if i == PinpointHandler.NO_QUESTIONS:
+                self.assertTrue(r['no_questions']['last'])
+            else:
+                self.assertTrue(not r['no_questions']['last'])
+            _correct = (self.db.Location
+                        .find_one({'city': r['question']['name']}))
+            data = {
+              'lat': _correct['lat'] + random.random(),
+              # the divide is the assure that the delta is not too big
+              # to cause 0 points every single time
+              'lng': _correct['lng'] - random.random() / 2,
+              'time': random.random() * 10 / 2
+            }
+            r = _post(data)
+            _total_points += r['points']
+
+        self.assertTrue(_total_points > 0.0)
+
+        # next, we're suppose to close the finisher
+        session, = self.db.PinpointSession.find()
+        assert session['center'] == self.newyork['_id']
+        assert session['user'] == user['_id']
+
+        r = _get({'finish': True})
+        session, = self.db.PinpointSession.find()
+        self.assertTrue(session['finish_date'])
+
+        #session, = self.db.PinpointSession.find()
+        total_points = 0.0
+        for answer in self.db.PinpointAnswer.find({'session': session['_id']}):
+            total_points += answer['points']
+        self.assertTrue(r['results'])
+        self.assertTrue(r['results']['total_points'])
+        self.assertTrue(r['results']['coins'])
+
+        # that should have incremented the user_settings's coins_total
+        coins_total_before = user_settings['coins_total']
+        user_settings, = self.db.UserSettings.find()
+        coins_total_after = user_settings['coins_total']
+        self.assertEqual(coins_total_after - coins_total_before,
+                         r['results']['coins'])
+
+        job, = self.db.Job.find()
+        assert job['user'] == user['_id']
+        self.assertTrue(job['description'])
+        self.assertEqual(coins_total_after - coins_total_before,
+                         job['coins'])
+        self.assertEqual(job['location'], self.newyork['_id'])
+
+    def test_pinpoint_timeout_last(self):
+        for __ in range(20):
+            self._create_random_location(self.newyork)
+
+        def _get(data=None):
+            return self.get_struct(url, data)
+
+        def _post(data):
+            return self.post_struct(url, data)
+
+        url = self.reverse_url('pinpoint')
+        user = self._login(location=self.newyork)
+
+        c = self.db.PinpointCenter()
+        c['country'] = self.newyork['country']
+        c['south_west'] = [29.0, -123.0]
+        c['north_east'] = [47.0, -67.0]
+        c.save()
+
+        # before we begin, insert a previous session so that the tests make
+        # sure that doesn't affect anything
+        s = self.db.PinpointSession()
+        s['center'] = c['_id']
+        s['user'] = user['_id']
+        s['finish_date'] = (datetime.datetime.utcnow()
+                            - datetime.timedelta(days=1))
+        s.save()
+
+        r = _get()
+        assert r['center']
+        assert 'question' not in r
+
+        from handlers import PinpointHandler
+        for i in range(PinpointHandler.NO_QUESTIONS - 1):
+            r = _get({'next': True})
+            assert r['question']
+            _correct = self.db.Location.find_one({'city': r['question']['name']})
+            data = {
+              'lat': _correct['lat'] + 0.1,
+              'lng': _correct['lng'] - 0.1,
+              'time': '0.1',
+            }
+            r = _post(data)
+            assert r['miles']
+            assert r['time'] > 0
+
+        # last question
+        r = _get({'next': True})
+        assert r['no_questions']['last']
+
+        # now, for the 10th question, there's no post() because it times out
+        # so the next thing will be a get(finish=True)
+        r = _get({'finish': True})
+        self.assertTrue(r['results']['total_points'])
+        self.assertTrue(r['results']['coins'])
+        user_settings, = self.db.UserSettings.find()
+        answers = self.db.PinpointAnswer.find()
+        last_answer, = answers.sort('add_date', -1).limit(1)
+        self.assertTrue(last_answer['timedout'])
+        self.assertEqual(last_answer['points'], 0.0)
+        session, prev_session = (self.db.PinpointSession
+                                 .find().sort('finish_date', -1))
+        assert session['finish_date'] > prev_session['finish_date']
+        self.assertTrue(session['finish_date'])
+
+    def _create_random_location(self, near):
+        def random_str(l):
+            pool = list(u'qwertyuiopasdfghjklzxcvbnm')
+            random.shuffle(pool)
+            return ''.join(pool[:l])
+
+        loc = self.db.Location()
+        loc['country'] = near['country']
+        loc['locality'] = near['locality']
+        loc['city'] = random_str(10).title()
+        loc['lat'] = near['lat'] + random.choice([-10, -5, -1, 1, 5, 10])
+        loc['lng'] = near['lng'] + random.choice([-10, -5, -1, 1, 5, 10])
+        loc.save()
+
+    def test_settings(self):
+        self._login()
+        url = self.reverse_url('settings')
+        r = self.get_struct(url)
+        self.assertEqual(r['disable_sound'], False)
+
+        r = self.post_struct(url, {'disable_sound': True})
+        self.assertEqual(r['disable_sound'], True)
+
+        r = self.get_struct(url)
+        self.assertEqual(r['disable_sound'], True)
+
+        r = self.post_struct(url, {'disable_sound': ''})
+        self.assertEqual(r['disable_sound'], False)
+
+        r = self.get_struct(url)
+        self.assertEqual(r['disable_sound'], False)
+
+    def test_miles(self):
+        user = self._login()
+        url = self.reverse_url('miles')
+        r = self.get_struct(url)
+        self.assertEqual(r['flights'], [])
+        self.assertEqual(r['no_cities'], 1)
+        self.assertEqual(r['percentage'], 0)
+
+        # now pretend we've done some flights
+        loc1 = self.db.Location()
+        loc1['city'] = u'Kansas City'
+        loc1['country'] = u'United States'
+        loc1['code'] = u'MCI'
+        loc1['airport_name'] = u'Kansas City International Airport'
+        loc1['lat'] = 30.0
+        loc1['lng'] = -80.0
+        loc1.save()
+
+        f1 = self.db.Flight()
+        f1['user'] = user['_id']
+        f1['from'] = self.newyork['_id']
+        f1['to'] = loc1['_id']
+        f1['miles'] = 1000.0
+        f1.save()
+
+        r = self.get_struct(url)
+        self.assertEqual(r['no_cities'], 2)
+        data, = r['flights']
+        self.assertTrue(data['date'])
+        self.assertEqual(data['miles'], 1000)
+        self.assertEqual(data['from']['code'], self.newyork['code'])
+        self.assertEqual(data['from']['airport_name'], self.newyork['airport_name'])
+        self.assertEqual(data['from']['name'], unicode(self.newyork))
+        self.assertEqual(data['to']['code'], loc1['code'])
+        self.assertEqual(data['to']['airport_name'], loc1['airport_name'])
+        self.assertEqual(data['to']['name'], unicode(loc1))
+        #self.assertEqual(r['percentage'], 0)
+
+    def test_airport(self):
+        self._login(location=self.newyork)
+        url = self.reverse_url('airport')
+
+        r = self.get_struct(url)
+        self.assertEqual(r['airport_name'], self.newyork['airport_name'])
+        self.assertTrue(r['destinations'][-1]['id'], 'moon')
+        non_moons = [x for x in r['destinations'] if x['id'] != 'moon']
+        self.assertEqual(non_moons, [])
+
+        loc1 = self.db.Location()
+        loc1['city'] = u'Kansas City'
+        loc1['country'] = u'United States'
+        loc1['code'] = u'MCI'
+        loc1['airport_name'] = u'Kansas City International Airport'
+        loc1['lat'] = self.newyork['lat'] + 1
+        loc1['lng'] = self.newyork['lng'] + 1
+        loc1.save()
+
+        loc2 = self.db.Location()
+        loc2['city'] = u'Vancouver'
+        loc2['country'] = u'Canada'
+        loc2['code'] = u'YVR'
+        loc2['airport_name'] = u'Vancouver International Airport'
+        loc2['lat'] = self.newyork['lat'] + 10
+        loc2['lng'] = self.newyork['lng'] + 10
+        loc2.save()
+
+
+        locX = self.db.Location()
+        locX['city'] = u'Charleston'
+        locX['country'] = u'United States'
+        locX['lat'] = -5.0
+        locX['lng'] = 8.0
+        locX.save()
+
+        r = self.get_struct(url)
+        cities = [x['city'] for x in r['destinations'] if x['id'] != 'moon']
+        self.assertEqual(cities[0], loc1['city'])
+        # order by distance
+        self.assertEqual(cities[1], loc2['city'])
+        self.assertTrue(locX['city'] not in cities)  # no airport_name
+        self.assertTrue(r['destinations'][-1]['id'], 'moon')

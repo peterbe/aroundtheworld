@@ -109,7 +109,7 @@ class BaseHandler(tornado.web.RequestHandler):
         }
         user = self.get_current_user()
         if user:
-            user_settings = self.get_user_settings(user)
+            user_settings = self.get_current_user_settings()
             state['user'] = {}
             state['user']['name'] = user.get_full_name()
             state['user']['miles_total'] = int(user_settings['miles_total'])
@@ -409,6 +409,7 @@ class SettingsHandler(AuthenticatedBaseHandler):
     def get(self):
         user = self.get_current_user()
         user_settings = self.get_user_settings(user)
+        assert user_settings
         data = {}
         data['disable_sound'] = user_settings['disable_sound']
         self.write_json(data)
@@ -429,14 +430,13 @@ class MilesHandler(AuthenticatedBaseHandler):
         user = self.get_current_user()
         user_settings = self.get_user_settings(user)
         data = {}
-        no_cities = 0
         _cities = set()
         for each in self.db.Flight.collection.find({'user': user['_id']}):
             _cities.add(each['from'])
             _cities.add(each['to'])
-        data['no_cities'] = len(_cities)
+        data['no_cities'] = max(1, len(_cities))
         data['flights'] = self.get_flights(user)
-        data['percentage'] = '4%'
+        data['percentage'] = 0
         self.write_json(data)
 
     def get_flights(self, user):
@@ -607,6 +607,29 @@ class CityHandler(AuthenticatedBaseHandler):
 @route('/pinpoint.json$', name='pinpoint')
 class PinpointHandler(AuthenticatedBaseHandler):
 
+    # number between 0 and (inclusive) 1.0 that decides how many coins to
+    # give for a percentage.
+    PERCENTAGE_COINS_RATIO = 1.0
+
+    MIN_DISTANCE = 50.0
+    NO_QUESTIONS = 10
+    SECONDS = 10
+
+    def calculate_points(self, miles, seconds_left):
+        min_ = self.MIN_DISTANCE
+        if miles < min_:
+            p = (min_ - miles) / min_
+        else:
+            p = 0
+        return seconds_left * p
+
+    def points_to_coins(self, points):
+        # max points is when you answer with 0 miles in 0 seconds
+        # for every question
+        max_ = self.NO_QUESTIONS * self.SECONDS * 1
+        percentage = 100 * points / max_
+        return int(percentage * self.PERCENTAGE_COINS_RATIO)
+
     def get(self):
         user = self.get_current_user()
         current_location = self.get_current_location(user)
@@ -626,8 +649,66 @@ class PinpointHandler(AuthenticatedBaseHandler):
             'lng': center['north_east'][1],
           }
         }
+        data['no_questions'] = self.NO_QUESTIONS
 
-        if self.get_argument('next', None):
+        if self.get_argument('finish', None):
+            session, = (self.db.PinpointSession
+                        .find({'user': user['_id'],
+                               'center': current_location['_id']})
+                        .sort('add_date', -1)  # newest first
+                        .limit(1))
+            assert session
+            session['finish_date'] = datetime.datetime.utcnow()
+            session.save()
+
+            last_answer, = (self.db.PinpointAnswer
+                            .find({'session': session['_id']})
+                            .sort('add_date', -1)
+                            .limit(1))
+            if not last_answer['answer']:
+                last_answer['timedout'] = True
+                last_answer['points'] = 0.0
+                last_answer.save()
+
+            total_points = 0.0
+            summary = []
+
+            for answer in (self.db.PinpointAnswer
+                           .find({'session': session['_id']})
+                           .sort('add_date', 1)):
+                total_points += answer['points']
+                location = self.db.Location.find_one({'_id': answer['location']})
+                summary.append({
+                  'city': location['city'],
+                  'time': (not answer['timedout']
+                           and round(answer['time'], 1)
+                           or None),
+                  'points': round(answer['points'], 1),
+                  'miles': (not answer['timedout']
+                            and round(answer['miles'], 1)
+                            or None),
+                  'timedout': answer['timedout'],
+                })
+            data['summary'] = summary
+
+            coins = self.points_to_coins(total_points)
+            user_settings = self.get_current_user_settings()
+            user_settings['coins_total'] += coins
+            user_settings.save()
+
+            job = self.db.Job()
+            job['user'] = user['_id']
+            job['coins'] = coins
+            job['description'] = u'Geographer'
+            job['location'] = current_location['_id']
+            job.save()
+
+            data['results'] = {
+              'total_points': round(total_points, 1),
+              'coins': coins,
+            }
+
+        elif self.get_argument('next', None):
             session = self.db.PinpointSession.find_one({'user': user['_id'],
                                                         'center': current_location['_id'],
                                                         'finish_date': None})
@@ -641,37 +722,58 @@ class PinpointHandler(AuthenticatedBaseHandler):
                          .find({'session': session['_id']})
                          .sort('add_date', -1)  # newest first
                          .limit(1)):
-                previous_location = each
+                previous_answer = each
                 break
             else:
-                previous_location = None
+                previous_answer = None
 
-            if previous_location:
-                if previous_location['answer'] is None:
+            if previous_answer:
+                if not previous_answer['answer']:
                     # no answer was sent, it must have timed out
-                    previous_location['timedout'] = True
-                    previous_location.save()
+                    previous_answer['timedout'] = True
+                    previous_answer['points'] = 0.0
+                    previous_answer.save()
 
             try:
                 location = self._get_next_location(
                   session,
                   country,
-                  previous_location=previous_location,
+                  previous_location=
+                    previous_answer['location'] if previous_answer else None,
                 )
             except NoLocationsError:
                 self.write_json({'error': 'NOLOCATIONS'})
                 return
 
-            answer = self.db.PinpointAnswer()
-            answer['session'] = session['_id']
-            answer['location'] = location['_id']
-            answer.save()
-
-            data['question'] = {
-              'name': location['city'],
-              'id': str(location['_id']),
-              'seconds': 10
+            _no_answers = self.db.PinpointAnswer.find({'session': session['_id']}).count()
+            data['no_questions'] = {
+              'total': self.NO_QUESTIONS,
+              'number': _no_answers + 1,
+              'last': _no_answers + 1 == self.NO_QUESTIONS,
             }
+            if _no_answers < self.NO_QUESTIONS:
+                answer = self.db.PinpointAnswer()
+                answer['session'] = session['_id']
+                answer['location'] = location['_id']
+                answer.save()
+
+                data['question'] = {
+                  'name': location['city'],
+                  'id': str(location['_id']),
+                  'seconds': self.SECONDS,
+                }
+            else:
+                self.write_json({'error': 'ALREADYSENTALLLOCATIONS'})
+                return
+        else:
+            # close any unfinished sessions
+            for session in (self.db.PinpointSession
+                             .find({'user': user['_id'],
+                                    'center': current_location['_id'],
+                                    'finish_date': None})):
+                # XXX: should I just delete them?
+                session['finish_date'] = datetime.datetime.utcnow()
+                session.save()
 
         self.write_json(data)
 
@@ -681,7 +783,9 @@ class PinpointHandler(AuthenticatedBaseHandler):
           'country': country,
         }
         if previous_location:
-            filter_['_id'] = {'$ne': previous_location['_id']}
+            if not isinstance(previous_location, ObjectId):
+                previous_location = previous_location['_id']
+            filter_['_id'] = {'$ne': previous_location}
 
         if not allow_repeats:
             past_location_ids = set()
@@ -703,7 +807,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             return location
 
     def post(self):
-        stop_time = datetime.datetime.utcnow()
+        #stop_time = datetime.datetime.utcnow()
         user = self.get_current_user()
         center = self.get_current_location(user)
 
@@ -721,20 +825,30 @@ class PinpointHandler(AuthenticatedBaseHandler):
                    .find({'session': session['_id']})
                    .sort('add_date', -1)  # newest first
                    .limit(1))
-        correct_location = self.db.Location.find_one({'_id': answer['location']})
+        correct_location = (self.db.Location
+                            .find_one({'_id': answer['location']}))
         assert correct_location
         correct_position = {
           'lat': correct_location['lat'],
           'lng': correct_location['lng']
         }
         data = {}
-        #print "COMPARE"
-        #print guess
-        #print correct_position
         distance = calculate_distance(guess, correct_position)
         data['miles'] = int(distance.miles)
-        data['correct'] = distance.miles < 10.0
+
+        data['time'] = float(self.get_argument('time'))
+
+        time_left = float(self.SECONDS - data['time'])
+        points = self.calculate_points(distance.miles, time_left)
+
+        data['points'] = round(points, 1)
         data['correct_position'] = correct_position
+        answer['answer'] = (guess['lat'], guess['lng'])
+        answer['time'] = round(data['time'], 2)
+        answer['points'] = round(points, 2)
+        answer['miles'] = distance.miles
+        answer['timedout'] = False
+        answer.save()
         self.write_json(data)
 
 
@@ -754,10 +868,6 @@ class AirportHandler(AuthenticatedBaseHandler):
                                  'airport_name': {'$ne': None}})):
             distance = calculate_distance(current_location, location)
             cost = self.calculate_cost(distance.miles, user)
-            if user_settings['kilometers']:
-                distance_friendly = '%d km' % distance.kilometers
-            else:
-                distance_friendly = '%d miles' % distance.miles
             destination = {
               'id': str(location['_id']),
               'code': location['code'],
@@ -767,9 +877,19 @@ class AirportHandler(AuthenticatedBaseHandler):
               'country': location['country'],
               'cost': cost,
               'miles': distance.miles,
-              'distance': distance_friendly,
             }
             destinations.append(destination)
+
+        destinations.append({
+          'id': 'moon',
+          'code': '',
+          'city': '',
+          'country': '',
+          'locality': 'space',
+          'name': 'Moon',
+          'cost': 1000000,
+          'miles': 238857,
+        })
 
         data['destinations'] = destinations
         self.write_json(data)
@@ -821,10 +941,8 @@ class FlyHandler(AirportHandler):
         _id = self.get_argument('id')
         location = self.db.Location.find_one({'_id': ObjectId(_id)})
         assert location
-        #print "FLYING TO", repr(location)
         user = self.get_current_user()
         current_location = self.get_current_location(user)
-        #print "CURRENTLY IN", repr(current_location)
         assert location != current_location
         distance = calculate_distance(current_location, location)
         cost = self.calculate_cost(distance.miles, user)
@@ -906,7 +1024,7 @@ class BaseAuthHandler(BaseHandler):
         send_email(self.application.settings['email_backend'],
                    subject,
                    email_body,
-                   self.application.settings['webmaster'],
+                   self.application.settings['admin_emails'][0],
                    self.application.settings['admin_emails'],
                    )
 

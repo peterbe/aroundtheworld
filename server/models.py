@@ -162,7 +162,7 @@ class Location(BaseDocument):
         return {
           'name': unicode(self),
           'code': self['code'],
-          'airport_name': self['code'],
+          'airport_name': self['airport_name'],
           'city': self['city'],
           'locality': self['locality'],
           'country': self['country'],
@@ -193,6 +193,16 @@ class Transaction(BaseDocument):
     }
     required_fields = ['user', 'cost']
 
+
+@register
+class Job(BaseDocument):
+    __collection__ = 'earnings'
+    structure = {
+      'user': ObjectId,
+      'coins': int,
+      'description': unicode,
+      'location': ObjectId,
+    }
 
 @register
 class Question(BaseDocument):
@@ -298,9 +308,9 @@ class PinpointAnswer(BaseDocument):
       'session': ObjectId,
       'location': ObjectId,
       'answer': [float],
-      'correct': bool,
       'time': float,
-      'points': int,
+      'points': float,
+      'miles': float,
       'timedout': bool,
     }
 

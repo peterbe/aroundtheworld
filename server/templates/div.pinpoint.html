@@ -1,5 +1,7 @@
 <div id="pinpoint-tucked" style="display:none">
+
   <p class="timer">XX</p>
+  <p class="no-questions">:</p>
   <p class="current">City Name</p>
   <p class="skip"><a href="#">Ok. I'm ready!</a></p>
 </div>
@@ -12,18 +14,49 @@
 
   <h2>Geographer</h2>
 
-  <ul>
-    <li>Your job is to pinpoint named cities as close as possible.</li>
-    <li>First you watch the map for 10 seconds.</li>
-    <li>You get it correct if you're within 10 miles.</li>
-    <li>After 10 questions you can cash in.</li>
-  </ul>
+  <div class="begin">
+    <p>Your job is to pinpoint named cities as close as possible.</p>
 
-  <form>
-    <div align="center">
-    <button>When you're ready: Begin!</button>
-    </div>
-  </form>
+    <ul>
+      <li>Study the map for 10 seconds.</li>
+      <li>Click as near as possible to the named city.</li>
+      <li>Points are awarded based on distance and time.</li>
+      <li>After 10 questions you can cash in.</li>
+    </ul>
+
+    <form>
+      <div align="center">
+        <button>When you're ready: Begin!</button>
+      </div>
+    </form>
+
+  </div>
+
+  <div class="finish" style="display:none">
+    <h2>Well done!</h2>
+    <p class="short-summary">You earned <strong class="total-points"></strong> which earned you
+    <strong class="coins"></strong>!</p>
+
+    <h3>Summary of your pinpointing:</h3>
+    <table>
+      <thead>
+        <tr>
+	  <td>City</td>
+	  <td class="number">Miles away</td>
+	  <td class="number">Seconds</td>
+	  <td class="number">Points</td>
+	</tr>
+      </thead>
+      <tfoot>
+        <tr>
+	  <td colspan="3" style="text-align:right">Total:</td>
+	  <td class="number">Total: <span class="points-total"></span></td>
+	</tr>
+      <tfoot>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
 
   <p class="exit">
     Ok. <a href="#city" class="overlay-changer">Go back to the city</a>
