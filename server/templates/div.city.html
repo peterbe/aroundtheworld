@@ -1,16 +1,45 @@
 <div id="city" class="overlay">
-  <h2>Welcome to <strong></strong></h2>
 
-  <p>Mucho work needed to be done here.</p>
+  <div class="home section">
+    <h2>Welcome to <strong></strong></h2>
+    <p>Mucho work needed to be done here.</p>
 
-  <h3>Jobs</h3>
-  <ul class="jobs">
+    <ul>
+      <li><a href="#airport" class="overlay-changer">Go to the airport</a></li>
+      <li><a href="#city,embassy" class="overlay-changer">Meet the ambassadors</a></li>
+      <li><a href="#city,jobs" class="overlay-changer">Check out the jobs</a></li>
+    </ul>
 
-  </ul>
+  </div>
 
-  <p>
-  <a href="#airport" class="overlay-changer">Go to the airport</a>
-  </p>
+  <div class="jobs section" style="display:none">
+
+    <h2>Jobs in <strong></strong></h2>
+
+    <ul class="jobs">
+    </ul>
+
+    <p>
+      <a href="#city" class="overlay-changer">Back to the city</a>
+    </p>
+
+  </div>
+
+  <div class="embassy section" style="display:none">
+    <h2>Embassy of <span class="country"></span></h2>
+    <div class="html-container">
+    </div>
+    <div class="none">
+      <p><strong>Sorry</strong>, this country doesn't have any ambassadors.</p>
+      <p>If you want to become the ambassador of this country then let us know:
+        <a href="#contactus" class="overlay-changer">Contact us</a>
+      </p>
+    </div>
+
+    <p>
+      <a href="#city" class="overlay-changer">Back to the city</a>
+    </p>
+  </div>
 
 
 </div>

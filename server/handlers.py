@@ -581,18 +581,39 @@ class LocationHandler(AuthenticatedBaseHandler):
 @route('/city.json$', name='city')
 class CityHandler(AuthenticatedBaseHandler):
 
+    AMBASSADORS = {
+      'Sweden': 'sweden.html',
+    }
+
+    def get_ambassadors_html(self):
+        location = self.get_current_location()
+        country = location['country']
+        if country not in self.AMBASSADORS:
+            return None
+
+        return self.render_string(
+            'ambassadors/%s' % self.AMBASSADORS[country])
+
     def get(self):
         data = {}
         user = self.get_current_user()
         location = self.get_current_location(user)
 
-        data['name'] = unicode(location)
-        data['city'] = location['city']
-        data['locality'] = location['locality']
-        data['country'] = location['country']
-        data['lat'] = location['lat']
-        data['lng'] = location['lng']
-        data['jobs'] = self.get_jobs(user, location)
+        get = self.get_argument('get', None)
+        if get == 'ambassadors':
+            data['html'] = self.get_ambassadors_html()
+        elif get == 'jobs':
+            data['jobs'] = self.get_jobs(user, location)
+        elif get:
+            raise tornado.web.HTTPError(404, 'Invalid get')
+        else:
+            data['name'] = unicode(location)
+            data['city'] = location['city']
+            data['locality'] = location['locality']
+            data['country'] = location['country']
+            data['lat'] = location['lat']
+            data['lng'] = location['lng']
+            #data['jobs'] = self.get_jobs(user, location)
 
         self.write_json(data)
 
