@@ -466,15 +466,44 @@ class CoinsHandler(AuthenticatedBaseHandler):
     def get(self):
         user = self.get_current_user()
         data = {}
-        data['transactions'] = self.get_transactions(user)
+        data['transactions'], count = self.get_transactions(user)
+        data['count_transactions'] = count
+
+        data['jobs'], count = self.get_jobs(user)
+        data['count_jobs'] = count
         self.write_json(data)
 
-    def get_transactions(self, user):
+    def get_jobs(self, user, limit=10):
+        jobs = []
+        filter_ = {'user': user['_id']}
+        records = self.db.Job.find(filter_)
+        count = records.count()
+        skip = limit * int(self.get_argument('jobs-page', 0))
+        for each in (records
+                     .limit(limit)
+                     .skip(skip)
+                     .sort('add_date', -1)):  # newest first
+            location = self.db.Location.find_one({'_id': each['location']})
+            assert location
+            job = {
+              'description': each['description'],
+              'coins': each['coins'],
+              'location': unicode(location),
+              'date': each['add_date'].strftime(FULL_DATE_FMT),
+            }
+            jobs.append(job)
+        return jobs, count
+
+    def get_transactions(self, user, limit=10):
         transactions = []
         filter_ = {'user': user['_id']}
-        for each in (self.db.Transaction
-                     .find(filter_)
-                     .sort('add_date', 1)):  # oldest first
+        records = self.db.Transaction.find(filter_)
+        count = records.count()
+        skip = limit * int(self.get_argument('transactions-page', 0))
+        for each in (records
+                     .limit(limit)
+                     .skip(skip)
+                     .sort('add_date', -1)):  # newest first
             transaction = {
               'cost': each['cost'],
               'date': each['add_date'].strftime(FULL_DATE_FMT),
@@ -491,7 +520,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
             transaction['description'] = description
             transaction['type'] = type_
             transactions.append(transaction)
-        return transactions
+        return transactions, count
 
 
 def _commafy(s):

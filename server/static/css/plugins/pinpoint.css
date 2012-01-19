@@ -38,6 +38,9 @@
       font-weight: bold;
   }
 
+#pinpoint .button-wrapper {
+    text-align:center;
+}
 #pinpoint button {
     font-size:1.2em;
     font-weight:bold;

@@ -6,3 +6,9 @@
     width:16px;
     background: url(../../images/mini-airplane.png) 0 -2px no-repeat;
 }
+#coins td.load-more {
+    text-align: right;
+}
+#coins td.load-more a {
+    font-size: 80%;
+}

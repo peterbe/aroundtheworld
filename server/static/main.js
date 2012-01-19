@@ -58,7 +58,7 @@ var State = (function() {
       } else {
         $('.user-location:visible', container).hide();
       }
-      $('.user-name', container).text(state.user.name);
+      $('.user-name a', container).text(state.user.name);
       $('.user-miles a', container)
         .text(Utils.formatMiles(state.user.miles_total, true));
       $('.user-coins a', container)
