@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th select[name="locations"] { width:70px; }
+tfoot th select[name="categories"] { width:110px; }
+tfoot th select[name="points_values"] { width:40px; }
+tfoot th select[name="authors"] { width:100px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} questions {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <p>
+    <a href="{{ reverse_url('admin_add_question') }}">Add a new question</a>
+    &nbsp;
+    &bull;
+    &nbsp;
+    <a href="{{ reverse_url('admin_questions_numbers') }}">Numbers (who's winning?)</a>
+
+  </p>
+  <form action=".">
+      <table class="condensed-table">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Points</th>
+            <th>Author</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th>
+              <select multiple name="locations">
+                {% for location in all_locations %}
+                <option value="{{ location['code'] }}"
+                  {% if location['code'] in locations %}selected{% end %}
+                >{{ location['code'] }}<!-- ({{ location['country'] }})--></option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <select multiple name="categories">
+                {% for category in all_categories %}
+                <option value="{{ category['name'] }}"
+                  {% if category['name'] in categories %}selected{% end %}
+                >{{ category['name'] }}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <select multiple name="points_values">
+                {% for p in range(1, 5 + 1) %}
+                <option value="{{ p }}"
+                  {% if p in points_values %}selected{% end %}
+                >{{ p }}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <select multiple name="authors">
+                {% for user in all_authors %}
+                <option value="{{ user['_id'] }}"
+                 {% if user['_id'] in authors %}selected{% end %}
+                 >{% if user['username'] %}
+                   {{ user['username'] }}
+                 {% else %}
+                   {{ user['email'] }}
+                 {% end %}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for question, category, location, author in questions %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_question', question['_id']) }}">{{ question['text'] }}</a>
+              {% if not question['published'] %}
+                <span class="label warning">Not published</span>
+              {% end %}
+            </td>
+            <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
+            <td>{{ category['name'] }}</td>
+            <td>{{ question['points_value'] }}</td>
+            <td>
+              {% if author %}
+                {% if author['username'] %}
+                  {{ author['username'] }}
+                {% else %}
+                  {{ author['email'] }}
+                {% end %}
+              {% else %}
+                &nbsp;
+              {% end %}
+            </td>
+            <td>{{ question['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+{% end %}

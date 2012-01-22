@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block extrajs %}
+<script src="{{ static_url('admin/jquery.cookie.js') }}"></script>
+<script>
+$(function() {
+  if ($.cookie('admin-hero') != 'hide') {
+    $('.hero-unit').show();
+    $('.hero-unit .btn').click(function() {
+      $('.hero-unit').fadeOut('slow');
+      $.cookie('admin-hero', 'hide');
+      return false;
+    });
+  }
+});
+</script>
+{% end %}
+
+{% block content %}
+      <!-- Main hero unit for a primary marketing message or call to action -->
+      <div class="hero-unit" style="display:none">
+        <h1>Admin Home!</h1>
+        <p>Wow! You must be awesomely amazing if you managed to get here. What are you going to do?</p>
+        <p><a class="btn primary large">Alright alright &raquo;</a></p>
+      </div>
+
+      <!-- Example row of columns -->
+      <div class="row">
+        <div class="span6">
+          <h2>Questions</h2>
+          <p>There are currently <strong>{{ count_questions_published }} questions</strong>
+          ({{ count_questions_not_published }} not published)
+          spread across <strong>{{ count_locations_with_airport_name }} cities</strong>.</p>
+          <p><a class="btn" href="{{ reverse_url('admin_questions') }}">Add/Edit questions &raquo;</a></p>
+        </div>
+        <div class="span5">
+          <h2>Locations</h2>
+           <p><strong>{{ count_locations_with_airport_name }} destinations</strong>
+           ({{ count_locations_total }} cities in total) across {{ count_countries }} countries.
+           </p>
+          <p><a class="btn" href="{{ reverse_url('admin_locations') }}">Add/Edit locations &raquo;</a></p>
+       </div>
+        <div class="span5">
+          <h2>Users</h2>
+          <p>Of a total of <strong>{{ count_users }} users</strong>
+          ({{ count_ambassadors }} ambassadors, {{ count_mayors }} mayors)
+          {{ count_new_users}} new users joined in the last two weeks.</p>
+          <p><a class="btn" href="/users/">Edit/Remove users &raquo;</a></p>
+        </div>
+      </div>
+
+{% end %}

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from models import User, connection
+from core.models import User, connection
 from .base import DatabaseTestCaseMixin
 
 class ModelsTestCase(TestCase, DatabaseTestCaseMixin):

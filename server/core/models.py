@@ -51,11 +51,13 @@ class User(BaseDocument):
       'first_name': unicode,
       'last_name': unicode,
       'current_location': ObjectId,
+      'superuser': bool
     }
 
     use_autorefs = False
     required_fields = ['username']
     default_values = {
+      'superuser': False
     }
 
     def __unicode__(self):
@@ -106,6 +108,22 @@ class User(BaseDocument):
               re.compile(re.escape(value), re.I)})
         return user
 
+
+@register
+class Ambassador(BaseDocument):
+    __collection__ = 'ambassadors'
+    structure = {
+      'user': ObjectId,
+      'country': unicode,
+    }
+
+@register
+class Mayor(BaseDocument):
+    __collection__ = 'mayors'
+    structure = {
+      'user': ObjectId,
+      'location': ObjectId,
+    }
 
 @register
 class UserSettings(BaseDocument):
@@ -217,6 +235,7 @@ class Question(BaseDocument):
       'location': ObjectId,
       'category': ObjectId,
       'published': bool,
+      'notes': unicode,
     }
 
     default_values = {

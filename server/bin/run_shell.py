@@ -11,7 +11,7 @@ except ImportError:
 
 
 if __name__ == '__main__':
-    from models import *
+    from core.models import *
     from pymongo.objectid import InvalidId, ObjectId
 
     import settings

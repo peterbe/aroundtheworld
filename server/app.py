@@ -9,8 +9,10 @@ import tornado.web
 import redis.client
 from tornado.options import define, options
 from tornado_utils.routes import route
-import handlers
+import core.handlers
+import admin.handlers
 import settings
+
 
 
 define("debug", default=False, help="run in debug mode", type=bool)
@@ -20,16 +22,19 @@ define("port", default=8000, help="run on the given port", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self, database_name=None):
-        _ui_modules = __import__('ui_modules', globals(), locals(), ['ui_modules'], -1)
-        ui_modules_map = {}
-        for name in [x for x in dir(_ui_modules) if re.findall('[A-Z]\w+', x)]:
-            thing = getattr(_ui_modules, name)
-            try:
-                if issubclass(thing, tornado.web.UIModule):
-                    ui_modules_map[name] = thing
-            except TypeError:  # pragma: no cover
-                # most likely a builtin class or something
-                pass
+        for each in ('core.ui_modules', 'admin.ui_modules'):
+            _ui_modules = __import__(each, globals(), locals(),
+                                     ['ui_modules'], -1)
+            ui_modules_map = {}
+            for name in [x for x in dir(_ui_modules)
+                         if re.findall('[A-Z]\w+', x)]:
+                thing = getattr(_ui_modules, name)
+                try:
+                    if issubclass(thing, tornado.web.UIModule):
+                        ui_modules_map[name] = thing
+                except TypeError:  # pragma: no cover
+                    # most likely a builtin class or something
+                    pass
 
         routed_handlers = route.get_routes()
         app_settings = dict(
@@ -48,15 +53,16 @@ class Application(tornado.web.Application):
         )
         if 0 or not options.debug:
             routed_handlers.append(
-              tornado.web.url('/.*?', handlers.PageNotFoundHandler,
-                            name='page_not_found')
+              tornado.web.url('/.*?',
+                              core.handlers.PageNotFoundHandler,
+                              name='page_not_found')
             )
         super(Application, self).__init__(routed_handlers, **app_settings)
 
         self.redis = redis.client.Redis(settings.REDIS_HOST,
                                         settings.REDIS_PORT)
 
-        from models import connection
+        from core.models import connection
         self.db = connection[database_name or settings.DATABASE_NAME]
 
 

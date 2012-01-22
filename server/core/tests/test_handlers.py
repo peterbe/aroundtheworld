@@ -8,8 +8,9 @@ import tornado.escape
 from pymongo.objectid import ObjectId
 from .base import BaseHTTPTestCase
 import settings
-#from handlers import (TwitterAuthHandler, FollowsHandler, FollowingHandler,
-#                      EveryoneIFollowJSONHandler)
+from core.handlers import (PinpointHandler, GoogleAuthHandler, QuizzingHandler,
+                           CityHandler)
+
 
 class HandlersTestCase(BaseHTTPTestCase):
 
@@ -44,7 +45,6 @@ class HandlersTestCase(BaseHTTPTestCase):
                 return func(data)
             return callback
 
-        from handlers import GoogleAuthHandler
         GoogleAuthHandler.get_authenticated_user = \
           make_google_get_authenticated_user({
             'username': username,
@@ -164,7 +164,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         qs, = self.db.QuestionSession.find()  # assert there is only 1
         self.assertEqual(qs['user'], user['_id'])
         self.assertEqual(qs['location'], self.newyork['_id'])
-        from handlers import QuizzingHandler
         self.assertEqual(r['no_questions']['total'], QuizzingHandler.NO_QUESTIONS)
         self.assertEqual(r['no_questions']['number'], 1)
         self.assertTrue(not r['no_questions']['last'])
@@ -216,7 +215,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         for i in range(20):
             self._create_question(self.tour_guide, self.newyork)
 
-        from handlers import QuizzingHandler
         user = self._login(location=self.newyork)
         for i in range(QuizzingHandler.NO_QUESTIONS):
             r = _get()
@@ -473,7 +471,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert self.db.PinpointAnswer.find().count() == 2
         # re-fetch from database
         second_a = self.db.PinpointAnswer.find_one({'_id': second_a['_id']})
-        from handlers import PinpointHandler
 #        self.assertEqual(round(second_a['time']), PinpointHandler.SECONDS)
         self.assertEqual(second_a['answer'], [data['lat'], data['lng']])
         self.assertTrue(second_a['points'])
@@ -611,7 +608,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert r['center']
         assert 'question' not in r
 
-        from handlers import PinpointHandler
         for i in range(PinpointHandler.NO_QUESTIONS - 1):
             r = _get({'next': True})
             assert r['question']
@@ -770,7 +766,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         response = self.get_struct(url, {'get': 'ambassadors'})
         self.assertEqual(response['html'], None)
 
-        from handlers import CityHandler
         for country in CityHandler.AMBASSADORS:
             nonloc['country'] = unicode(country)
             nonloc.save()

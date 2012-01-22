@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block extrajs %}
+<script src="{{ static_url('lib/highcharts.min.js') }}"></script>
+<script>
+var CATEGORIES = {% raw categories_json %};
+var SERIES = {% raw series_json %};
+var chart;
+$(document).ready(function() {
+   chart = new Highcharts.Chart({
+      chart: {
+         renderTo: 'container',
+         defaultSeriesType: 'line',
+         marginRight: 130,
+         marginBottom: 25
+      },
+      title: {
+         text: 'Where are there the most and least questions in the world?',
+         x: -20 //center
+      },
+      subtitle: {
+         text: 'Source: WorldClimate.com',
+         x: -20
+      },
+      xAxis: {
+         categories: CATEGORIES
+      },
+      yAxis: {
+         title: {
+            text: '# Questions'
+         },
+         plotLines: [{
+            value: 0,
+            width: 1,
+            color: '#808080'
+         }]
+      },
+      tooltip: {
+         formatter: function() {
+                   return '<strong>'+ this.series.name +'</strong><br>'+
+               this.x +': '+ this.y;
+         }
+      },
+      legend: {
+         layout: 'vertical',
+         align: 'right',
+         verticalAlign: 'top',
+         x: -10,
+         y: 100,
+         borderWidth: 0
+      },
+      series: SERIES
+   });
+});
+</script>
+{% end %}
+
+{% block content %}
+
+  <h2>Question numbers</h2>
+
+  <div id="container"></div>
+
+{% end %}

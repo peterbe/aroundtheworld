@@ -4,14 +4,14 @@ import unittest
 import site
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-path = lambda *a: os.path.join(ROOT,*a)
+path = lambda *a: os.path.join(ROOT, *a)
 
 site.addsitedir(path('.'))
 site.addsitedir(path('vendor'))
 
 TEST_MODULES = [
-    'tests.test_handlers',
-    'tests.test_models',
+    'core.tests.test_handlers',
+    'core.tests.test_models',
 ]
 
 
