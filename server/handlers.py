@@ -19,7 +19,7 @@ from tornado.escape import json_decode, json_encode
 from pymongo.objectid import InvalidId, ObjectId
 from geopy.distance import distance as geopy_distance
 
-from models import User
+from models import User, Question
 import settings
 
 ONE_HOUR = 60 * 60; ONE_DAY = ONE_HOUR * 24; ONE_WEEK = ONE_DAY * 7
@@ -274,6 +274,26 @@ class FlightPathsHandler(BaseHandler):
 @route('/quizzing.json$', name='quizzing')
 class QuizzingHandler(AuthenticatedBaseHandler):
 
+    # number between 0 and (inclusive) 1.0 that decides how many coins to
+    # give for a percentage.
+    PERCENTAGE_COINS_RATIO = 1.0
+
+    SECONDS = 10
+    NO_QUESTIONS = 5
+
+    def points_to_coins(self, points):
+        max_ = self.NO_QUESTIONS * Question.HIGHEST_POINTS_VALUE
+        percentage = 100 * points / max_
+        return int(percentage * self.PERCENTAGE_COINS_RATIO)
+
+    def _teardown(self, user, location):
+        for session in (self.db.QuestionSession
+                        .find({'user': user['_id'],
+                               'location': location['_id'],
+                               'finish_date': None})):
+            session.delete()
+
+
     def get(self):
         category = self.get_argument('category')
         category = category.replace('+', ' ')
@@ -284,17 +304,24 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         location = self.get_current_location(user)
         data = {}
         data['quiz_name'] = category['name']
-        session = (self.db.QuestionSession
-                   .find_one({'user': user['_id'],
-                              'category': category['_id'],
-                              'location': location['_id'],
-                              'finish_date': None}))
+        if self.get_argument('start', None):
+            self._teardown(user, location)
+            session = None
+        else:
+            session = (self.db.QuestionSession
+                       .find_one({'user': user['_id'],
+                                  'category': category['_id'],
+                                  'location': location['_id'],
+                                  'finish_date': None}))
         if session is None:
             session = self.db.QuestionSession()
+            print "Create new session"
             session['user'] = user['_id']
             session['location'] = location['_id']
             session['category'] = category['_id']
             session.save()
+        else:
+            print "Using existing session", session['_id']
 
         for each in (self.db.SessionAnswer
                      .find({'session': session['_id']})
@@ -329,12 +356,22 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         answer['session'] = session['_id']
         answer.save()
 
+
+        _no_answers = (self.db.SessionAnswer
+                       .find({'session': session['_id']})
+                       .count())
+        print "_no_answers", _no_answers
+        data['no_questions'] = {
+          'total': self.NO_QUESTIONS,
+          'number': _no_answers,
+          'last': _no_answers == self.NO_QUESTIONS,
+        }
+
         data['question'] = {
-          'id': str(question['_id']),
           'text': question['text'],
           'alternatives': question['alternatives'],
         }
-        data['question']['seconds'] = 10
+        data['question']['seconds'] = self.SECONDS
         self.write_json(data)
 
     def _get_next_question(self, session, category, location,
@@ -373,32 +410,90 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         user = self.get_current_user()
         location = self.get_current_location(user)
 
-        answer = self.get_argument('answer')
-        question_id = self.get_argument('id')
-        question = self.db.Question.find_one({'_id': ObjectId(question_id)})
+        if self.get_argument('teardown', None):
+            # called when the plugin is torn down
+            # Use this opportunity to close any unfinished sessions
+            self._teardown(user, location)
+            self.write_json({'ok': True})
+            return
+
         session, = (self.db.QuestionSession
                     .find({'user': user['_id'],
                            'location': location['_id'],
                            'finish_date': None})
                     .sort('add_date', -1)  # newest first
                     .limit(1))
-        data = {}
-        data['correct'] = question.check_answer(answer)
-        if not data['correct']:
-            data['correct_answer'] = question['correct']
-        data['points_value'] = question.get('points_value', 1)
 
         answer_obj, = (self.db.SessionAnswer
-                       .find({'session': session['_id'],
-                              'question': question['_id']})
+                       .find({'session': session['_id']})
                        .sort('add_date', -1)  # newest first
                        .limit(1))
-        answer_obj['time'] = 1.0 * (stop_time - answer_obj['add_date']).seconds
-        answer_obj['answer'] = answer
-        answer_obj['correct'] = data['correct']
-        answer_obj['points'] = data['points_value']
-        answer_obj['timedout'] = False
-        answer_obj.save()
+
+        data = {}
+        if self.get_argument('finish', None):
+            session['finish_date'] = datetime.datetime.utcnow()
+            session.save()
+
+            if not answer_obj['answer']:
+                answer_obj['timedout'] = True
+                answer_obj['points'] = 0
+                answer_obj.save()
+
+            total_points = 0
+            summary = []
+            for answer in (self.db.SessionAnswer
+                           .find({'session': session['_id']})
+                           .sort('add_date', 1)  # oldest first
+                           ):
+                total_points += answer['points']
+                question = self.db.Question.find_one({'_id': answer['question']})
+                summary.append({
+                  'question': question['text'],
+                  'correct_answer': question['correct'],
+                  'your_answer': answer['answer'],
+                  'correct': answer['correct'],
+                  'time': (not answer['timedout']
+                           and answer['time']
+                           or None),
+                  'points': answer['points'],
+                })
+            data['summary'] = summary
+            coins = self.points_to_coins(total_points)
+            user_settings = self.get_current_user_settings()
+            user_settings['coins_total'] += coins
+            user_settings.save()
+
+            job = self.db.Job()
+            job['user'] = user['_id']
+            job['coins'] = coins
+            job['category'] = session['category']
+            job['location'] = session['location']
+            job.save()
+
+            data['results'] = {
+              'total_points': total_points,
+              'coins': coins,
+            }
+
+        else:
+            #question_id = self.get_argument('id')
+            #question = self.db.Question.find_one({'_id': ObjectId(question_id)})
+
+            question = self.db.Question.find_one({'_id': answer_obj['question']})
+
+            answer = self.get_argument('answer')
+            time_ = float(self.get_argument('time'))
+            data['correct'] = question.check_answer(answer)
+            if not data['correct']:
+                data['correct_answer'] = question['correct']
+            data['points_value'] = question.get('points_value', 1)
+
+            answer_obj['time'] = time_
+            answer_obj['answer'] = answer
+            answer_obj['correct'] = data['correct']
+            answer_obj['points'] = data['points_value'] * data['correct']
+            answer_obj['timedout'] = False
+            answer_obj.save()
 
         self.write_json(data)
 
@@ -479,14 +574,30 @@ class CoinsHandler(AuthenticatedBaseHandler):
         records = self.db.Job.find(filter_)
         count = records.count()
         skip = limit * int(self.get_argument('jobs-page', 0))
+        _locations = {};  _categories = {}  # optimization
         for each in (records
                      .limit(limit)
                      .skip(skip)
                      .sort('add_date', -1)):  # newest first
-            location = self.db.Location.find_one({'_id': each['location']})
+            if each['location'] not in _locations:
+                _locations[each['location']] = \
+                  self.db.Location.find_one({'_id': each['location']})
+            location = _locations[each['location']]
             assert location
+
+            ## legacy
+            try: each['category']
+            except KeyError:
+                each.delete()
+                continue
+
+            if each['category'] not in _categories:
+                _categories[each['category']] = \
+                  self.db.Category.find_one({'_id': each['category']})
+            category = _categories[each['category']]
+            assert category
             job = {
-              'description': each['description'],
+              'description': category['name'],
               'coins': each['coins'],
               'location': unicode(location),
               'date': each['add_date'].strftime(FULL_DATE_FMT),
@@ -665,6 +776,8 @@ class PinpointHandler(AuthenticatedBaseHandler):
     NO_QUESTIONS = 10
     SECONDS = 10
 
+    CATEGORY_NAME = u'Geographer'
+
     def calculate_points(self, miles, seconds_left):
         min_ = self.MIN_DISTANCE
         if miles < min_:
@@ -701,64 +814,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
         }
         data['no_questions'] = self.NO_QUESTIONS
 
-        if self.get_argument('finish', None):
-            session, = (self.db.PinpointSession
-                        .find({'user': user['_id'],
-                               'center': current_location['_id']})
-                        .sort('add_date', -1)  # newest first
-                        .limit(1))
-            assert session
-            session['finish_date'] = datetime.datetime.utcnow()
-            session.save()
-
-            last_answer, = (self.db.PinpointAnswer
-                            .find({'session': session['_id']})
-                            .sort('add_date', -1)
-                            .limit(1))
-            if not last_answer['answer']:
-                last_answer['timedout'] = True
-                last_answer['points'] = 0.0
-                last_answer.save()
-
-            total_points = 0.0
-            summary = []
-
-            for answer in (self.db.PinpointAnswer
-                           .find({'session': session['_id']})
-                           .sort('add_date', 1)):
-                total_points += answer['points']
-                location = self.db.Location.find_one({'_id': answer['location']})
-                summary.append({
-                  'city': location['city'],
-                  'time': (not answer['timedout']
-                           and round(answer['time'], 1)
-                           or None),
-                  'points': round(answer['points'], 1),
-                  'miles': (not answer['timedout']
-                            and round(answer['miles'], 1)
-                            or None),
-                  'timedout': answer['timedout'],
-                })
-            data['summary'] = summary
-
-            coins = self.points_to_coins(total_points)
-            user_settings = self.get_current_user_settings()
-            user_settings['coins_total'] += coins
-            user_settings.save()
-
-            job = self.db.Job()
-            job['user'] = user['_id']
-            job['coins'] = coins
-            job['description'] = u'Geographer'
-            job['location'] = current_location['_id']
-            job.save()
-
-            data['results'] = {
-              'total_points': round(total_points, 1),
-              'coins': coins,
-            }
-
-        elif self.get_argument('next', None):
+        if self.get_argument('next', None):
             session = self.db.PinpointSession.find_one({'user': user['_id'],
                                                         'center': current_location['_id'],
                                                         'finish_date': None})
@@ -861,44 +917,111 @@ class PinpointHandler(AuthenticatedBaseHandler):
         user = self.get_current_user()
         center = self.get_current_location(user)
 
-        guess = {
-          'lat': float(self.get_argument('lat')),
-          'lng': float(self.get_argument('lng'))
-        }
-        session, = (self.db.PinpointSession
-                    .find({'user': user['_id'],
-                           'center': center['_id'],
-                           'finish_date': None})
-                    .sort('add_date', -1)  # newest first
-                    .limit(1))
-        answer, = (self.db.PinpointAnswer
-                   .find({'session': session['_id']})
-                   .sort('add_date', -1)  # newest first
-                   .limit(1))
-        correct_location = (self.db.Location
-                            .find_one({'_id': answer['location']}))
-        assert correct_location
-        correct_position = {
-          'lat': correct_location['lat'],
-          'lng': correct_location['lng']
-        }
         data = {}
-        distance = calculate_distance(guess, correct_position)
-        data['miles'] = int(distance.miles)
 
-        data['time'] = float(self.get_argument('time'))
+        if self.get_argument('finish', None):
+            session, = (self.db.PinpointSession
+                        .find({'user': user['_id'],
+                               'center': center['_id']})
+                        .sort('add_date', -1)  # newest first
+                        .limit(1))
+            session['finish_date'] = datetime.datetime.utcnow()
+            session.save()
 
-        time_left = float(self.SECONDS - data['time'])
-        points = self.calculate_points(distance.miles, time_left)
+            last_answer, = (self.db.PinpointAnswer
+                            .find({'session': session['_id']})
+                            .sort('add_date', -1)
+                            .limit(1))
+            if not last_answer['answer']:
+                last_answer['timedout'] = True
+                last_answer['points'] = 0.0
+                last_answer.save()
 
-        data['points'] = round(points, 1)
-        data['correct_position'] = correct_position
-        answer['answer'] = (guess['lat'], guess['lng'])
-        answer['time'] = round(data['time'], 2)
-        answer['points'] = round(points, 2)
-        answer['miles'] = distance.miles
-        answer['timedout'] = False
-        answer.save()
+            total_points = 0.0
+            summary = []
+
+            for answer in (self.db.PinpointAnswer
+                           .find({'session': session['_id']})
+                           .sort('add_date', 1)):
+                total_points += answer['points']
+                location = self.db.Location.find_one({'_id': answer['location']})
+                summary.append({
+                  'city': location['city'],
+                  'time': (not answer['timedout']
+                           and round(answer['time'], 1)
+                           or None),
+                  'points': round(answer['points'], 1),
+                  'miles': (not answer['timedout']
+                            and round(answer['miles'], 1)
+                            or None),
+                  'timedout': answer['timedout'],
+                })
+            data['summary'] = summary
+
+            coins = self.points_to_coins(total_points)
+            user_settings = self.get_current_user_settings()
+            user_settings['coins_total'] += coins
+            user_settings.save()
+
+            category = self.db.Category.find_one({'name': self.CATEGORY_NAME})
+            if not category:
+                category = self.db.Category()
+                category['name'] = self.CATEGORY_NAME
+                category.save()
+
+            job = self.db.Job()
+            job['user'] = user['_id']
+            job['coins'] = coins
+            job['category'] = category['_id']
+            job['location'] = center['_id']
+            job.save()
+
+            data['results'] = {
+              'total_points': round(total_points, 1),
+              'coins': coins,
+            }
+
+        else:
+
+            guess = {
+              'lat': float(self.get_argument('lat')),
+              'lng': float(self.get_argument('lng'))
+            }
+            session, = (self.db.PinpointSession
+                        .find({'user': user['_id'],
+                               'center': center['_id'],
+                               'finish_date': None})
+                        .sort('add_date', -1)  # newest first
+                        .limit(1))
+            answer, = (self.db.PinpointAnswer
+                       .find({'session': session['_id']})
+                       .sort('add_date', -1)  # newest first
+                       .limit(1))
+            correct_location = (self.db.Location
+                                .find_one({'_id': answer['location']}))
+            assert correct_location
+            correct_position = {
+              'lat': correct_location['lat'],
+              'lng': correct_location['lng']
+            }
+
+            distance = calculate_distance(guess, correct_position)
+            data['miles'] = int(distance.miles)
+
+            data['time'] = float(self.get_argument('time'))
+
+            time_left = float(self.SECONDS - data['time'])
+            points = self.calculate_points(distance.miles, time_left)
+
+            data['points'] = round(points, 1)
+            data['correct_position'] = correct_position
+            answer['answer'] = (guess['lat'], guess['lng'])
+            answer['time'] = round(data['time'], 2)
+            answer['points'] = round(points, 2)
+            answer['miles'] = distance.miles
+            answer['timedout'] = False
+            answer.save()
+
         self.write_json(data)
 
 

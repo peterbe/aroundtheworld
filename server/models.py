@@ -200,7 +200,7 @@ class Job(BaseDocument):
     structure = {
       'user': ObjectId,
       'coins': int,
-      'description': unicode,
+      'category': ObjectId,
       'location': ObjectId,
     }
 
@@ -224,6 +224,8 @@ class Question(BaseDocument):
       'points_value': 1,
       'published': True,
     }
+
+    HIGHEST_POINTS_VALUE = 5
 
     def check_answer(self, value):
         return value.lower() == self['correct'].lower()

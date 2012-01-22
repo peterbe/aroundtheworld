@@ -10,15 +10,15 @@ var Airport = (function() {
        $('input[name="yes"]', c).removeAttr('disabled');
        $('em', c).text(name);
        $('input[name="id"]', c).val(id);
-       $('.cost', c).text(Utils.formatCost(cost));
-       $('.current-coins', c).text(Utils.formatCost(STATE.user.coins_total));
+       $('.cost', c).text(Utils.formatCost(cost, true));
+       $('.current-coins', c).text(Utils.formatCost(STATE.user.coins_total, true));
        $('input[name="cancel"]', c).click(function() {
          c.hide();
          $('.choices', container).show();
        });
        if (cost > STATE.user.coins_total) {
          $('.cant-afford', c).show('fast');
-         $('.cant-afford strong', c).text(Utils.formatCost(cost - STATE.user.coins_total));
+         $('.cant-afford strong', c).text(Utils.formatCost(cost - STATE.user.coins_total, true));
          $('input[name="yes"]', c).attr('disabled', 'disabled');
        }
        $('form', c).unbind('submit').submit(function() {

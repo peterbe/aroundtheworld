@@ -157,11 +157,23 @@ class HandlersTestCase(BaseHTTPTestCase):
         q2 = self._create_question(self.tour_guide, self.newyork)
         r = _get()
         assert r['question']
+        assert r['no_questions']
         q = r['question']
+
         self.assertTrue(q['text'] in (q1['text'], q2['text']))
         qs, = self.db.QuestionSession.find()  # assert there is only 1
         self.assertEqual(qs['user'], user['_id'])
         self.assertEqual(qs['location'], self.newyork['_id'])
+        from handlers import QuizzingHandler
+        self.assertEqual(r['no_questions']['total'], QuizzingHandler.NO_QUESTIONS)
+        self.assertEqual(r['no_questions']['number'], 1)
+        self.assertTrue(not r['no_questions']['last'])
+
+        session, = self.db.QuestionSession.find()
+        self.assertEqual(session['category'], self.tour_guide['_id'])
+        self.assertEqual(session['user'], user['_id'])
+        self.assertEqual(session['location'], self.newyork['_id'])
+        self.assertTrue(not session['finish_date'])
 
         sa, = self.db.SessionAnswer.find()
         self.assertEqual(sa['session'], qs['_id'])
@@ -175,6 +187,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         r = _get()
         second_q = r['question']
         self.assertTrue(first_q != second_q)
+        self.assertEqual(r['no_questions']['number'], 2)
 
         sa1, = self.db.SessionAnswer.find({'timedout': True})
         sa2, = self.db.SessionAnswer.find({'timedout': None})
@@ -187,8 +200,39 @@ class HandlersTestCase(BaseHTTPTestCase):
         else:
             q = q2
 
-        r = self.post_struct(url, {'answer': q['correct'], 'id': str(q['_id'])})
+        r = self.post_struct(url, {
+          'answer': q['correct'],
+          'time': random.random() * 10
+        })
         self.assertTrue(r['correct'])
+
+    def test_quizzing_finish(self):
+        assert not self.db.QuestionSession.find().count()
+        url = self.reverse_url('quizzing')
+
+        def _get():
+            return self.get_struct(url, {'category': self.tour_guide['name']})
+
+        for i in range(20):
+            self._create_question(self.tour_guide, self.newyork)
+
+        from handlers import QuizzingHandler
+        user = self._login(location=self.newyork)
+        for i in range(QuizzingHandler.NO_QUESTIONS):
+            r = _get()
+            if i + 1 == QuizzingHandler.NO_QUESTIONS:
+                self.assertTrue(r['no_questions']['last'])
+            answer = random.choice(['one', 'two', 'three'])
+            time_ = random.random() * 10 - 0.1
+            r = self.post_struct(url, {'answer': answer, 'time': time_})
+
+        r = self.post_struct(url, {'finish': True})
+        assert r['results']
+        self.assertTrue(r['results']['coins'])
+        self.assertTrue(r['results']['total_points'])
+
+
+
 
     def test_flying(self):
         url = self.reverse_url('fly')
@@ -509,7 +553,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert session['center'] == self.newyork['_id']
         assert session['user'] == user['_id']
 
-        r = _get({'finish': True})
+        r = _post({'finish': True})
         session, = self.db.PinpointSession.find()
         self.assertTrue(session['finish_date'])
 
@@ -530,7 +574,7 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         job, = self.db.Job.find()
         assert job['user'] == user['_id']
-        self.assertTrue(job['description'])
+        self.assertTrue(job['category'])
         self.assertEqual(coins_total_after - coins_total_before,
                          job['coins'])
         self.assertEqual(job['location'], self.newyork['_id'])
@@ -587,7 +631,7 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         # now, for the 10th question, there's no post() because it times out
         # so the next thing will be a get(finish=True)
-        r = _get({'finish': True})
+        r = _post({'finish': True})
         self.assertTrue(r['results']['total_points'])
         self.assertTrue(r['results']['coins'])
         user_settings, = self.db.UserSettings.find()

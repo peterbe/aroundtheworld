@@ -1,37 +1,74 @@
 <div id="quizzing" class="overlay">
-  <div class="timer" style="display:none"></div>
-  <h2 class="quiz-name"></h2>
-  <h2>Play quiz!</h2>
 
-  <div class="points-total-outer">
-    <p>Points:</p>
-    <p class="points-total">0</p>
+  <div class="results" style="display:none">
+    <h2>Well done! You finished the job</h2>
+    <p class="short-summary">You collected <strong class="total-points"></strong> which earned you
+    <strong class="coins"></strong>!</p>
+
+    <h3>Summary of your questions:</h3>
+    <table>
+      <thead>
+        <tr>
+	  <td>&nbsp;</td>
+	  <td>Question</td>
+	  <td>Your answer</td>
+	  <td>Correct answer</td>
+	  <td>Time</td>
+	  <td>Points</td>
+	</tr>
+      </thead>
+      <tfoot>
+        <tr>
+	  <td colspan="5" style="text-align:right">Total:</td>
+	  <td class="number points-total"></td>
+	</tr>
+      </tfoot>
+      <tbody>
+      </tbody>
+    </table>
+
+
   </div>
 
-  <input type="hidden" name="id">
-  <p class="question">
-    <strong>Question:</strong>
-  </p>
-  <ol class="alternatives">
-  </ol>
-  <p class="question-attention tooslow" style="display:none">
-   Sorry, too slow!
-   <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-  </p>
-  <p class="question-attention pleasewait" style="display:none">
-  Wait! Checking your answer...
-  </p>
-  <p class="question-attention correct" style="display:none">
-   Yay! That's right!!<br>
-   <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-  </p>
-  <p class="question-attention wrong" style="display:none">
-   Wrong! Sorry, the correct answer was: <strong class="correct-answer"></strong><br>
-   <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-  </p>
+  <div class="play">
+    <div class="timer" style="display:none"></div>
+    <h2>Quiz job as: <span class="quiz-name"></span></h2>
+
+
+    <div class="points-total-outer">
+      <p>Points:</p>
+      <p class="points-total">0</p>
+    </div>
+
+    <input type="hidden" name="id">
+    <p class="question">
+      <strong>Question
+      (<span class="no-questions"></span>):</strong>
+    </p>
+    <ol class="alternatives">
+    </ol>
+    <p class="question-attention tooslow" style="display:none">
+     Sorry, too slow!
+     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
+    </p>
+    <p class="question-attention pleasewait" style="display:none">
+    Wait! Checking your answer...
+    </p>
+    <p class="question-attention correct" style="display:none">
+     Yay! That's right!!<br>
+     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
+    </p>
+    <p class="question-attention wrong" style="display:none">
+     Wrong! Sorry, the correct answer was: <strong class="correct-answer"></strong><br>
+     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
+    </p>
+
+  </div>
 
   <p class="exit">
-  I give up!  <a href="#city" class="overlay-changer">Go back to the city</a>
+  <span class="pre-finish" style="display:none">I give up!</span>
+  <span class="post-finish">Ok.</span>
+  <a href="#city" class="overlay-changer">Go back to the city</a>
   </p>
 
 </div>
