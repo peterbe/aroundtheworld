@@ -1,6 +1,3 @@
-[submodule "vendor/src/mongokit"]
-	path = vendor/src/mongokit
-	url = git://github.com/namlook/mongokit.git
 [submodule "vendor/src/tornado-utils"]
 	path = vendor/src/tornado-utils
 	url = git://github.com/peterbe/tornado-utils.git

@@ -39,7 +39,8 @@ $(function() {
            ({{ count_locations_total }} cities in total) across {{ count_countries }} countries.
            </p>
           <p><a class="btn" href="{{ reverse_url('admin_locations') }}">Add/Edit locations &raquo;</a></p>
-       </div>
+        </div>
+        {% if is_superuser %}
         <div class="span5">
           <h2>Users</h2>
           <p>Of a total of <strong>{{ count_users }} users</strong>
@@ -47,6 +48,7 @@ $(function() {
           {{ count_new_users}} new users joined in the last two weeks.</p>
           <p><a class="btn" href="/users/">Edit/Remove users &raquo;</a></p>
         </div>
+        {% end %}
       </div>
 
 {% end %}

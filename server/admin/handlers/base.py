@@ -28,7 +28,6 @@ class AuthenticatedBaseHandler(BaseHandler):
         user = self.get_current_user()
         if not user:
             self.redirect('/#login')
-            return
         elif not user['superuser']:
             # check that you're ambassador or mayor
             if (self.db.Ambassador
@@ -40,7 +39,6 @@ class AuthenticatedBaseHandler(BaseHandler):
                                   .count()):
                 return
             self.redirect(self.reverse_url('admin_ohno'))
-            return
 
 
 class AmbassadorBaseHandler(AuthenticatedBaseHandler):
@@ -124,5 +122,16 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           self.db.Mayor
           .find().distinct('user')
         )
+
+        user = self.get_current_user()
+        is_superuser = is_ambassador = False
+        if user['superuser']:
+            is_superuser = True
+        elif (self.db.Ambassador
+                .find({'user': user['_id']})
+                .count()):
+            is_ambassador = True
+        options['is_superuser'] = is_superuser
+        options['is_ambassador'] = is_ambassador
 
         self.render('admin/home.html', **options)

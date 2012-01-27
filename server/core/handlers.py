@@ -315,13 +315,10 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                                   'finish_date': None}))
         if session is None:
             session = self.db.QuestionSession()
-            print "Create new session"
             session['user'] = user['_id']
             session['location'] = location['_id']
             session['category'] = category['_id']
             session.save()
-        else:
-            print "Using existing session", session['_id']
 
         for each in (self.db.SessionAnswer
                      .find({'session': session['_id']})
@@ -356,11 +353,9 @@ class QuizzingHandler(AuthenticatedBaseHandler):
         answer['session'] = session['_id']
         answer.save()
 
-
         _no_answers = (self.db.SessionAnswer
                        .find({'session': session['_id']})
                        .count())
-        print "_no_answers", _no_answers
         data['no_questions'] = {
           'total': self.NO_QUESTIONS,
           'number': _no_answers,

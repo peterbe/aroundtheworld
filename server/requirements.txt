@@ -3,3 +3,4 @@ tornado
 mongokit
 mock
 geopy
+wtforms

@@ -22,10 +22,10 @@ define("port", default=8000, help="run on the given port", type=int)
 
 class Application(tornado.web.Application):
     def __init__(self, database_name=None):
+        ui_modules_map = {}
         for each in ('core.ui_modules', 'admin.ui_modules'):
             _ui_modules = __import__(each, globals(), locals(),
                                      ['ui_modules'], -1)
-            ui_modules_map = {}
             for name in [x for x in dir(_ui_modules)
                          if re.findall('[A-Z]\w+', x)]:
                 thing = getattr(_ui_modules, name)
