@@ -1,3 +1,9 @@
+[submodule "server/vendor/src/tornado-utils"]
+	path = vendor/src/tornado-utils
+	url = git://github.com/peterbe/tornado-utils.git
+[submodule "server/vendor/src/tornado"]
+	path = server/vendor/src/tornado
+	url = git://github.com/facebook/tornado.git
 [submodule "server/vendor/src/wtforms"]
 	path = server/vendor/src/wtforms
 	url = git://github.com/clones/wtforms.git
