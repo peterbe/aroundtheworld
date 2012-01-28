@@ -216,11 +216,16 @@ class HandlersTestCase(BaseHTTPTestCase):
             self._create_question(self.tour_guide, self.newyork)
 
         user = self._login(location=self.newyork)
+        _one_right = False
         for i in range(QuizzingHandler.NO_QUESTIONS):
             r = _get()
             if i + 1 == QuizzingHandler.NO_QUESTIONS:
                 self.assertTrue(r['no_questions']['last'])
-            answer = random.choice(['one', 'two', 'three'])
+            if not _one_right:
+                _one_right = True
+                answer = 'one'
+            else:
+                answer = random.choice(['one', 'two', 'three'])
             time_ = random.random() * 10 - 0.1
             r = self.post_struct(url, {'answer': answer, 'time': time_})
 

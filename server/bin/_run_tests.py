@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-import os
-import unittest
-import site
+import sys, os
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-path = lambda *a: os.path.join(ROOT, *a)
-
-site.addsitedir(path('.'))
-site.addsitedir(path('vendor'))
+sys.path.insert(0, ROOT)
+import here
+import unittest
 
 TEST_MODULES = [
     'core.tests.test_handlers',
