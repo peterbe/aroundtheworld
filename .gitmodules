@@ -1,5 +1,5 @@
 [submodule "server/vendor/src/tornado-utils"]
-	path = vendor/src/tornado-utils
+	path = server/vendor/src/tornado-utils
 	url = git://github.com/peterbe/tornado-utils.git
 [submodule "server/vendor/src/tornado"]
 	path = server/vendor/src/tornado
