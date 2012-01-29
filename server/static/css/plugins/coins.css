@@ -1,6 +1,6 @@
 
 #coins td.transaction-description {
-    font-size: 80%;
+    font-size: 0.9em;
 }
 #coins td.transaction-type-flight {
     width:16px;
@@ -10,5 +10,5 @@
     text-align: right;
 }
 #coins td.load-more a {
-    font-size: 80%;
+    font-size: 0.9em;
 }

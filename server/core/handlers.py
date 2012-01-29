@@ -637,6 +637,40 @@ class CoinsHandler(AuthenticatedBaseHandler):
             transactions.append(transaction)
         return transactions, count
 
+    def post(self):
+        # XXX this is just a temporary hack
+        if self.get_argument('cheat'):
+            user = self.get_current_user()
+            location = self.get_current_location()
+            category = self.db.Category.find_one({'name': 'Cheater'})
+            if not category:
+                category = self.db.Category()
+                category['name'] = u'Cheater'
+                category.save()
+            if self.db.Job.find({'user': user['_id'],
+                                     'location': location['_id'],
+                                     'category': category['_id']}).count():
+
+                self.write_json({'ERROR': 'Cheated here already'})
+                return
+            else:
+                COINS = 1000
+                job = self.db.Job()
+                job['user'] = user['_id']
+                job['coins'] = COINS
+                job['category'] = category['_id']
+                job['location'] = location['_id']
+                job.save()
+
+                user_settings = self.get_current_user_settings()
+                user_settings['coins_total'] += COINS
+                user_settings.save()
+                self.write_json({'coins': COINS})
+                return
+        self.write_json({'ERROR': 'Wrong code'})
+
+
+
 
 def _commafy(s):
     r = []
@@ -738,7 +772,6 @@ class CityHandler(AuthenticatedBaseHandler):
         get = self.get_argument('get', None)
         if get == 'ambassadors':
             data['ambassadors'] = self.get_ambassadors_html(location)
-            print data
         elif get == 'jobs':
             data['jobs'] = self.get_available_jobs(user, location)
         elif get == 'intro':
