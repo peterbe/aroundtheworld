@@ -190,7 +190,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             question['text'] = form.text.data
             question['correct'] = form.correct.data
             question['alternatives'] = [x.strip() for x
-                                        in form.alternatives.data.split()
+                                        in form.alternatives.data.splitlines()
                                         if x.strip()]
             question['alternatives_sorted'] = form.alternatives_sorted.data
             category = (self.db.Category
@@ -242,7 +242,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             question['text'] = form.text.data
             question['correct'] = form.correct.data
             question['alternatives'] = [x.strip() for x
-                                        in form.alternatives.data.split()
+                                        in form.alternatives.data.splitlines()
                                         if x.strip()]
             question['alternatives_sorted'] = form.alternatives_sorted.data
             category = (self.db.Category
@@ -256,9 +256,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
                         .find_one({'_id': ObjectId(form.location.data)}))
             assert location
             question['location'] = location['_id']
-            #print form.category.data
             question.save()
-            #raise NotImplementedError
             self.redirect(self.reverse_url('admin_questions'))
         else:
             self.get(_id, form=form)
