@@ -29,6 +29,10 @@
               ><a href="{{ reverse_url('admin_questions') }}">Questions</a></li>
             <li {% if '/locations/' in current_url %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_locations') }}">Locations</a></li>
+            {% if is_superuser %}
+            <li {% if '/users/' in current_url %}class="active"{% end %}
+              ><a href="{{ reverse_url('admin_users') }}">Users</a></li>
+            {% end %}
             <li><a href="/">Exit Admin</a></li>
           </ul>
         </div>

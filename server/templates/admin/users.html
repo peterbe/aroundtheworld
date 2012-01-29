@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q_city"],
+tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="countries"] { width:150px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} questions {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="condensed-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Coins</th>
+            <th>Miles</th>
+            <th>Current location</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th colspan="2"><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for user, user_settings, location in users %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_user', user['_id']) }}">{{ user['username'] }}</a>
+              {% if user['superuser'] %}
+                <span class="label warning">Superuser</span>
+              {% end %}
+
+            </td>
+            <td>{{ user['email'] }}</td>
+            <td>{% module Thousands(user_settings['coins_total']) %}</td>
+            <td>{% module Thousands(int(user_settings['miles_total'])) %}</td>
+            <td>{{ location }}</td>
+            <td>{{ user['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+{% end %}

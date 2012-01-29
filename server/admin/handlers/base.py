@@ -18,11 +18,19 @@ class BaseHandler(CoreBaseHandler):
 
     def render(self, template, **options):
         options['current_url'] = self.request.path
+        user = self.get_current_user()
+        options['is_mayor'] = options['is_ambassador'] = False
+        options['is_superuser'] = user['superuser']
+        if not options['is_superuser']:
+            options['is_ambassador'] = (self.db.Ambassador
+                                        .find({'user': user['_id']})
+                                        .count())
         return super(BaseHandler, self).render(template, **options)
 
 
 class AuthenticatedBaseHandler(BaseHandler):
     MAYOR_OK = True
+    AMBASSADOR_OK = True
 
     def prepare(self):
         user = self.get_current_user()
@@ -30,9 +38,9 @@ class AuthenticatedBaseHandler(BaseHandler):
             self.redirect('/#login')
         elif not user['superuser']:
             # check that you're ambassador or mayor
-            if (self.db.Ambassador
-                .find({'user': user['_id']})
-                .count()):
+            if self.AMBASSADOR_OK and (self.db.Ambassador
+                                       .find({'user': user['_id']})
+                                       .count()):
                 return
             if self.MAYOR_OK and (self.db.Mayor
                                   .find({'user': user['_id']})
@@ -44,6 +52,13 @@ class AuthenticatedBaseHandler(BaseHandler):
 class AmbassadorBaseHandler(AuthenticatedBaseHandler):
 
     MAYOR_OK = False
+    AMBASSADOR_OK = True
+
+
+class SuperuserBaseHandler(AuthenticatedBaseHandler):
+
+    MAYOR_OK = False
+    AMBASSADOR_OK = False
 
 
 @route('/admin/ohno/', name='admin_ohno')
@@ -124,14 +139,14 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
         )
 
         user = self.get_current_user()
-        is_superuser = is_ambassador = False
-        if user['superuser']:
-            is_superuser = True
-        elif (self.db.Ambassador
-                .find({'user': user['_id']})
-                .count()):
-            is_ambassador = True
-        options['is_superuser'] = is_superuser
-        options['is_ambassador'] = is_ambassador
+        #is_superuser = is_ambassador = False
+        #if user['superuser']:
+        #    is_superuser = True
+        #elif (self.db.Ambassador
+        #        .find({'user': user['_id']})
+        #        .count()):
+        #    is_ambassador = True
+        #options['is_superuser'] = is_superuser
+        #options['is_ambassador'] = is_ambassador
 
         self.render('admin/home.html', **options)
