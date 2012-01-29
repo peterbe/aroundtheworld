@@ -1,5 +1,7 @@
 /* Some overrides from the bootstrap */
 a:link { text-decoration: underline; }
+li { color:rgb(64,64,64); }
+a { color:rgb(60, 60, 60); }
 /* end overrides from bootstrap */
 
 html, body {
@@ -93,7 +95,6 @@ html, body {
     margin-top: 50px;
   }
 
-a { color:rgb(60, 60, 60); }
 
 .overlay-image {
   float: right;
