@@ -14,7 +14,6 @@ var City = (function() {
         .attr('href', hash)
             .text(each.description)
               .click(function() {
-                L($(this).attr('href'));
                 Loader.load_hash($(this).attr('href'));
                 return true;
               }).appendTo($('<li>').appendTo(c));
@@ -25,11 +24,23 @@ var City = (function() {
 
   function _load_embassy(callback) {
     $.getJSON('/city.json', {get: 'ambassadors'}, function(response) {
-      if (response.html) {
+      if (response.ambassadors) {
         $('.embassy .none:visible', container).hide();
-        $('.embassy .html-container', container).html(response.html);
+        $('.embassy .html-container', container).html(response.ambassadors);
       } else {
         $('.embassy .none:hidden', container).show();
+      }
+      callback();
+    });
+  }
+
+  function _load_intro(callback) {
+    $.getJSON('/city.json', {get: 'intro'}, function(response) {
+      if (response.intro) {
+        $('.intro .none:visible', container).hide();
+        $('.intro .html-container', container).html(response.intro);
+      } else {
+        $('.intro .none:hidden', container).show();
       }
       callback();
     });
@@ -47,11 +58,18 @@ var City = (function() {
            map.setZoom(15);
          }
          $('.section:visible', container).hide();
+         if (response.name) {
+           $('.location-name', container).text(response.name);
+         }
          if (page == 'embassy') {
-           $('.country', container).text(response.country);
            _load_embassy(function() {
              $('.embassy .none', container).hide();
              $('.embassy', container).show();
+           });
+         } else if (page == 'intro') {
+           _load_intro(function() {
+             $('.intro .none', container).hide();
+             $('.intro', container).show();
            });
          } else if (page == 'jobs') {
            _load_jobs(function() {

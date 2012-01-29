@@ -109,8 +109,8 @@ function initialize(callback) {
   }
   var opts = {
      zoom: zoom,
-    //center: myLatLng,
     center: center,
+    disableDefaultUI: true,
     mapTypeId: google.maps.MapTypeId.TERRAIN
   };
 

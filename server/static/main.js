@@ -63,6 +63,11 @@ var State = (function() {
         .text(Utils.formatMiles(state.user.miles_total, true));
       $('.user-coins a', container)
         .text(Utils.formatCost(state.user.coins_total, true));
+      if (state.user.admin_access) {
+        $('.admin', container).show();
+      } else {
+        $('.admin', container).hide();
+      }
     } else {
       $('.logged-in:visible', container).hide();
       $('.user-login:hidden', container).show();

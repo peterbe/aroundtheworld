@@ -50,7 +50,9 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_current_ip(self):
         ip = self.request.remote_ip
         if ip == '127.0.0.1':
-            ip = '64.179.205.74'  # debugging, Hartwell, GA
+            logging.warn('remote_ip not known')
+            ip = None
+            #ip = '64.179.205.74'  # debugging, Hartwell, GA
         return ip
 
 
@@ -116,6 +118,13 @@ class BaseHandler(tornado.web.RequestHandler):
             state['user']['coins_total'] = user_settings['coins_total']
             state['user']['disable_sound'] = user_settings['disable_sound']
             location = self.get_current_location(user)
+
+            if user['superuser'] or (self.db.Ambassador
+                                     .find({'user': user['_id']})
+                                     .count()):
+                state['user']['admin_access'] = True
+            else:
+                state['user']['admin_access'] = False
 
             if location:
                 state['location'] = {
@@ -687,18 +696,34 @@ class LocationHandler(AuthenticatedBaseHandler):
 @route('/city.json$', name='city')
 class CityHandler(AuthenticatedBaseHandler):
 
-    AMBASSADORS = {
-      'Sweden': 'sweden.html',
+    TEXTS = {
+      'Sweden': 'sweden',
+    }
+    FLAGS = {
+      'Sweden': 'sweden.png',
     }
 
-    def get_ambassadors_html(self):
-        location = self.get_current_location()
+    def _get_country_directory(self, location):
         country = location['country']
-        if country not in self.AMBASSADORS:
-            return None
+        if country not in self.TEXTS:
+            logging.error("No texts for %r" % country)
+        return os.path.join('texts', self.TEXTS.get(country))
 
-        return self.render_string(
-            'ambassadors/%s' % self.AMBASSADORS[country])
+    def get_ambassadors_html(self, location):
+        dir_ = self._get_country_directory(location)
+        return self.render_string(os.path.join(dir_, 'ambassadors.html'))
+
+    def get_intro_html(self, location):
+        dir_ = self._get_country_directory(location)
+        return self.render_string(os.path.join(dir_, 'intro.html'))
+
+    def get_flag(self, location):
+        country = location['country']
+        if country not in self.FLAGS:
+            logging.warn("No flag for %r" % country)
+            return
+        return self.static_url(os.path.join('images/flags',
+                                            self.FLAGS[country]))
 
     def get(self):
         data = {}
@@ -707,9 +732,11 @@ class CityHandler(AuthenticatedBaseHandler):
 
         get = self.get_argument('get', None)
         if get == 'ambassadors':
-            data['html'] = self.get_ambassadors_html()
+            data['ambassadors'] = self.get_ambassadors_html(location)
         elif get == 'jobs':
             data['jobs'] = self.get_jobs(user, location)
+        elif get == 'intro':
+            data['intro'] = self.get_intro_html(location)
         elif get:
             raise tornado.web.HTTPError(404, 'Invalid get')
         else:

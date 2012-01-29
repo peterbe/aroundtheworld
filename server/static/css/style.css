@@ -1,8 +1,12 @@
+/* Some overrides from the bootstrap */
+a:link { text-decoration: underline; }
+/* end overrides from bootstrap */
+
 html, body {
   height: 100%;
-  margin: 0;
+  /*margin: 0;
   padding: 0;
-  font-family: sans-serif;
+  font-family: sans-serif;*/
 }
 
 #map_canvas {
@@ -39,7 +43,7 @@ html, body {
     }
   #usernav li {
     display:inline;
-    font-size:0.8em;
+    font-size:1em;
   }
   #usernav li {
     margin-right:5px;

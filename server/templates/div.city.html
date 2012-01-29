@@ -1,10 +1,11 @@
 <div id="city" class="overlay">
 
   <div class="home section">
-    <h2>Welcome to <strong></strong></h2>
+    <h2>Welcome to <strong class="location-name"></strong></h2>
     <p>Mucho work needed to be done here.</p>
 
     <ul>
+      <li><a href="#city,intro" class="overlay-changer">First, read an introduction about <span class="country"></span></a></li>
       <li><a href="#airport" class="overlay-changer">Go to the airport</a></li>
       <li><a href="#city,embassy" class="overlay-changer">Meet the ambassadors</a></li>
       <li><a href="#city,jobs" class="overlay-changer">Check out the jobs</a></li>
@@ -26,7 +27,7 @@
   </div>
 
   <div class="embassy section" style="display:none">
-    <h2>Embassy of <span class="country"></span></h2>
+    <h2>Embassy of <span class="location-name"></span></h2>
     <div class="html-container">
     </div>
     <div class="none">
@@ -34,6 +35,20 @@
       <p>If you want to become the ambassador of this country then let us know:
         <a href="#contactus" class="overlay-changer">Contact us</a>
       </p>
+    </div>
+
+    <p>
+      <a href="#city" class="overlay-changer">Back to the city</a>
+    </p>
+  </div>
+
+
+  <div class="intro section" style="display:none">
+    <h2>Introduction to <span class="location-name"></span></h2>
+    <div class="html-container">
+    </div>
+    <div class="none">
+      <p><strong>Sorry</strong>, this country doesn't have an introduction text.</p>
     </div>
 
     <p>
