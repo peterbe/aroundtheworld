@@ -159,8 +159,21 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
     def get(self, form=None):
         data = {}
         if form is None:
+            initial = {}
+            _cutoff = (datetime.datetime.utcnow() -
+                       datetime.timedelta(seconds=60 * 10))  # 10 min
+            for q in (self.db.Question
+                      .find({'author': self.get_current_user()['_id'],
+                             'add_date': {'$gt': _cutoff}})
+                      .sort('add_date', -1)  # newest first
+                      .limit(1)):
+                initial['published'] = q['published']
+                initial['category'] = str(q['category'])
+                initial['location'] = str(q['location'])
+
             form = QuestionForm(categories=self.categories,
-                                locations=self.locations)
+                                locations=self.locations,
+                                **initial)
         data['form'] = form
         self.render('admin/add_question.html', **data)
 
@@ -186,7 +199,6 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             question['category'] = category['_id']
             question['points_value'] = int(form.points_value.data)
             question['published'] = form.published.data
-            print repr(form.published.data)
             question['notes'] = form.notes.data.strip()
             location = (self.db.Location
                         .find_one({'_id': ObjectId(form.location.data)}))
@@ -207,8 +219,8 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
         data['question'] = self.db.Question.find_one({'_id': ObjectId(_id)})
         if form is None:
             initial = dict(data['question'])
-            #initial['spell_correct'] = question.spell_correct
-            #initial['genre'] = question.genre.name
+            initial['category'] = str(initial['category'])
+            initial['location'] = str(initial['location'])
             form = QuestionForm(categories=self.categories,
                                 locations=self.locations,
                                 **initial)

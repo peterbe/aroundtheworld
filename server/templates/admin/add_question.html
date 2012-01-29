@@ -9,6 +9,12 @@ $(function() {
   $('.error input', 'form').change(function() {
     $(this).parents('.error').removeClass('error');
   });
+  $('#id_correct').change(function() {
+    if ($(this).val() && !$('#alternatives_0').val()) {
+      $('#alternatives_0').val($(this).val());
+      $('#alternatives_1').focus();
+    }
+  });
 });
 </script>
 {% end %}

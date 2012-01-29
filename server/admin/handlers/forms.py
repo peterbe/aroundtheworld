@@ -40,7 +40,6 @@ class MultilinesWidget(object):
             values = [x.strip() for x in value.splitlines() if x.strip()]
         else:
             values = value
-        #print "__call__ values", repr(values)
         _removed_title = False
         for i in range(self.length):
             if values is None:
@@ -85,18 +84,25 @@ class QuestionForm(BaseForm):
                                  widget=MultilinesWidget(length=4,
                                                          vertical=True))
     alternatives_sorted = BooleanField("Alternatives ordered",
-                                 description="Bla bla")
+          description="Whether or not the alternatives should appear exactly "
+                      "in this order when shown")
+
     points_value = SelectField("Points value",
-                               choices=[(str(x), str(x)) for x
-                                        in range(1, 5 + 1)])
-    published = BooleanField("Published")
+          choices=[('1', '1 (easy)'),
+                   ('2', '2'),
+                   ('3', '3'),
+                   ('4', '4'),
+                   ('5', '5 (hard)')])
+
+    published = BooleanField("Published",
+                             description="Whether it should immediately appear")
     category = SelectField("Category",
                       [validators.Required()])
     location = SelectField("City",
                       [validators.Required()])
     notes = TextAreaField("Notes",
-                            description="Any references or links to "\
-                                        "strengthen your answer")
+                          description="Any references or links to "\
+                                      "strengthen your answer")
 
     def __init__(self, *args, **kwargs):
         super(QuestionForm, self).__init__(*args, **kwargs)
@@ -108,12 +114,14 @@ class QuestionForm(BaseForm):
           (str(x['_id']), '%s (%s)' % (x['code'], x['country']))
           for x in kwargs['locations']
         ]
+        if kwargs.get('location'):
+            self.location.data = kwargs['location']
 
     def validate(self, *args, **kwargs):
         success = super(QuestionForm, self).validate(*args, **kwargs)
         if success:
             # check invariants
-            if self.data['correct'] not in self.data['alternatives'].split():
+            if self.data['correct'] not in self.data['alternatives'].splitlines():
                 (self._fields['correct']
                   .errors.append("Answer not in alternatives"))
                 success = False
