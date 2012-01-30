@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q_city"],
+tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="countries"] { width:150px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} documents {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <p>
+    <a href="{{ reverse_url('admin_add_document') }}">Add a new document</a>
+    &nbsp;
+    <!--&bull;
+    &nbsp;
+    <a href="{{ reverse_url('admin_questions_numbers') }}">Numbers (who's winning?)</a>-->
+  </p>
+
+  <form action=".">
+      <table class="condensed-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>
+              <select multiple name="types">
+                {% for type in all_types %}
+                <option value="{{ type }}"
+                  {% if type in types %}selected{% end %}
+                >{{ type }}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for document, location, user in documents %}
+          <tr>
+            <td>
+              {% if user %}
+              <a href="{{ reverse_url('admin_document', document['_id']) }}">
+                {{ user['username'] or user['email'] }}</a>
+              {% else %}
+                -
+              {% end %}
+            </td>
+            <td>
+              {% if not user %}
+              <a href="{{ reverse_url('admin_document', document['_id']) }}">
+              {% if location %}
+                  {{ location }}
+              {% else %}
+                  {{ document['country'] }}
+              {% end %}
+              </a>
+              {% else %}
+                -
+              {% end %}
+            </td>
+            <td>
+              <span class="label">{{ document['type'] }}</span>
+            </td>
+            <td>{{ document['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+{% end %}

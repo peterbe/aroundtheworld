@@ -696,26 +696,31 @@ class LocationHandler(AuthenticatedBaseHandler):
 @route('/city.json$', name='city')
 class CityHandler(AuthenticatedBaseHandler):
 
-    TEXTS = {
-      'Sweden': 'sweden',
-    }
     FLAGS = {
       'Sweden': 'sweden.png',
     }
 
-    def _get_country_directory(self, location):
-        country = location['country']
-        if country not in self.TEXTS:
-            logging.error("No texts for %r" % country)
-        return os.path.join('texts', self.TEXTS.get(country))
-
     def get_ambassadors_html(self, location):
-        dir_ = self._get_country_directory(location)
-        return self.render_string(os.path.join(dir_, 'ambassadors.html'))
+        filter_ = {
+          'type': 'ambassadors',
+          'country': location['country'],
+        }
+        document = self.db.HTMLDocument.find_one(filter_)
+        if document:
+            if not document['html']:
+                document.update_html()
+            return document['html']
 
     def get_intro_html(self, location):
-        dir_ = self._get_country_directory(location)
-        return self.render_string(os.path.join(dir_, 'intro.html'))
+        filter_ = {
+          'type': 'intro',
+          'location': location['_id'],
+        }
+        document = self.db.HTMLDocument.find_one(filter_)
+        if document:
+            if not document['html']:
+                document.update_html()
+            return document['html']
 
     def get_flag(self, location):
         country = location['country']
@@ -733,6 +738,7 @@ class CityHandler(AuthenticatedBaseHandler):
         get = self.get_argument('get', None)
         if get == 'ambassadors':
             data['ambassadors'] = self.get_ambassadors_html(location)
+            print data
         elif get == 'jobs':
             data['jobs'] = self.get_available_jobs(user, location)
         elif get == 'intro':

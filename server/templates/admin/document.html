@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+textarea { width:100%; }
+textarea[name="source"] { height:400px; }
+</style>
+{% end %}
+
+{% block extrajs %}
+<script src="{{ static_url('lib/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
+{% if document['source_format'] == 'html' %}
+<script src="{{ static_url('lib/ace/mode-html.js') }}" type="text/javascript" charset="utf-8"></script>
+{% end %}
+{% if document['source_format'] == 'markdown' %}
+<script src="{{ static_url('lib/ace/mode-markdown.js') }}" type="text/javascript" charset="utf-8"></script>
+{% end %}
+<script>
+$(function() {
+  var t = $('textarea[name="source"]');
+  var c = t.parents('div.clearfix');
+  c.hide();
+  $('#editor').text(t.val());
+
+  // https://github.com/ajaxorg/ace/wiki/Embedding---API
+  var editor = ace.edit("editor");
+
+  {% if document['source_format'] == 'html' %}
+    var mode = require("ace/mode/html").Mode;
+  {% end %}
+
+  {% if document['source_format'] == 'markdown' %}
+    var mode = require("ace/mode/markdown").Mode;
+  {% end %}
+  editor.getSession().setMode(new mode());
+
+  $('form[method="post"]').submit(function() {
+    $('#source').val(editor.getSession().getValue());
+  });
+});
+</script>
+{% end %}
+
+{% block content %}
+
+  <h2>Edit document</h2>
+  <h3>
+    {% if location %}
+    Location: {{ location }}
+    {% end %}
+    {% if user %}
+    User: {{ user }}
+    {% end %}
+  </h3>
+
+  {% if form.errors %}
+    <ul class="errors general-errors">
+        {% for field_name, field_errors in [(n,form.errors[n]) for n in form.errors if form.errors[n]] %}
+            {% for error in field_errors %}
+                <li>{{ form[field_name].label }} {{ error }}</li>
+            {% end %}
+        {% end %}
+    </ul>
+  {% end %}
+
+  <form action="." method="post">{% module xsrf_form_html() %}
+  <fieldset>
+
+  <div id="editor" style="position:relative;height: 450px; width: 100%">
+  </div>
+
+  {% for field in form %}
+    <div class="clearfix {% if field.errors %}error{% end %}">
+      {% raw field.label %}
+      <div class="input">
+      {% module RenderField(field) %}
+      {% if field.errors %}
+         <span class="help-inline">{% for error in field.errors %}{{ error }}<br>{% end %}</span>
+      {% end %}
+      </div>
+    </div>
+  {% end %}
+    <div class="actions">
+      <input type="submit" value="Save changes" class="btn primary">
+      <button class="btn" type="reset">Cancel</button>
+    </div>
+  </fieldset>
+
+  </form>
+{% end %}

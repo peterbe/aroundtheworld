@@ -27,6 +27,8 @@ class LocationsAdminHandler(AmbassadorBaseHandler):
                                  .distinct('country'))
         data['all_countries'].sort()
         data['countries'] = self.get_arguments('countries', [])
+        if data['countries']:
+            filter_['country'] = {'$in': data['countries']}
 
         args = dict(self.request.arguments)
         if 'page' in args:

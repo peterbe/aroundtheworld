@@ -5,6 +5,7 @@ from pymongo.objectid import ObjectId
 import datetime
 from mongokit import Document, ValidationError
 from mongokit import Connection
+import markdown
 
 
 connection = Connection()
@@ -339,3 +340,40 @@ class PinpointAnswer(BaseDocument):
       'session',
       'location',
     ]
+
+
+@register
+class HTMLDocument(BaseDocument):
+    __collection__ = 'htmldocuments'
+    structure = {
+      'html': unicode,
+      'source': unicode,
+      'source_format': unicode,
+      'type': unicode,
+      'location': ObjectId,
+      'country': unicode,
+      'user': ObjectId,
+      'notes': unicode,
+    }
+
+    required_fields = [
+      'source',
+      'source_format',
+      'type',
+    ]
+
+    default_values = {
+      'source_format': u'html',
+    }
+
+    validators = {
+      'source_format': lambda x: x in ('html', 'markdown'),
+      'type': lambda x: x in ('intro', 'ambassadors')
+    }
+
+    def update_html(self):
+        if self['source_format'] == 'markdown':
+            self['html'] = markdown.markdown(self['source'])
+            self.save()
+        else:
+            raise NotImplementedError(self['source_format'])

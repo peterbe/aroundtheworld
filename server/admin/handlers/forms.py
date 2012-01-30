@@ -154,3 +154,23 @@ class LocationForm(BaseForm):
                       validators.Length(min=3, max=100)])
     lat = TextField("Latitude", [validators.Required(), Floatable()])
     lng = TextField("Longitude", [validators.Required(), Floatable()])
+
+
+class DocumentForm(BaseForm):
+    source = TextAreaField("Source", [validators.Required()])
+    source_format = SelectField("Source format",
+          [validators.Required()],
+          choices=[('html', 'HTML'),
+                   ('markdown', 'Markdown')])
+    type = SelectField("Type",
+          [validators.Required()],
+          choices=[('intro', 'Intro'),
+                   ('ambassadors', 'Ambassadors')])
+
+    notes = TextAreaField("Notes")
+
+
+class AddDocumentForm(DocumentForm):
+
+    location = TextField("Location")
+    user = TextField("User")
