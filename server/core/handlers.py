@@ -734,7 +734,7 @@ class CityHandler(AuthenticatedBaseHandler):
         if get == 'ambassadors':
             data['ambassadors'] = self.get_ambassadors_html(location)
         elif get == 'jobs':
-            data['jobs'] = self.get_jobs(user, location)
+            data['jobs'] = self.get_available_jobs(user, location)
         elif get == 'intro':
             data['intro'] = self.get_intro_html(location)
         elif get:
@@ -750,7 +750,7 @@ class CityHandler(AuthenticatedBaseHandler):
 
         self.write_json(data)
 
-    def get_jobs(self, user, location):
+    def get_available_jobs(self, user, location):
         categories = defaultdict(int)
         point_values = defaultdict(int)
         _categories = dict((x['_id'], x)
@@ -766,6 +766,8 @@ class CityHandler(AuthenticatedBaseHandler):
         jobs = []
         for category in _categories.values():
             no_questions = categories[category['name']]
+            if no_questions < 10:
+                continue
             job = {
               'type': 'quizzing',
               'category': category['name'],
@@ -1050,6 +1052,8 @@ class PinpointHandler(AuthenticatedBaseHandler):
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
 
+    BASE_PRICE = 100  # coins
+
     def get(self):
         user = self.get_current_user()
         current_location = self.get_current_location(user)
@@ -1090,7 +1094,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         self.write_json(data)
 
     def calculate_cost(self, miles, user):
-        return int(round(miles * .1))
+        return self.BASE_PRICE + int(round(miles * .1))
 
 
 

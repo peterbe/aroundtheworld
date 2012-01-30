@@ -1,5 +1,14 @@
 #!/usr/bin/env python
+try:
+    import here
+except ImportError:
+    import sys
+    import os.path as op
+    sys.path.insert(0, op.abspath(op.join(op.dirname(__file__), '..')))
+    import here
+
 from geopy import geocoders
+
 
 def run(search):
     g = geocoders.Google()
