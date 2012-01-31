@@ -46,6 +46,9 @@ tfoot th select[name="countries"] { width:150px; }
               {% if user['superuser'] %}
                 <span class="label warning">Superuser</span>
               {% end %}
+              {% if user.is_ambassador %}
+                <span class="label notice">Ambassador</span>
+              {% end %}
 
             </td>
             <td>{{ user['email'] }}</td>

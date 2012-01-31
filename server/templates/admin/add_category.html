@@ -4,7 +4,7 @@
 <script>
 $(function() {
   $('button[type="reset"]').click(function() {
-    window.location = '..';
+    window.location = '../';
   });
   $('.error input', 'form').change(function() {
     $(this).parents('.error').removeClass('error');
@@ -27,7 +27,7 @@ $(function() {
     <ul class="errors general-errors">
         {% for field_name, field_errors in [(n,form.errors[n]) for n in form.errors if form.errors[n]] %}
             {% for error in field_errors %}
-                <li>{{ form[field_name].label }} {{ error }}</li>
+                <li><strong>{{ form[field_name].label.text }}:</strong> {{ error }}</li>
             {% end %}
         {% end %}
     </ul>

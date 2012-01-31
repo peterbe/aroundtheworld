@@ -46,6 +46,9 @@ class UsersAdminHandler(SuperuserBaseHandler):
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
         data['filtering'] = bool(filter_)
         _locations = {}
+        _ambassador_users = {}
+        for each in self.db.Ambassador.find():
+            _ambassador_users[each['user']] = each['country']
         for each in (self.db.User
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
@@ -54,6 +57,8 @@ class UsersAdminHandler(SuperuserBaseHandler):
             if each['current_location'] not in _locations:
                 _locations[each['current_location']] = \
                   self.db.Location.find_one({'_id': each['current_location']})
+
+            each.is_ambassador = _ambassador_users.get(each['_id'])
             users.append((
               each,
               self.db.UserSettings.find_one({'user': each['_id']}),

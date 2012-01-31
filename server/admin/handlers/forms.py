@@ -62,6 +62,32 @@ class MultilinesWidget(object):
         return '\n'.join(htmls)
 
 
+class CategoryForm(BaseForm):
+    name = TextField("Category",
+                    [validators.Required(),
+                     validators.Length(min=5, max=100)],
+                    widget=TextInputWithMaxlength(100, attrs={
+                      'size': 100,
+                      'class': 'xlarge',
+                    }))
+
+    def __init__(self, *args, **kwargs):
+        super(CategoryForm, self).__init__(*args, **kwargs)
+        self.categories = kwargs['categories']
+
+    def validate(self, *args, **kwargs):
+        success = super(CategoryForm, self).validate(*args, **kwargs)
+        if success:
+            names = [x['name'].lower() for x in self.categories]
+            if self.data['name'].lower() in names:
+                self._fields['name'].errors.append(
+                  "Category already exists"
+                )
+                success = False
+        return success
+
+
+
 class QuestionForm(BaseForm):
     text = TextField("Question",
                      [validators.Required(),

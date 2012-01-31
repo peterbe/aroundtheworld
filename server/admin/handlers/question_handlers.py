@@ -5,8 +5,8 @@ from collections import defaultdict
 from pymongo.objectid import ObjectId
 import tornado.escape
 from tornado_utils.routes import route
-from .forms import QuestionForm
-from .base import AuthenticatedBaseHandler
+from .forms import QuestionForm, CategoryForm
+from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
 from .base import djangolike_request_dict
 
 
@@ -160,6 +160,8 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
         data = {}
         if form is None:
             initial = {}
+            if self.get_argument('category', None):
+                initial['category'] = self.get_argument('category')
             _cutoff = (datetime.datetime.utcnow() -
                        datetime.timedelta(seconds=60 * 10))  # 10 min
             for q in (self.db.Question
@@ -260,3 +262,51 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             self.redirect(self.reverse_url('admin_questions'))
         else:
             self.get(_id, form=form)
+
+
+class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
+
+    @property
+    def categories(self):
+        return self.db.Category.find({'name': {'$nin': ['Geographer']}})
+
+    @property
+    def locations(self):
+        user = self.get_current_user()
+        filter_ = {'airport_name': {'$ne': None}}
+        if not user['superuser']:
+            countries = (self.db.Ambassador
+                         .find({'user': user['_id']})
+                         .distinct('country'))
+            assert countries  # no support for mayors yet
+            filter_['country'] = {'$in': countries}
+        return (self.db.Location
+                .find(filter_)
+                .sort('code', 1))
+
+
+@route('/admin/questions/categories/add/', name='admin_add_category')
+class AddCategoryAdminHandler(BaseQuestionAdminHandler):
+
+    def get(self, form=None):
+        data = {}
+        if form is None:
+            initial = {}
+            form = CategoryForm(categories=self.categories,
+                                **initial)
+        data['form'] = form
+        self.render('admin/add_category.html', **data)
+
+    def post(self):
+        post_data = djangolike_request_dict(self.request.arguments)
+        form = CategoryForm(post_data,
+                            categories=self.categories)
+        if form.validate():
+            category = self.db.Category()
+            category['name'] = form.name.data
+            category.save()
+            url = self.reverse_url('admin_add_question')
+            url += '?category=%s' % category['_id']
+            self.redirect(url)
+        else:
+            self.get(form=form)
