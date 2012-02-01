@@ -2,9 +2,9 @@ import re
 import urllib
 from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
-#from .forms import UserForm
+from .forms import UserForm
 #from geopy import geocoders
-from .base import SuperuserBaseHandler
+from .base import djangolike_request_dict, SuperuserBaseHandler
 
 
 
@@ -68,38 +68,60 @@ class UsersAdminHandler(SuperuserBaseHandler):
         self.render('admin/users.html', **data)
 
 
-@route('/admin/user/(\w{24})/', name='admin_user')
+@route('/admin/users/(\w{24})/', name='admin_user')
 class UserAdminHandler(SuperuserBaseHandler):
 
+    @property
+    def countries(self):
+        countries = (self.db.Location.find()
+                     .distinct('country'))
+        countries.sort()
+        return countries
+
     def get(self, _id, form=None):
-        raise NotImplementedError
         data = {}
-        data['location'] = self.db.Location.find_one({'_id': ObjectId(_id)})
+        user = self.db.User.find_one({'_id': ObjectId(_id)})
+        data['user'] = user
         if form is None:
-            initial = dict(data['location'])
-            form = LocationForm(**initial)
+            initial = dict(user)
+            initial['ambassador'] = [x['country'] for x in
+                                     self.db.Ambassador
+                                      .find({'user': user['_id']})]
+            form = UserForm(countries=self.countries, **initial)
         data['form'] = form
-        self.render('admin/location.html', **data)
+        data['user_settings'] = (self.db.UserSettings
+                                 .find_one({'user': user['_id']}))
+        data['current_location'] = (self.db.Location
+                                 .find_one({'_id': user['current_location']}))
+        self.render('admin/user.html', **data)
 
     def post(self, _id):
-        raise NotImplementedError
         data = {}
-        location = self.db.Location.find_one({'_id': ObjectId(_id)})
-        data['location'] = location
+        user = self.db.User.find_one({'_id': ObjectId(_id)})
+        data['user'] = user
         post_data = djangolike_request_dict(self.request.arguments)
-        #if 'alternatives' in post_data:
-        #    post_data['alternatives'] = ['\n'.join(post_data['alternatives'])]
 
-        form = LocationForm(post_data)
+        form = UserForm(post_data, countries=self.countries)
         if form.validate():
-            location['city'] = form.city.data
-            location['country'] = form.country.data
-            location['locality'] = form.locality.data or None
-            location['code'] = form.code.data or None
-            location['airport_name'] = form.airport_name.data or None
-            location['lat'] = float(form.lat.data)
-            location['lng'] = float(form.lng.data)
-            location.save()
-            self.redirect(self.reverse_url('admin_locations'))
+            user['username'] = form.username.data
+            user['email'] = form.email.data
+            user['first_name'] = form.first_name.data
+            user['last_name'] = form.last_name.data
+            user['superuser'] = form.superuser.data
+            user.save()
+
+            countries = form.ambassador.data
+            for each in self.db.Ambassador.find({'user': user['_id']}):
+                if each['country'] not in countries:
+                    each.delete()
+                else:
+                    countries.remove(each['country'])
+            for country in countries:
+                ambassador = self.db.Ambassador()
+                ambassador['user'] = user['_id']
+                ambassador['country'] = country
+                ambassador.save()
+
+            self.redirect(self.reverse_url('admin_users'))
         else:
             self.get(_id, form=form)

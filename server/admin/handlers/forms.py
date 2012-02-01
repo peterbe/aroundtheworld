@@ -1,5 +1,5 @@
 from wtforms import (Form, BooleanField, TextField, TextAreaField, validators,
-                     SelectField)
+                     SelectField, SelectMultipleField)
 from wtforms.widgets import html_params, TextInput
 from wtforms.validators import ValidationError
 
@@ -200,3 +200,18 @@ class AddDocumentForm(DocumentForm):
 
     location = TextField("Location")
     user = TextField("User")
+
+
+class UserForm(BaseForm):
+    username = TextField("Username",
+                         [validators.Required()])
+    email = TextField("Email")
+    first_name = TextField("First name")
+    last_name = TextField("Last name")
+    superuser = BooleanField("Superuser")
+    ambassador = SelectMultipleField("Ambassador of...")
+
+    def __init__(self, *args, **kwargs):
+        super(UserForm, self).__init__(*args, **kwargs)
+        self.ambassador.choices = [(x, x)
+                                   for x in kwargs['countries']]
