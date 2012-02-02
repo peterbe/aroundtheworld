@@ -7,7 +7,7 @@ var Plugins = (function() {
   var extra_args = {};
   return {
      load: function(id, extra_arg) {
-       L('*load*', id);
+       //L('*load*', id);
        if (PLUGINS[id] && PLUGINS[id].length) {
          if ($.inArray(id, loaded_plugins) == -1) {
            $.each(PLUGINS[id], function (i, plugin_url) {

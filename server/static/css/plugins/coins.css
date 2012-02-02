@@ -12,3 +12,5 @@
 #coins td.load-more a {
     font-size: 0.9em;
 }
+
+.nav-tabs a { font-weight: bold; font-size:1.1em; }

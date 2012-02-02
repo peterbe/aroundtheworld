@@ -7,10 +7,10 @@ var Coins = (function() {
 
   function _show_transactions(transactions, count, clear) {
     if (clear) {
-      $('.purchases tbody tr', container).remove();
+      $('div.purchases tbody tr', container).remove();
     }
     $.each(transactions, function(i, each) {
-      $('.purchases:hidden', container).show();
+      //$('div.purchases:hidden', container).show();
       var c = $('<tr>');
       $('<td>')
         .addClass('transaction-type-' + each.type)
@@ -27,12 +27,12 @@ var Coins = (function() {
         .addClass('transaction-when')
         .text(each.date)
           .appendTo(c);
-      c.appendTo($('.purchases tbody', container));
+      c.appendTo($('div.purchases tbody', container));
       transactions_shown++;
     });
     if (count > transactions_shown) {
-      $('.purchases .load-more:hidden', container).show();
-      $('.purchases .load-more', container)
+      $('div.purchases .load-more:hidden', container).show();
+      $('div.purchases .load-more', container)
         .off('click').click(function() {
           $.getJSON('/coins.json', {'transactions-page': transactions_page + 1}, function(response) {
             if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
@@ -42,16 +42,16 @@ var Coins = (function() {
           return false;
         });
     } else {
-      $('.purchases .load-more:visible', container).hide();
+      $('div.purchases .load-more:visible', container).hide();
     }
   }
 
   function _show_jobs(jobs, count, clear) {
     if (clear) {
-      $('.jobs tbody tr', container).remove();
+      $('div.jobs tbody tr', container).remove();
     }
     $.each(jobs, function(i, each) {
-      $('.jobs:hidden', container).show();
+      //$('div.jobs:hidden', container).show();
       var c = $('<tr>');
       $('<td>')
         .addClass('job-description')
@@ -69,12 +69,12 @@ var Coins = (function() {
         .addClass('job-when')
         .text(each.date)
           .appendTo(c);
-      c.appendTo($('.jobs tbody', container));
+      c.appendTo($('div.jobs tbody', container));
       jobs_shown++;
     });
     if (count > jobs_shown) {
-      $('.jobs .load-more:hidden', container).show();
-      $('.jobs .load-more', container)
+      $('div.jobs .load-more:hidden', container).show();
+      $('div.jobs .load-more', container)
         .off('click').click(function() {
           $.getJSON('/coins.json', {'jobs-page': jobs_page + 1}, function(response) {
             if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
@@ -84,19 +84,31 @@ var Coins = (function() {
           return false;
         });
     } else {
-      $('.jobs .load-more:visible', container).hide();
+      $('div.jobs .load-more:visible', container).hide();
     }
   }
 
   return {
-     load: function() {
+     load: function(table) {
+       // NB: parameter table is currently not being used
        $.getJSON('/coins.json', function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
 
          $('.short-stats strong', container).text(Utils.formatCost(STATE.user.coins_total, true));
          $('.short-stats:hidden', container).fadeIn(100);
-         _show_transactions(response.transactions, response.count_transactions, true);
-         _show_jobs(response.jobs, response.count_jobs, true);
+
+         $.getJSON('/coins.json', {'transactions-page': 0}, function(response) {
+           $('.loading:visible', container).hide();
+           $('a[href="#tab-purchases"]', container).text(
+              $('a[href="#tab-purchases"]', container).text() + ' (' + response.count_transactions + ')');
+           _show_transactions(response.transactions, response.count_transactions, true);
+           $('.purchases table:hidden', container).show();
+           $.getJSON('/coins.json', {'jobs-page': 0}, function(response) {
+             $('a[href="#tab-jobs"]', container).text(
+                $('a[href="#tab-jobs"]', container).text() + ' (' + response.count_jobs + ')');
+             _show_jobs(response.jobs, response.count_jobs, true);
+           });
+         });
        });
 
        if (STATE.location) {
@@ -108,9 +120,10 @@ var Coins = (function() {
   };
 })();
 
-Plugins.start('coins', function() {
+Plugins.start('coins', function(table) {
   // called every time this plugin is loaded
-  Coins.load();
+  Coins.load(table);
+
   if (window.addEventListener) {
     var state = 0, konami = [38,38,40,40,37,39,37,39,66,65];
     window.addEventListener("keydown", function(e) {
@@ -120,7 +133,7 @@ Plugins.start('coins', function() {
         $.post('/coins.json', {cheat:true}, function(response) {
           if (response.coins) {
             State.update();
-            alert("You cheater! " + response.coins + " coins awarded to you");
+            alert("You cheater!\n" + response.coins + " coins awarded to you");
           } else if (response.ERROR) {
             alert(response.ERROR);
           } else {

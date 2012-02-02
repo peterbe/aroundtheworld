@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+<title>Around the world</title>
+{% include "_stylesheets.html" %}
+<script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
+</head>
+<body>
+
+    <ul class="nav nav-tabs">
+    <li class="active"><a href="#tab-home" data-toggle="tab">Home</a></li>
+    <li><a href="#tab-profile" data-toggle="tab">Profile</a></li>
+    </ul>
+
+<div class="tab-content">
+<div class="tab-pane active" id="tab-home">Home</div>
+<div class="tab-pane" id="tab-profile">Profile!</div>
+</div>
+<div id="foo,bar">foo,bar</div>
+<script src={{static_url('lib/bootstrap-tab.js')}}></script>
+<script>
+$(function() {
+ $('#foo,bar').css('border','1px solid red');
+
+});
+</script>
+</body>
+</html>

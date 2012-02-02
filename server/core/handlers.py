@@ -565,11 +565,12 @@ class CoinsHandler(AuthenticatedBaseHandler):
     def get(self):
         user = self.get_current_user()
         data = {}
-        data['transactions'], count = self.get_transactions(user)
-        data['count_transactions'] = count
-
-        data['jobs'], count = self.get_jobs(user)
-        data['count_jobs'] = count
+        if self.get_argument('transactions-page', None) is not None:
+            data['transactions'], count = self.get_transactions(user)
+            data['count_transactions'] = count
+        if self.get_argument('jobs-page', None) is not None:
+            data['jobs'], count = self.get_jobs(user)
+            data['count_jobs'] = count
         self.write_json(data)
 
     def get_jobs(self, user, limit=10):
@@ -1380,6 +1381,10 @@ class IPLookupHandler(BaseHandler):
         self.write_json(data)
         self.finish()
 
+@route('/test.html')
+class TestHandler(BaseHandler):
+    def get(self):
+        self.render('test.html')
 
 # this handler gets automatically appended last to all handlers inside app.py
 class PageNotFoundHandler(BaseHandler):
