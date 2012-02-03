@@ -208,6 +208,18 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             question['location'] = location['_id']
             question.save()
 
+            count = (self.db.Question
+                     .find({'category': category['_id'],
+                            'location': location['_id']})
+                     .count())
+            if count < 10:
+                msg = ("%s more questions and people will be able to work as a %s in %s" %
+                       (11 - count, category['name'], location))
+            else:
+                msg = ("There are now %s questions of this category in %s" %
+                       (count, location))
+            self.push_flash_message("Question added!", msg, type_='success')
+
             self.redirect(self.reverse_url('admin_questions'))
         else:
             self.get(form=form)

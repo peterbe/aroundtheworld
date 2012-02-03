@@ -63,6 +63,7 @@ class Application(tornado.web.Application):
                                         settings.REDIS_PORT)
 
         from core.models import connection
+        import admin.models  # so it gets registered
         self.db = connection[database_name or settings.DATABASE_NAME]
 
 

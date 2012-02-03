@@ -25,7 +25,50 @@ class BaseHandler(CoreBaseHandler):
             options['is_ambassador'] = (self.db.Ambassador
                                         .find({'user': user['_id']})
                                         .count())
+        options['messages'] = self.pull_flash_messages()
         return super(BaseHandler, self).render(template, **options)
+
+    def push_flash_message(self, title, text=u'', user=None,
+                           type_='info'  # 'success' or 'error'
+                           ):
+        if user is None:
+            user = self.get_current_user()
+            assert user
+            #if not user:
+            #    return
+        if not text:
+            raise ValueError("AT the moment we can't accept blank texts on flash "\
+                             "messages because gritter won't be able to show it")
+        for msg in (self.db.FlashMessage
+                    .find({'user': user['_id']})
+                    .sort('add_date', -1)
+                    .limit(1)):
+            if msg['title'] == title and msg['text'] == text:
+                # but was it several seconds ago?
+                if (datetime.datetime.utcnow() - msg['add_date']).seconds < 3:
+                    return
+        msg = self.db.FlashMessage()
+        msg['user'] = user['_id']
+        msg['title'] = unicode(title)
+        msg['text'] = unicode(text)
+        msg['type'] = unicode(type_)
+        msg.save()
+
+    def pull_flash_messages(self, unread=True, user=None):
+        if user is None:
+            user = self.get_current_user()
+            assert user
+            #if not user:
+            #    return []
+        _search = {'user': user['_id']}
+        if unread:
+            _search['read'] = False
+        messages = []
+        for message in self.db.FlashMessage.find(_search).sort('add_date', 1):
+            messages.append(message)
+            message['read'] = True
+            message.save()
+        return messages
 
 
 class AuthenticatedBaseHandler(BaseHandler):
