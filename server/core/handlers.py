@@ -837,7 +837,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
     PERCENTAGE_COINS_RATIO = 1.0
 
     MIN_DISTANCE = 50.0
-    NO_QUESTIONS = 10
+    NO_QUESTIONS = 5
     SECONDS = 10
 
     CATEGORY_NAME = u'Geographer'

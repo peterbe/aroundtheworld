@@ -89,7 +89,7 @@ var Pinpoint = (function() {
 
   function _finish() {
     Pinpoint.teardown();
-    $.getJSON('/pinpoint.json', {finish: true}, function(response) {
+    $.post('/pinpoint.json', {finish: true}, function(response) {
       $('#pinpoint-tucked:visible').hide();
       $('#pinpoint-splash:visible').hide();
       container.show();
@@ -289,7 +289,6 @@ var Pinpoint = (function() {
       });
     },
     teardown: function() {
-      L('Tearing down');
       if (skip_timer) clearTimeout(skip_timer);
       if (timer) clearTimeout(timer);
       $('#pinpoint-splash').hide();
