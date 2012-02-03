@@ -1,0 +1,17 @@
+  <fieldset>
+  {% for field in form %}
+    <div class="control-group {% if field.errors %}error{% end %}">
+      {% raw field.label %}
+      <div class="controls">
+      {% module RenderField(field) %}
+      {% if field.errors %}
+         <span class="help-inline">{% for error in field.errors %}{{ error }}<br>{% end %}</span>
+      {% end %}
+      </div>
+    </div>
+  {% end %}
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save changes</button>
+      <button type="reset" class="btn">Cancel</button>
+    </div>
+  </fieldset>

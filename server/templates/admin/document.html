@@ -53,15 +53,7 @@ $(function() {
     {% end %}
   </h3>
 
-  {% if form.errors %}
-    <ul class="errors general-errors">
-        {% for field_name, field_errors in [(n,form.errors[n]) for n in form.errors if form.errors[n]] %}
-            {% for error in field_errors %}
-                <li>{{ form[field_name].label }} {{ error }}</li>
-            {% end %}
-        {% end %}
-    </ul>
-  {% end %}
+  {% include "_show_form_errors.html" %}
 
   <form action="." method="post">{% module xsrf_form_html() %}
   <fieldset>

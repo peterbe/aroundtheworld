@@ -27,16 +27,7 @@ $(function() {
 {% block content %}
 
   <h2>Add location</h2>
-
-  {% if form.errors %}
-    <ul class="errors general-errors">
-        {% for field_name, field_errors in [(n,form.errors[n]) for n in form.errors if form.errors[n]] %}
-            {% for error in field_errors %}
-                <li><strong>{{ form[field_name].label.text }}:</strong> {{ error }}</li>
-            {% end %}
-        {% end %}
-    </ul>
-  {% end %}
+  {% include "_show_form_errors.html" %}
 
   <div id="search-results" style="display:none">
     <h3>Do you mean?</h3>
@@ -45,24 +36,6 @@ $(function() {
   </div>
 
   <form action="." method="post">{% module xsrf_form_html() %}
-  <fieldset>
-
-  {% for field in form %}
-    <div class="clearfix {% if field.errors %}error{% end %}">
-      {% raw field.label %}
-      <div class="input">
-      {% module RenderField(field) %}
-      {% if field.errors %}
-         <span class="help-inline">{% for error in field.errors %}{{ error }}<br>{% end %}</span>
-      {% end %}
-      </div>
-    </div>
-  {% end %}
-    <div class="actions">
-      <input type="submit" value="Save changes" class="btn primary">
-      <button class="btn" type="reset">Cancel</button>
-    </div>
-  </fieldset>
-
+  {% include "_show_fieldset.html" %}
   </form>
 {% end %}

@@ -20,7 +20,8 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
         series = defaultdict(list)
         dates = (datetime.datetime(2012, 1, 1),
                  datetime.datetime(2012, 2, 1),
-                 datetime.datetime(2012, 3, 1))
+                 datetime.datetime(2012, 3, 1),
+                 )
         intervals = []
         _prev = None
         for each in dates:
@@ -28,15 +29,23 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
                 intervals.append((_prev, each))
             _prev = each
 
+        _previous = {}
         for start, end in intervals:
             _counts = defaultdict(int)
             for question in (self.db.Question
                              .find({'published': True,
                                     'add_date': {'$gte': start, '$lt': end}})):
                 _counts[question['location']] += 1
+            _these_locations = set()
             for location, count in _counts.items():
-                series[location].append(count)
+                series[location].append(_previous.get(location, 0) + count)
+                _previous[location] = count
+                _these_locations.add(location)
+            for location in series.keys():
+                if location not in _these_locations:
+                    series[location].append(_previous.get(location, 0))
 
+        #print series
         _names = dict((x['_id'], x['country'])
                       for x in self.db.Location.find())
         series = [{'name': _names[x], 'data': y}
