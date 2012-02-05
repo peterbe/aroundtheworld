@@ -121,7 +121,10 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_homepage(self):
         response = self.client.get('/')
         self.assertEqual(response.code, 200)
-        self.assertTrue(settings.PROJECT_TITLE in response.body)
+        body = response.body
+        if isinstance(body, str):
+            body = unicode(body, 'utf-8')
+        self.assertTrue(settings.PROJECT_TITLE in body)
 
     def test_quizzing(self):
         assert not self.db.QuestionSession.find().count()
@@ -316,8 +319,8 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_coins(self):
         url = self.reverse_url('coins')
 
-        def _get():
-            return self.get_struct(url)
+        def _get(*a, **k):
+            return self.get_struct(url, *a, **k)
 
         r = _get()
         self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
@@ -329,7 +332,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         user_settings['miles_total'] = 0.0
         user_settings.save()
         r = _get()
-        self.assertEqual(r['transactions'], [])
+        self.assertEqual(r, {})
 
         sanfran = self.db.Location()
         sanfran['code'] = u'SFO'
@@ -374,7 +377,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         tx2['flight'] = f2['_id']
         tx2.save()
 
-        r = _get()
+        r = _get({'transactions-page': 0})
         t1 = r['transactions'][0]
         self.assertEqual(t1['cost'], 200)
         self.assertTrue(sanfran['city'] in t1['description'])
@@ -760,19 +763,33 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertTrue(r['destinations'][-1]['id'], 'moon')
 
     def test_city_ambassadors(self):
-        nonloc = self.db.Location()
-        nonloc['country'] = u'Unheardof'
-        nonloc['city'] = u'Place'
-        nonloc['lat'] = 1.0
-        nonloc['lng'] = 1.0
-        nonloc.save()
-        self._login(location=nonloc)
+        loc = self.db.Location()
+        loc['country'] = u'Unheardof'
+        loc['city'] = u'Place'
+        loc['lat'] = 1.0
+        loc['lng'] = 1.0
+        loc.save()
+        self._login(location=loc)
         url = self.reverse_url('city')
         response = self.get_struct(url, {'get': 'ambassadors'})
-        self.assertEqual(response['html'], None)
+        self.assertEqual(response['ambassadors'], None)
 
-        for country in CityHandler.AMBASSADORS:
-            nonloc['country'] = unicode(country)
-            nonloc.save()
-            response = self.get_struct(url, {'get': 'ambassadors'})
-            self.assertTrue(response['html'])
+        user = self.db.User()
+        user['username'] = u'karl'
+        user.save()
+
+        ambassador = self.db.Ambassador()
+        ambassador['user'] = user['_id']
+        ambassador['country'] = loc['country']
+        ambassador.save()
+
+        document = self.db.HTMLDocument()
+        document['source'] = u'Check *this* out!'
+        document['source_format'] = u'markdown'
+        document['type'] = u'ambassadors'
+        document['country'] = loc['country']
+        document['user'] = user['_id']
+        document.save()
+
+        response = self.get_struct(url, {'get': 'ambassadors'})
+        self.assertTrue(u'Check <em>this</em> out!' in response['ambassadors'])
