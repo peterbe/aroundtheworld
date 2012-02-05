@@ -25,8 +25,20 @@
           <ul class="nav">
             <li {% if current_url == reverse_url('admin_home') %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_home') }}">Home</a></li>
-            <li {% if '/questions/' in current_url %}class="active"{% end %}
-              ><a href="{{ reverse_url('admin_questions') }}">Questions</a></li>
+            <li class="dropdown{% if '/questions/' in current_url %} active{% end %}"
+	        id="question-menu">
+             <a class="dropdown-toggle" data-toggle="dropdown" 
+	         href="#question-menu">Questions <b class="caret"></b>
+	     </a>
+	     <ul class="dropdown-menu">
+                <li><a href="{{ reverse_url('admin_questions') }}">All questions</a></li>
+                <li><a href="{{ reverse_url('admin_add_question') }}">Add a new question</a></li>
+                <li><a href="{{ reverse_url('admin_questions_numbers') }}">Numbers (who's winning?)</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ reverse_url('admin_categories') }}">All categories</a></li>
+                <li><a href="{{ reverse_url('admin_add_category') }}">Add a new category</a></li>
+              </ul>
+	    </li>
             <li {% if '/locations/' in current_url %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_locations') }}">Locations</a></li>
             {% if is_superuser or is_ambassador %}
@@ -105,6 +117,7 @@
 
 
   <script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
+  <script src="{{ static_url('lib/bootstrap-dropdown.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-modal.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-tooltip.js') }}"></script>
   <script>
@@ -113,6 +126,8 @@
       console.log.apply(console, arguments);
   }
   $(function() {
+    $('.dropdown-toggle').dropdown();
+    
     $('a.close').click(function() {
       $(this).parents('.alert').fadeOut(400);
       return false;
