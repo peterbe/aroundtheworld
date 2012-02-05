@@ -18,6 +18,7 @@ from tornado_utils.send_mail import send_email
 from tornado.escape import json_decode, json_encode
 from pymongo.objectid import InvalidId, ObjectId
 from geopy.distance import distance as geopy_distance
+from core.ui_modules import QuestionPictureThumbnailMixin
 
 from models import User, Question
 import settings
@@ -281,7 +282,7 @@ class FlightPathsHandler(BaseHandler):
 
 
 @route('/quizzing.json$', name='quizzing')
-class QuizzingHandler(AuthenticatedBaseHandler):
+class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
 
     # number between 0 and (inclusive) 1.0 that decides how many coins to
     # give for a percentage.
@@ -342,6 +343,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
             if previous_question['answer'] is None:
                 # no answer was sent, it must have timed out
                 previous_question['timedout'] = True
+                previous_question['points'] = 0
                 previous_question.save()
 
         try:
@@ -375,6 +377,16 @@ class QuizzingHandler(AuthenticatedBaseHandler):
           'text': question['text'],
           'alternatives': question['alternatives'],
         }
+        if question.has_picture():
+            picture = question.get_picture()
+            uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+
+            url = self.static_url(uri.replace('/static/',''))
+            data['question']['picture'] = {
+              'url': url,
+              'width': width,
+              'height': height,
+            }
         data['question']['seconds'] = self.SECONDS
         self.write_json(data)
 
@@ -449,6 +461,10 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                            .find({'session': session['_id']})
                            .sort('add_date', 1)  # oldest first
                            ):
+                if answer['timedout'] and answer['points'] is None:
+                    raise Exception("this shouldn't happen any more")
+                    answer['points'] = 0
+                    answer.save()
                 total_points += answer['points']
                 question = self.db.Question.find_one({'_id': answer['question']})
                 summary.append({
@@ -460,6 +476,7 @@ class QuizzingHandler(AuthenticatedBaseHandler):
                            and answer['time']
                            or None),
                   'points': answer['points'],
+                  'timedout': answer['timedout'],
                 })
             data['summary'] = summary
             coins = self.points_to_coins(total_points)
@@ -500,7 +517,6 @@ class QuizzingHandler(AuthenticatedBaseHandler):
             answer_obj.save()
 
         self.write_json(data)
-
 
 @route('/settings.json$', name='settings')
 class SettingsHandler(AuthenticatedBaseHandler):
@@ -801,12 +817,10 @@ class CityHandler(AuthenticatedBaseHandler):
             category = _categories[q['category']]
             categories[category['name']] += 1
             point_values[category['name']] += q['points_value']
-        #print categories
-        #print point_values
         jobs = []
         for category in _categories.values():
             no_questions = categories[category['name']]
-            if no_questions < 10:
+            if no_questions < QuizzingHandler.NO_QUESTIONS:
                 continue
             job = {
               'type': 'quizzing',

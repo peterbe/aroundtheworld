@@ -1,3 +1,7 @@
+import os.path as op
+ROOT = op.abspath(op.dirname(__file__))
+path = lambda *a: op.join(ROOT, *a)
+
 PROJECT_TITLE = u"Around The World"
 DATABASE_NAME = "aroundtheworld"
 
@@ -11,6 +15,8 @@ REDIS_PORT = 6379
 # complete this in your local_settings.py to get emails sent on errors
 ADMIN_EMAILS = (
 )
+
+THUMBNAIL_DIRECTORY = path('static/thumbnails')
 
 try:
     from local_settings import *

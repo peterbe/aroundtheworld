@@ -250,6 +250,26 @@ class Question(BaseDocument):
     def check_answer(self, value):
         return value.lower() == self['correct'].lower()
 
+    def has_picture(self):
+        return bool(self.db.QuestionPicture
+                    .find({'question': self['_id']})
+                    .count())
+
+    def get_picture(self):
+        return self.db.QuestionPicture.find_one({'question': self['_id']})
+
+
+@register
+class QuestionPicture(BaseDocument):
+    __collection__ = 'question_pictures'
+    structure = {
+      'question': ObjectId,
+      'render_attributes': dict,
+    }
+    required_fields = ['question']
+    gridfs = {'files': ['original']}
+
+
 @register
 class Category(BaseDocument):
     __collection__ = 'questioncategories'

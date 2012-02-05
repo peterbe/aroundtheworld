@@ -3,3 +3,4 @@ coverage_report/
 sleeping/
 ace-clone/
 server/vendor/bin/markdown_py
+server/static/thumbnails/

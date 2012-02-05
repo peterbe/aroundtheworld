@@ -1,9 +1,12 @@
+import mimetypes
 import datetime
 import re
 import urllib
+from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import ObjectId
 import tornado.escape
+from tornado.web import HTTPError
 from tornado_utils.routes import route
 from .forms import QuestionForm, CategoryForm
 from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
@@ -190,6 +193,8 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
 
     def post(self):
         post_data = djangolike_request_dict(self.request.arguments)
+        if self.request.files:
+            post_data.update(djangolike_request_dict(self.request.files))
         if 'alternatives' in post_data:
             post_data['alternatives'] = ['\n'.join(post_data['alternatives'])]
         form = QuestionForm(post_data,
@@ -216,6 +221,30 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             assert location
             question['location'] = location['_id']
             question.save()
+            if form.picture.data:
+                picture = self.db.QuestionPicture()
+                picture['question'] = question['_id']
+                picture.save()
+                try:
+                    ok = False
+                    image = form.picture.data
+                    if not any([image['filename'].lower().endswith(x)
+                                for x in ('.png', '.jpg', '.gif', '.jpeg')]):
+                        raise HTTPError(400)
+                    assert isinstance(image['body'], str), type(image['body'])
+                    type_, __ = mimetypes.guess_type(image['filename'])
+                    with picture.fs.new_file('original') as f:
+                        f.content_type = type_
+                        f.write(image['body'])
+                    ok = True
+                finally:
+                    if not ok:
+                        picture.delete()
+                        self.push_flash_message(
+                          'Picture upload failed',
+                          text='Check that the requirements for the picture is correct',
+                          type_='error'
+                          )
 
             count = (self.db.Question
                      .find({'category': category['_id'],
@@ -257,7 +286,8 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
         post_data = djangolike_request_dict(self.request.arguments)
         if 'alternatives' in post_data:
             post_data['alternatives'] = ['\n'.join(post_data['alternatives'])]
-
+        if self.request.files:
+            post_data.update(djangolike_request_dict(self.request.files))
         form = QuestionForm(post_data,
                             categories=self.categories,
                             locations=self.locations)
@@ -280,6 +310,37 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             assert location
             question['location'] = location['_id']
             question.save()
+
+            if form.picture.data:
+                if question.has_picture():
+                    picture = question.get_picture()
+                    picture.delete()
+                picture = self.db.QuestionPicture()
+                picture['question'] = question['_id']
+                picture.save()
+
+                try:
+                    ok = False
+                    image = form.picture.data
+                    if not any([image['filename'].lower().endswith(x)
+                                for x in ('.png', '.jpg', '.gif', '.jpeg')]):
+                        raise HTTPError(400)
+                    assert isinstance(image['body'], str), type(image['body'])
+                    type_, __ = mimetypes.guess_type(image['filename'])
+                    with picture.fs.new_file('original') as f:
+                        f.content_type = type_
+                        f.write(image['body'])
+                    ok = True
+                finally:
+                    if not ok:
+                        picture.delete()
+                        self.push_flash_message(
+                          'Picture upload failed',
+                          text='Check that the requirements for the picture is correct',
+                          type_='error'
+                          )
+
+
             self.redirect(self.reverse_url('admin_questions'))
         else:
             self.get(_id, form=form)
@@ -331,3 +392,28 @@ class AddCategoryAdminHandler(BaseQuestionAdminHandler):
             self.redirect(url)
         else:
             self.get(form=form)
+
+
+@route('/admin/questions/categories/', name='admin_categories')
+class CategoriesAdminHandler(BaseQuestionAdminHandler):
+
+    def get(self):
+        data = {}
+        counts = {}
+        categories = []
+        locations = []
+        for location in (self.db.Location
+                         .find({'airport_name': {'$ne': None}})
+                         .sort('code')):
+            locations.append(location)
+
+        for category in self.db.Category.find().sort('name'):
+            counts[category['name']] = {}
+            categories.append(category)
+            for location in locations:
+                count = self.db.Question.find({'category': category['_id'], 'location': location['_id']}).count()
+                counts[category['name']][location['code']] = count
+        data['categories'] = categories
+        data['locations'] = locations
+        data['counts'] = counts
+        self.render('admin/categories.html', **data)

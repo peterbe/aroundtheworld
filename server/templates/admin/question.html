@@ -9,6 +9,15 @@ $(function() {
   $('.error input', 'form').change(function() {
     $(this).parents('.error').removeClass('error');
   });
+
+  if ($('.thumbnail-preview-wrapper').size()) {
+    $('.thumbnail-preview-wrapper').detach().insertBefore($('input[type="file"]'));
+  }
+  if ($('a.thumbnail-preview').size()) {
+    $('#id_text').change(function() {
+      $('a.thumbnail-preview').data('question', $(this).val());
+    });
+  }
 });
 </script>
 {% end %}
@@ -18,7 +27,18 @@ $(function() {
   <h2>Edit question</h2>
 
   {% include "_show_form_errors.html" %}
-  <form class="form-horizontal" action="." method="post">{% module xsrf_form_html() %}
+  <form class="form-horizontal" enctype="multipart/form-data" action="." method="post">{% module xsrf_form_html() %}
   {% include "_show_fieldset.html" %}
   </form>
+
+  {% if question.has_picture() %}
+    <p class="thumbnail-preview-wrapper">
+        <a title="Question has an picture" class="thumbnail-preview"
+           data-toggle="modal" data-question="{{ question['text'] }}"
+           href="{% module GetQuestionPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
+           >{% module ShowQuestionPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
+        &larr; existing picture
+    </p>
+  {% end %}
+
 {% end %}

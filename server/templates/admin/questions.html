@@ -32,6 +32,7 @@ tfoot th select[name="authors"] { width:100px; }
         <thead>
           <tr>
             <th>Question</th>
+            <th>Picture</th>
             <th>Location</th>
             <th>Category</th>
             <th>Points</th>
@@ -42,6 +43,9 @@ tfoot th select[name="authors"] { width:100px; }
         <tfoot>
           <tr>
             <th><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th>
+              &nbsp;
+            </th>
             <th>
               <select multiple name="locations">
                 {% for location in all_locations %}
@@ -96,6 +100,16 @@ tfoot th select[name="authors"] { width:100px; }
                 <span class="label warning">Not published</span>
               {% end %}
             </td>
+            <td>
+            {% if question.has_picture() %}
+            <a title="Question has an picture" class="thumbnail-preview"
+               data-toggle="modal" data-question="{{ question['text'] }}"
+               href="{% module GetQuestionPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
+               >{% module ShowQuestionPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
+            {% else %}
+             -
+            {% end %}
+            </td>
             <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
             <td>{{ category['name'] }}</td>
             <td>{{ question['points_value'] }}</td>
@@ -125,4 +139,6 @@ tfoot th select[name="authors"] { width:100px; }
         </ul>
       </div>
     </form>
+
+
 {% end %}

@@ -55,7 +55,6 @@ var Quiz = (function() {
       $('tbody tr', container).remove();
       $('tfoot .points-total').text('');
       $.each(response.summary, function(i, each) {
-        L(each);
         var tr = $('<tr>');
         if (each.correct) {
           tr.addClass('correct');
@@ -69,18 +68,32 @@ var Quiz = (function() {
           .addClass('question')
           .text(each.question)
             .appendTo(tr);
-        $('<td>')
-          .addClass('answer')
-          .text(each.your_answer)
-            .appendTo(tr);
+        if (each.timedout) {
+          $('<td>')
+            .addClass('timedout')
+              .text('timed out')
+                .appendTo(tr);
+        } else {
+          $('<td>')
+            .addClass('answer')
+              .text(each.your_answer)
+                .appendTo(tr);
+        }
         $('<td>')
           .addClass('answer')
           .text(each.correct_answer)
             .appendTo(tr);
-        $('<td>')
-          .addClass('number')
-          .text(Utils.formatPoints(each.time))
-            .appendTo(tr);
+        if (each.timedout) {
+          $('<td>')
+            .addClass('timedout')
+              .text('-')
+                .appendTo(tr);
+        } else {
+          $('<td>')
+            .addClass('number')
+              .text(Utils.formatPoints(each.time))
+                .appendTo(tr);
+        }
         $('<td>')
           .addClass('number')
           .text(each.points)
@@ -90,7 +103,7 @@ var Quiz = (function() {
         tr.appendTo(tbody);
       });
 
-      $('tfoot .points-total', container)
+      $('tfoot .points-total-total', container)
         .text(_total_points);
     });
   }
@@ -117,7 +130,7 @@ var Quiz = (function() {
          success: function (response) {
            $('.pleasewait:visible', container).hide();
            if (response.correct) {
-             $('.correct', container).show('fast');
+             $('.correct', container).fadeIn(200);
              if (response.points_value) {
                var v = parseInt($('.points-total', container).text());
                $('.points-total', container).text(v + response.points_value);
@@ -126,7 +139,7 @@ var Quiz = (function() {
              if (response.correct_answer) {
                $('.correct-answer', container).text(response.correct_answer);
              }
-             $('.wrong', container).show('fast');
+             $('.wrong', container).fadeIn(200);
            }
            Quiz.restart_timer(3);
          },
@@ -181,7 +194,7 @@ var Quiz = (function() {
          Quiz.load_next();
        } else {
          if (timedout) {
-           $('.tooslow', container).show('fast');
+           $('.tooslow', container).fadeIn(200);
            if ($('.question:visible', container).size()) {
              Quiz.restart_timer();
            }
@@ -189,12 +202,21 @@ var Quiz = (function() {
        }
      },
      show_question: function(question) {
+       if (question.picture) {
+         Utils.preload_image(question.picture.url);
+         $('.thumbnail-wrapper:hidden', container).show();
+         $('.thumbnail-wrapper .loading:hidden', container).show();
+         $('.thumbnail-wrapper img', container).remove();
+       } else {
+         $('.thumbnail-wrapper:visible', container).hide();
+         $('.thumbnail-wrapper img', container).remove();
+       }
        $('p.question span.question', container).remove();
        //$('ul.question li', container).remove();
        $('.alternatives li', container).remove();
        $('.alternatives', container).css('opacity', 1.0);
        $('.pleasewait:visible', container).hide();
-       $('input[name="id"]', container).val(question.id);
+       //$('input[name="id"]', container).val(question.id);
        $('.question-attention:visible', container).hide();
        $('<span>')
          .addClass('question')
@@ -216,13 +238,26 @@ var Quiz = (function() {
            $('.alt' + i, container).click();
          });
        });
-       Quiz.start_timer(question.seconds);
+       if (question.picture) {
+         $('<img>')
+           .attr('width', question.picture.width)
+           .attr('height', question.picture.height)
+           .attr('alt', question.text)
+           .addClass('thumbnail')
+           .ready(function() {
+             $('.thumbnail-wrapper .loading', container).hide();
+             Quiz.start_timer(question.seconds);
+           })
+           .appendTo($('.thumbnail-wrapper', container))
+           .attr('src', question.picture.url);
+       } else {
+         Quiz.start_timer(question.seconds);
+       }
      },
     show_name: function (name) {
        $('.quiz-name', container).text(name);
      },
     load_next: function(category) {
-      L('last?', _next_is_last);
       if (_next_is_last) {
         _finish();
       } else {
@@ -231,6 +266,8 @@ var Quiz = (function() {
       }
     },
     teardown: function() {
+      $('.thumbnail-wrapper:visible', container).hide();
+      $('.thumbnail-wrapper img', container).remove();
       $.post('/quizzing.json', {teardown: true});
     }
   }

@@ -1,5 +1,5 @@
 from wtforms import (Form, BooleanField, TextField, TextAreaField, validators,
-                     SelectField, SelectMultipleField)
+                     SelectField, SelectMultipleField, FileField)
 from wtforms.widgets import html_params, TextInput
 from wtforms.validators import ValidationError
 
@@ -65,7 +65,7 @@ class MultilinesWidget(object):
 class CategoryForm(BaseForm):
     name = TextField("Category",
                     [validators.Required(),
-                     validators.Length(min=5, max=100)],
+                     validators.Length(min=2, max=100)],
                     widget=TextInputWithMaxlength(100, attrs={
                       'size': 100,
                       'class': 'xlarge',
@@ -87,22 +87,21 @@ class CategoryForm(BaseForm):
         return success
 
 
-
 class QuestionForm(BaseForm):
     text = TextField("Question",
                      [validators.Required(),
-                      validators.Length(min=5, max=100)],
+                      validators.Length(min=5, max=200)],
                      description="Make sure the question ends with a ?",
-                     widget=TextInputWithMaxlength(100, attrs={
-                       'size': 100,
+                     widget=TextInputWithMaxlength(200, attrs={
+                       'size': 200,
                        'class': 'xlarge',
                      }),
                      id="id_text")
     correct = TextField("Answer",
                        [validators.Required(),
-                        validators.Length(min=1, max=50)],
+                        validators.Length(min=1, max=100)],
                       description="Make it reasonably short and easy to type",
-                      widget=TextInputWithMaxlength(50),
+                      widget=TextInputWithMaxlength(100),
                       id="id_correct")
     alternatives = TextAreaField("Alternatives",
                                  [validators.Required()],
@@ -112,6 +111,9 @@ class QuestionForm(BaseForm):
     alternatives_sorted = BooleanField("Alternatives ordered",
           description="Whether or not the alternatives should appear exactly "
                       "in this order when shown")
+
+    picture = FileField("Picture",
+                        description="Optional picture to go with the question")
 
     points_value = SelectField("Points value",
           choices=[('1', '1 (easy)'),
@@ -151,6 +153,7 @@ class QuestionForm(BaseForm):
                 (self._fields['correct']
                   .errors.append("Answer not in alternatives"))
                 success = False
+
         return success
 
 

@@ -1,12 +1,15 @@
 <div id="quizzing" class="overlay">
 
   <div class="results" style="display:none">
-    <h2>Well done! You finished the job</h2>
-    <p class="short-summary">You collected <strong class="total-points"></strong> which earned you
-    <strong class="coins"></strong>!</p>
+    <h2>Well done! You finished the job!</h2>
+    <p class="short-summary">
+      You collected
+      <strong class="total-points"></strong> which earned you
+      <strong class="coins"></strong>!
+    </p>
 
     <h3>Summary of your questions:</h3>
-    <table>
+    <table class="table">
       <thead>
         <tr>
 	  <td>&nbsp;</td>
@@ -20,7 +23,7 @@
       <tfoot>
         <tr>
 	  <td colspan="5" style="text-align:right">Total:</td>
-	  <td class="number points-total"></td>
+	  <td class="number points-total-total"></td>
 	</tr>
       </tfoot>
       <tbody>
@@ -38,6 +41,10 @@
     <div class="points-total-outer">
       <p>Points:</p>
       <p class="points-total">0</p>
+    </div>
+
+    <div class="thumbnail-wrapper" style="display:none">
+      <p class="loading">Loading picture...</p>
     </div>
 
     <input type="hidden" name="id">

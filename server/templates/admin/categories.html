@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block extrajs %}
+<script src="{{ static_url('lib/bootstrap-tooltip.js') }}"></script>
+<script>
+$(function() {
+  $('a[rel="tooltip"]').tooltip();
+});
+</script>
+{% end %}
+
+{% block content %}
+  <h2>All categories</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Category</th>
+        {% for location in locations %}
+        <th><a href="{{ reverse_url('admin_location', location['_id']) }}" rel="tooltip" title="{{ location }}">{{ location['code'] }}</a></th>
+        {% end %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for category in categories %}
+      <tr>
+        <td>{{ category['name'] }}</td>
+        {% for location in locations %}
+        <td>{{ counts[category['name']].get(location['code'], 0) }}</td>
+        {% end %}
+      </tr>
+      {% end %}
+    </tbody>
+  </table>
+
+{% end %}

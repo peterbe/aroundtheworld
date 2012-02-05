@@ -94,6 +94,13 @@ var State = (function() {
 })();
 
 var Utils = (function() {
+
+  function isInt(x) {
+    var y = parseInt(x);
+    if (isNaN(y)) return false;
+    return x == y && x.toString() == y.toString();
+  }
+
   function tsep(n,swap) {
     var ts=",", ds="."; // thousands and decimal separators
     if (swap) { ts=","; ts="."; } // swap if requested
@@ -127,9 +134,11 @@ var Utils = (function() {
       if (include_suffix) {
         var suffix = 'points';
         if (v == 1) suffix = 'point';
-        return v.toFixed(1) + ' ' + suffix;
+        if (!isInt(v)) v = v.toFixed(1);
+        return v + ' ' + suffix;
       }
-      return v.toFixed(1);
+      if (!isInt(v)) v = v.toFixed(1);
+      return v;
     },
     preload_image: function(url) {
       var i = document.createElement('img');

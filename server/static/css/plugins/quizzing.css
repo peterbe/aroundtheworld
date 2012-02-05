@@ -9,20 +9,24 @@
     text-align:center;
     background-color:#fff;
 }
-
+#quizzing .short-summary {
+    text-align:center;
+    font-size:130%;
+    margin:20px;
+}
 #quizzing .pleasewait {
     border:1px solid green;
 }
 #quizzing .tooslow {
     border:1px solid red;
 }
-#quizzing .correct {
+#quizzing p.correct {
     color: white;
     font-weight: bold;
     background-color:green;
     border:1px solid green;
 }
-#quizzing .wrong {
+#quizzing p.wrong {
     color: white;
     font-weight: bold;
     background-color:red;
@@ -38,4 +42,35 @@
 #quizzing .points-total {
     font-size:2em;
     font-weight:bold;
+}
+#quizzing .points-total {
+    font-size:2em;
+    font-weight:bold;
+}
+#quizzing tfoot td  {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+#quizzing .thumbnail-wrapper {
+    float: right;
+    margin-right: 50px;
+}
+#quizzing .thumbnail-wrapper .loading {
+    margin: 40px;
+    font-style: italic;
+}
+#quizzing td {
+    border-top: 1px solid #858585;
+}
+#quizzing tr.wrong {
+    background-color: #ff7373;
+}
+#quizzing tr.correct {
+    background-color: #c9f76f;
+}
+#quizzing td.timedout {
+    font-style: italic;
+}
+#quizzing td.question {
+    font-weight: bold;
 }

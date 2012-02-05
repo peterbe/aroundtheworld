@@ -88,7 +88,22 @@
     {% end %}
     </div> <!-- /container -->
 
+<div id="picture-modal" class="modal fade">
+  <div class="modal-header">
+    <a class="close" data-dismiss="modal">×</a>
+    <h3>Picture preview</h3>
+  </div>
+  <div class="modal-body" style="text-align:center">
+    <img>
+  </div>
+  <div class="modal-footer">
+    <a href="#" class="btn">Close</a>
+  </div>
+</div>
+
+
   <script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
+  <script src="{{ static_url('lib/bootstrap-modal.js') }}"></script>
   <script>
   function L() {
     if (window.console && window.console.log)
@@ -97,6 +112,18 @@
   $(function() {
     $('a.close').click(function() {
       $(this).parents('.alert').fadeOut(400);
+      return false;
+    });
+
+    $('a.thumbnail-preview').click(function() {
+      $('h3', '#picture-modal').text($(this).data('question'));
+      L($(this).data('question'));
+      $('img', '#picture-modal').attr('src', $(this).attr('href'));
+      $('#picture-modal').modal('show');
+      return false;
+    });
+    $('.modal a.close, .modal a.btn').click(function() {
+      $('#picture-modal').modal('hide');
       return false;
     });
   });
