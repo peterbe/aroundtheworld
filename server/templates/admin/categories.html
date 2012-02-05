@@ -16,7 +16,7 @@
       <tr>
         <td>{{ category['name'] }}</td>
         {% for location in locations %}
-        <td>{{ counts[category['name']].get(location['code'], 0) }}</td>
+        <td><a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}&amp;categories={{ category['name'].replace(' ', '+') }}">{{ counts[category['name']].get(location['code'], 0) }}</td>
         {% end %}
       </tr>
       {% end %}
