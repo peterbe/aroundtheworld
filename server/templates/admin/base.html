@@ -36,6 +36,8 @@
             {% if is_superuser %}
             <li {% if '/users/' in current_url %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_users') }}">Users</a></li>
+            <li {% if '/feedback/' in current_url %}class="active"{% end %}
+              ><a href="{{ reverse_url('admin_feedbacks') }}">Feedback</a></li>
             {% end %}
             <li><a href="/">Exit Admin</a></li>
           </ul>
@@ -104,6 +106,7 @@
 
   <script src="{{ static_url('lib/jquery-1.7.min.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-modal.js') }}"></script>
+  <script src="{{ static_url('lib/bootstrap-tooltip.js') }}"></script>
   <script>
   function L() {
     if (window.console && window.console.log)
@@ -126,6 +129,9 @@
       $('#picture-modal').modal('hide');
       return false;
     });
+
+    $('a[rel="tooltip"]').tooltip();
+
   });
   </script>
   {% block extrajs %}{% end %}

@@ -1,0 +1,42 @@
+<div id="feedback" class="overlay">
+  <h2>Feedback</h2>
+
+    <div class="alert alert-success" style="display:none">
+      <strong>Thank you!</strong> Feedback is always really useful!
+      <a href="#city" class="overlay-changer">Go back to the city</a>
+    </div>
+
+    <form class="form-horizontal">
+      <div class="control-group">
+        <label class="control-label" for="id_what">What's up?</label>
+        <div class="controls">
+	  <select name="what" id="id_what">
+	    <option value="general" selected>General</option>
+	    <option value="bug">Something not working</option>
+	    <option value="ideas">I have an idea</option>
+	    <option value="praise">Praise</option>
+	    <option value="complaint">Complaint</option>
+	    <option value="other">Other</option>
+	  </select>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label" for="id_comment">Textarea</label>
+        <div class="controls">
+          <textarea class="input-xlarge" id="id_comment" rows="5"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Send in feedback</button>
+        <button type="reset" class="btn">Cancel</button>
+      </div>
+
+    </form>
+
+<p class="exit">
+Ok. <a href="#city" class="overlay-changer">Go back to the city</a>
+</p>
+
+</div>

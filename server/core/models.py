@@ -397,3 +397,16 @@ class HTMLDocument(BaseDocument):
             self.save()
         else:
             raise NotImplementedError(self['source_format'])
+
+
+@register
+class Feedback(BaseDocument):
+    __collection__ = 'feedback'
+    structure = {
+      'what': unicode,
+      'comment': unicode,
+      'user': ObjectId,
+      'location': ObjectId,
+    }
+
+    required_fields = ['what', 'comment']

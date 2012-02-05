@@ -1400,6 +1400,27 @@ class TestHandler(BaseHandler):
     def get(self):
         self.render('test.html')
 
+
+@route('/feedback.json$', name='feedback')
+class FeedbackHandler(AuthenticatedBaseHandler):
+
+    def post(self):
+        what = self.get_argument('what')
+        comment = self.get_argument('comment')
+        user = self.get_current_user()
+        location = self.get_current_location()
+
+        feedback = self.db.Feedback()
+        feedback['what'] = what
+        feedback['comment'] = comment
+        if user:
+            feedback['user'] = user['_id']
+            feedback['location'] = location['_id']
+        feedback.save()
+
+        self.write_json({'ok': True})
+
+
 # this handler gets automatically appended last to all handlers inside app.py
 class PageNotFoundHandler(BaseHandler):
 

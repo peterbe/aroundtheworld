@@ -1,14 +1,5 @@
 {% extends "base.html" %}
 
-{% block extrajs %}
-<script src="{{ static_url('lib/bootstrap-tooltip.js') }}"></script>
-<script>
-$(function() {
-  $('a[rel="tooltip"]').tooltip();
-});
-</script>
-{% end %}
-
 {% block content %}
   <h2>All categories</h2>
   <table class="table">

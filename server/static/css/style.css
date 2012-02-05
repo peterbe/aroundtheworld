@@ -71,6 +71,10 @@ html, body {
     padding-left: 17px;
     background: url(../images/coins/gold-1.png) 0 0 no-repeat;
   }
+  #usernav .feedback a {
+    padding-left: 17px;
+    background: url(../images/feedback.png) 0 0 no-repeat;
+  }
 
 
 .overlay {

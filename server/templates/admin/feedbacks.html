@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q"] { width:300px; }
+tfoot th select[name="whats"] { width:120px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} pieces of feedback {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="table condensed-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Location</th>
+            <th>What</th>
+            <th>Comment</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>
+              <select multiple name="whats">
+                {% for what in all_whats %}
+                <option value="{{ what }}"
+                  {% if what in whats %}selected{% end %}
+                >{{ what }}</option>
+                {% end %}
+              </select>
+            </th>
+            <th><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for feedback, location, user in documents %}
+          <tr>
+            <td>{{ user['username'] }}</td>
+            <td><a href="" title="{{ location }}" rel="tooltip">{{ location['code'] }}</a></td>
+            <td>{{ feedback['what'] }}</td>
+            <td>{% module ShowComment(feedback['comment']) %}</td>
+            <td>{{ feedback['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+{% end %}

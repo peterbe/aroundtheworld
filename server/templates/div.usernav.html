@@ -26,11 +26,10 @@
         {% end %}</a>
       </li>
 
-      <!--
-      <li class="user-profile logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
-        <a href="#settings" class="overlay-changer" title="Settings">settings</a>
+      <li class="feedback logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+        <a href="#feedback" class="overlay-changer" title="Give feedback">Feedback</a>
       </li>
-      -->
+
       <li class="admin logged-in" {% if not (state.get('user') and state['user']['admin_access']) %}style="display:none"{% end %}>
         <a href="/admin/" title="Because you deserve it!">Admin</a>
       </li>
