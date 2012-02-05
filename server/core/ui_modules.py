@@ -1,7 +1,6 @@
 import datetime
 import os
 from time import mktime
-import tornado.web
 import settings
 import json
 from tornado_utils.thumbnailer import get_thumbnail
@@ -38,10 +37,11 @@ class QuestionPictureThumbnailMixin:
             ext = '.png'
         elif image.content_type == 'image/jpeg':
             ext = '.jpg'
-        #elif image.content_type == 'image/gif':
-        #   ext = '.gif'
+        elif image.content_type == 'image/gif':
+            ext = '.gif'
         else:
-            raise ValueError("Unrecognized content_type %r" % image.content_type)
+            raise ValueError(
+              "Unrecognized content_type %r" % image.content_type)
         path = (datetime.datetime.now()
                 .strftime('%Y %m %d')
                 .split())
@@ -51,7 +51,8 @@ class QuestionPictureThumbnailMixin:
                                        ext))
         path.insert(0, settings.THUMBNAIL_DIRECTORY)
         path = os.path.join(*path)
-        (width, height) = get_thumbnail(path, image.read(), (max_width, max_height))
+        (width, height) = get_thumbnail(path, image.read(),
+                                        (max_width, max_height))
         return path.replace(settings.ROOT, ''), (width, height)
 
 
@@ -62,7 +63,7 @@ class ShowQuestionPictureThumbnail(tornado.web.UIModule,
                **kwargs):
         uri, (width, height) = self.make_thumbnail(question_image,
                                                    (max_width, max_height))
-        url = self.handler.static_url(uri.replace('/static/',''))
+        url = self.handler.static_url(uri.replace('/static/', ''))
         args = {'src': url, 'width': width, 'height': height, 'alt': alt}
         if (not question_image.render_attributes
           or kwargs.get('save_render_attributes', False)):
@@ -79,10 +80,6 @@ class ShowQuestionPictureThumbnail(tornado.web.UIModule,
         tag.append('>')
         return ' '.join(tag)
 
-#class ShowQuestionPictureThumbnailJSON(ShowQuestionPictureThumbnail):
-#    def render(self, *args, **kwargs):
-#        kwargs['return_json'] = True
-#        return super(ShowQuestionPictureThumbnailJSON, self).render(*args, **kwargs)
 
 class GetQuestionPictureThumbnailSrc(ShowQuestionPictureThumbnail):
     def render(self, *args, **kwargs):

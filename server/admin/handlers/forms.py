@@ -123,7 +123,7 @@ class QuestionForm(BaseForm):
                    ('5', '5 (hard)')])
 
     published = BooleanField("Published",
-                             description="Whether it should immediately appear")
+                    description="Whether it should immediately appear")
     category = SelectField("Category",
                       [validators.Required()])
     location = SelectField("City",
@@ -149,7 +149,8 @@ class QuestionForm(BaseForm):
         success = super(QuestionForm, self).validate(*args, **kwargs)
         if success:
             # check invariants
-            if self.data['correct'] not in self.data['alternatives'].splitlines():
+            if (self.data['correct'] not
+                 in self.data['alternatives'].splitlines()):
                 (self._fields['correct']
                   .errors.append("Answer not in alternatives"))
                 success = False

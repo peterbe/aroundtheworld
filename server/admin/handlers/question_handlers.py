@@ -242,7 +242,8 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                         picture.delete()
                         self.push_flash_message(
                           'Picture upload failed',
-                          text='Check that the requirements for the picture is correct',
+                          text='Check that the requirements for the picture '
+                               'is correct',
                           type_='error'
                           )
 
@@ -251,7 +252,8 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                             'location': location['_id']})
                      .count())
             if count < 10:
-                msg = ("%s more questions and people will be able to work as a %s in %s" %
+                msg = ("%s more questions and people will be able to work as "
+                       "a %s in %s" %
                        (11 - count, category['name'], location))
             else:
                 msg = ("There are now %s questions of this category in %s" %
@@ -336,10 +338,10 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
                         picture.delete()
                         self.push_flash_message(
                           'Picture upload failed',
-                          text='Check that the requirements for the picture is correct',
+                          text=('Check that the requirements for the picture '
+                                'is correct'),
                           type_='error'
                           )
-
 
             self.redirect(self.reverse_url('admin_questions'))
         else:
@@ -411,7 +413,10 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
             counts[category['name']] = {}
             categories.append(category)
             for location in locations:
-                count = self.db.Question.find({'category': category['_id'], 'location': location['_id']}).count()
+                count = (self.db.Question
+                         .find({'category': category['_id'],
+                                'location': location['_id']})
+                         .count())
                 counts[category['name']][location['code']] = count
         data['categories'] = categories
         data['locations'] = locations

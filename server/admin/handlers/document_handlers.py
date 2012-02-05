@@ -3,7 +3,6 @@ import urllib
 from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
 from .forms import DocumentForm, AddDocumentForm
-from geopy import geocoders
 from .base import djangolike_request_dict, AmbassadorBaseHandler
 
 
@@ -70,7 +69,8 @@ class DocumentAdminHandler(AmbassadorBaseHandler):
         data = {}
         document = self.db.HTMLDocument.find_one({'_id': ObjectId(_id)})
         if document['location']:
-            data['location'] = self.db.Location.find_one({'_id': document['location']})
+            data['location'] = (self.db.Location
+                                .find_one({'_id': document['location']}))
             data['user'] = None
         elif document['location']:
             data['user'] = self.db.User.find_one({'_id': document['user']})
@@ -117,7 +117,8 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
               'airport_name': {'$ne': None}
             }
             for location in self.db.Location.find(filter_):
-                locations.append(location)
+                if location not in locations:
+                    locations.append(location)
         return locations
 
     def find_users(self, search):
@@ -155,7 +156,8 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
             document['type'] = form.type.data
             document.save()
 
-            self.redirect(self.reverse_url('admin_document', str(document['_id'])))
+            self.redirect(self.reverse_url('admin_document',
+                                           str(document['_id'])))
         else:
             self.get(form=form)
 

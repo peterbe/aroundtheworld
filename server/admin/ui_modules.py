@@ -1,6 +1,7 @@
 import tornado.web
 import tornado.escape
 
+
 class RenderField(tornado.web.UIModule):
     def render(self, field):
         try:
@@ -10,5 +11,6 @@ class RenderField(tornado.web.UIModule):
 
 
 class ShowComment(tornado.web.UIModule):
+
     def render(self, comment):
-        return tornado.escape.linkify(comment).replace('\n','<br>\n')
+        return tornado.escape.linkify(comment).replace('\n', '<br>\n')

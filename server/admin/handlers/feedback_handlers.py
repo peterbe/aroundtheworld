@@ -1,8 +1,7 @@
 import re
 import urllib
-from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
-from .base import djangolike_request_dict, SuperuserBaseHandler
+from .base import SuperuserBaseHandler
 
 
 @route('/admin/feedback/', name='admin_feedbacks')

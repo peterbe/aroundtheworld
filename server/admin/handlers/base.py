@@ -37,8 +37,9 @@ class BaseHandler(CoreBaseHandler):
             #if not user:
             #    return
         if not text:
-            raise ValueError("AT the moment we can't accept blank texts on flash "\
-                             "messages because gritter won't be able to show it")
+            raise ValueError(
+               "AT the moment we can't accept blank texts on flash "\
+               "messages because gritter won't be able to show it")
         for msg in (self.db.FlashMessage
                     .find({'user': user['_id']})
                     .sort('add_date', -1)
@@ -180,16 +181,5 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           self.db.Mayor
           .find().distinct('user')
         )
-
-        user = self.get_current_user()
-        #is_superuser = is_ambassador = False
-        #if user['superuser']:
-        #    is_superuser = True
-        #elif (self.db.Ambassador
-        #        .find({'user': user['_id']})
-        #        .count()):
-        #    is_ambassador = True
-        #options['is_superuser'] = is_superuser
-        #options['is_ambassador'] = is_ambassador
 
         self.render('admin/home.html', **options)

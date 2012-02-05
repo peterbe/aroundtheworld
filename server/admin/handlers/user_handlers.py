@@ -3,9 +3,7 @@ import urllib
 from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
 from .forms import UserForm
-#from geopy import geocoders
 from .base import djangolike_request_dict, SuperuserBaseHandler
-
 
 
 @route('/admin/users/', name='admin_users')

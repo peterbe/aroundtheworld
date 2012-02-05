@@ -13,7 +13,10 @@ var Lookup = (function() {
        };
        _location_searches.push(location);
        $.getJSON('/admin/findlocation.json', data, function(response) {
-         $('#search-results:hidden').show().detach().insertBefore($('#location').parents('div.clearfix'));
+         $('#search-results:hidden')
+           .show()
+             .detach()
+               .insertBefore($('#location').parents('div').eq(0));
 
          $('ul li', '#search-results').remove();
          $.each(response.results, function(i, item) {
@@ -27,6 +30,7 @@ var Lookup = (function() {
                  }).appendTo($('<li>')
                              .appendTo($('#search-results ul')));
          });
+
        });
      },
     search_user: function() {
@@ -39,7 +43,11 @@ var Lookup = (function() {
        };
        _user_searches.push(location);
        $.getJSON('/admin/finduser.json', data, function(response) {
-         $('#search-results:hidden').show().detach().insertBefore($('#user').parents('div.clearfix'));
+         $('#search-results:hidden')
+           .show()
+             .detach()
+               .insertBefore($('#user')
+                             .parents('div').eq(0));
 
          $('ul li', '#search-results').remove();
          $.each(response.results, function(i, item) {

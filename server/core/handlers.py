@@ -3,28 +3,29 @@ import datetime
 import random
 import os
 import logging
-import time
 import traceback
-import functools
 from collections import defaultdict
 from cStringIO import StringIO
-from pprint import pprint, pformat
+from pprint import pprint
 import tornado.auth
 import tornado.web
 import tornado.gen
 from tornado.web import HTTPError
 from tornado_utils.routes import route
 from tornado_utils.send_mail import send_email
-from tornado.escape import json_decode, json_encode
 from pymongo.objectid import InvalidId, ObjectId
 from geopy.distance import distance as geopy_distance
 from core.ui_modules import QuestionPictureThumbnailMixin
 
-from models import User, Question
+from models import Question
 import settings
 
-ONE_HOUR = 60 * 60; ONE_DAY = ONE_HOUR * 24; ONE_WEEK = ONE_DAY * 7
+
+ONE_HOUR = 60 * 60
+ONE_DAY = ONE_HOUR * 24
+ONE_WEEK = ONE_DAY * 7
 FULL_DATE_FMT = '%d %b %Y'
+
 
 def calculate_distance(from_location, to_location):
     from_ = (from_location['lat'], from_location['lng'])
@@ -35,8 +36,10 @@ def calculate_distance(from_location, to_location):
 class NoQuestionsError(RuntimeError):
     pass
 
+
 class NoLocationsError(RuntimeError):
     pass
+
 
 class BaseHandler(tornado.web.RequestHandler):
 
@@ -55,7 +58,6 @@ class BaseHandler(tornado.web.RequestHandler):
             ip = None
             #ip = '64.179.205.74'  # debugging, Hartwell, GA
         return ip
-
 
     def get_current_user(self):
         _id = self.get_secure_cookie('user')
@@ -80,7 +82,8 @@ class BaseHandler(tornado.web.RequestHandler):
             raise ValueError("Can't get settings when there is no user")
         _search = {'user': user['_id']}
         if fast:
-            return self.db.UserSettings.collection.find_one(_search) # skip mongokit
+            # skip mongokit
+            return self.db.UserSettings.collection.find_one(_search)
         else:
             user_settings = self.db.UserSettings.find_one(_search)
             if create_if_necessary and not user_settings:
@@ -183,20 +186,17 @@ class BaseHandler(tornado.web.RequestHandler):
             self.render("error.html", **options)
 
     def _email_exception(self, status_code, err_type, err_val, err_traceback):
-        import traceback
-        from cStringIO import StringIO
-        from pprint import pprint
         out = StringIO()
         subject = "%r on %s" % (err_val, self.request.path)
         out.write("TRACEBACK:\n")
         traceback.print_exception(err_type, err_val, err_traceback, 500, out)
-        traceback_formatted = out.getvalue()
+        #traceback_formatted = out.getvalue()
         #print traceback_formatted
         out.write("\nREQUEST ARGUMENTS:\n")
         arguments = self.request.arguments
         if arguments.get('password') and arguments['password'][0]:
             password = arguments['password'][0]
-            arguments['password'] = password[:2] + '*' * (len(password) -2)
+            arguments['password'] = password[:2] + '*' * (len(password) - 2)
         pprint(arguments, out)
         out.write("\nCOOKIES:\n")
         for cookie in self.cookies:
@@ -256,12 +256,14 @@ class HomeHandler(BaseHandler):
         options = {}
         self.render('home.html', **options)
 
+
 @route('/offline/')
 class OfflineHomeHandler(HomeHandler):
 
     def get(self):
         options = {}
         self.render('offline.html', **options)
+
 
 @route('/flightpaths/')
 class FlightPathsHandler(BaseHandler):
@@ -302,7 +304,6 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
                                'location': location['_id'],
                                'finish_date': None})):
             session.delete()
-
 
     def get(self):
         category = self.get_argument('category')
@@ -381,7 +382,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
             picture = question.get_picture()
             uri, (width, height) = self.make_thumbnail(picture, (250, 250))
 
-            url = self.static_url(uri.replace('/static/',''))
+            url = self.static_url(uri.replace('/static/', ''))
             data['question']['picture'] = {
               'url': url,
               'width': width,
@@ -422,7 +423,6 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
             return question
 
     def post(self):
-        stop_time = datetime.datetime.utcnow()
         user = self.get_current_user()
         location = self.get_current_location(user)
 
@@ -466,7 +466,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
                     answer['points'] = 0
                     answer.save()
                 total_points += answer['points']
-                question = self.db.Question.find_one({'_id': answer['question']})
+                question = (self.db.Question
+                            .find_one({'_id': answer['question']}))
                 summary.append({
                   'question': question['text'],
                   'correct_answer': question['correct'],
@@ -497,10 +498,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
             }
 
         else:
-            #question_id = self.get_argument('id')
-            #question = self.db.Question.find_one({'_id': ObjectId(question_id)})
-
-            question = self.db.Question.find_one({'_id': answer_obj['question']})
+            question = (self.db.Question
+                        .find_one({'_id': answer_obj['question']}))
 
             answer = self.get_argument('answer')
             time_ = float(self.get_argument('time'))
@@ -517,6 +516,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
             answer_obj.save()
 
         self.write_json(data)
+
 
 @route('/settings.json$', name='settings')
 class SettingsHandler(AuthenticatedBaseHandler):
@@ -543,7 +543,6 @@ class MilesHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
-        user_settings = self.get_user_settings(user)
         data = {}
         _cities = set()
         for each in self.db.Flight.collection.find({'user': user['_id']}):
@@ -595,7 +594,11 @@ class CoinsHandler(AuthenticatedBaseHandler):
         records = self.db.Job.find(filter_)
         count = records.count()
         skip = limit * int(self.get_argument('jobs-page', 0))
-        _locations = {};  _categories = {}  # optimization
+
+        # optimization
+        _locations = {}
+        _categories = {}
+
         for each in (records
                      .limit(limit)
                      .skip(skip)
@@ -605,12 +608,6 @@ class CoinsHandler(AuthenticatedBaseHandler):
                   self.db.Location.find_one({'_id': each['location']})
             location = _locations[each['location']]
             assert location
-
-            ## legacy
-            try: each['category']
-            except KeyError:
-                each.delete()
-                continue
 
             if each['category'] not in _categories:
                 _categories[each['category']] = \
@@ -685,8 +682,6 @@ class CoinsHandler(AuthenticatedBaseHandler):
                 self.write_json({'coins': COINS})
                 return
         self.write_json({'ERROR': 'Wrong code'})
-
-
 
 
 def _commafy(s):
@@ -843,6 +838,7 @@ class CityHandler(AuthenticatedBaseHandler):
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
 
+
 @route('/pinpoint.json$', name='pinpoint')
 class PinpointHandler(AuthenticatedBaseHandler):
 
@@ -893,9 +889,10 @@ class PinpointHandler(AuthenticatedBaseHandler):
         data['no_questions'] = self.NO_QUESTIONS
 
         if self.get_argument('next', None):
-            session = self.db.PinpointSession.find_one({'user': user['_id'],
-                                                        'center': current_location['_id'],
-                                                        'finish_date': None})
+            session = (self.db.PinpointSession
+                       .find_one({'user': user['_id'],
+                                  'center': current_location['_id'],
+                                  'finish_date': None}))
             if session is None:
                 session = self.db.PinpointSession()
                 session['user'] = user['_id']
@@ -922,14 +919,16 @@ class PinpointHandler(AuthenticatedBaseHandler):
                 location = self._get_next_location(
                   session,
                   country,
-                  previous_location=
-                    previous_answer['location'] if previous_answer else None,
+                  previous_location=(previous_answer['location']
+                                     if previous_answer else None),
                 )
             except NoLocationsError:
                 self.write_json({'error': 'NOLOCATIONS'})
                 return
 
-            _no_answers = self.db.PinpointAnswer.find({'session': session['_id']}).count()
+            _no_answers = (self.db.PinpointAnswer
+                           .find({'session': session['_id']})
+                           .count())
             data['no_questions'] = {
               'total': self.NO_QUESTIONS,
               'number': _no_answers + 1,
@@ -984,7 +983,8 @@ class PinpointHandler(AuthenticatedBaseHandler):
         if not count:
             if allow_repeats:
                 raise NoLocationsError("Not enough locations")
-            return self._get_next_location(session, country, allow_repeats=True)
+            return self._get_next_location(session, country,
+                                           allow_repeats=True)
 
         nth = random.randint(0, count - 1)
         for location in locations.limit(1).skip(nth):
@@ -1022,7 +1022,8 @@ class PinpointHandler(AuthenticatedBaseHandler):
                            .find({'session': session['_id']})
                            .sort('add_date', 1)):
                 total_points += answer['points']
-                location = self.db.Location.find_one({'_id': answer['location']})
+                location = (self.db.Location
+                            .find_one({'_id': answer['location']}))
                 summary.append({
                   'city': location['city'],
                   'time': (not answer['timedout']
@@ -1115,7 +1116,6 @@ class AirportHandler(AuthenticatedBaseHandler):
           'airport_name': current_location['airport_name'],
         }
         destinations = []
-        user_settings = self.get_current_user_settings(user)
         for location in (self.db.Location
                           .find({'_id': {'$ne': current_location['_id']},
                                  'airport_name': {'$ne': None}})):
@@ -1149,7 +1149,6 @@ class AirportHandler(AuthenticatedBaseHandler):
 
     def calculate_cost(self, miles, user):
         return self.BASE_PRICE + int(round(miles * .1))
-
 
 
 @route('/fly.json$', name='fly')
@@ -1283,12 +1282,13 @@ class BaseAuthHandler(BaseHandler):
 
     def make_username(self, first_name, last_name):
         def simple(s):
-            return s.lower().replace(' ','').replace('-','')
+            return s.lower().replace(' ', '').replace('-', '')
         return '%s%s' % (simple(first_name), simple(last_name))
 
     def post_login_successful(self, user):
-        """executed by the Google, Twitter and Facebook authentication handlers"""
-        return
+        """executed by the Google, Twitter and Facebook
+        authentication handlers"""
+        pass
 
 
 @route('/auth/google/', name='auth_google')
@@ -1311,7 +1311,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             raise HTTPError(500, "No email provided")
 
         user_struct = user
-        locale = user.get('locale') # not sure what to do with this yet
+        #locale = user.get('locale')  # not sure what to do with this yet
         first_name = user.get('first_name')
         last_name = user.get('last_name')
         username = user.get('username')
@@ -1323,7 +1323,8 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
         if not user:
             user = self.db.User.one(dict(email=email))
             if user is None:
-                user = self.db.User.one(dict(email=re.compile(re.escape(email), re.I)))
+                user = (self.db.User.find_one({
+                          'email': re.compile(re.escape(email), re.I)}))
 
         if not user:
             # create a new account
@@ -1337,8 +1338,8 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             import uuid
             user.set_password(unicode(uuid.uuid4()))
             user.save()
-
-            self.notify_about_new_user(user, extra_message="Used Google OpenID")
+            self.notify_about_new_user(user,
+                                       extra_message="Used Google OpenID")
 
         user_settings = self.get_user_settings(user)
         if not user_settings:
@@ -1394,6 +1395,7 @@ class IPLookupHandler(BaseHandler):
                 logging.warn("%s: %r" % (response.code, response.body))
         self.write_json(data)
         self.finish()
+
 
 @route('/test.html')
 class TestHandler(BaseHandler):

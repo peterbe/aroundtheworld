@@ -1,14 +1,14 @@
 import re
-from hashlib import md5
-import uuid
 from pymongo.objectid import ObjectId
 import datetime
-from mongokit import Document, ValidationError
+from mongokit import Document
 from mongokit import Connection
 import markdown
 
 
 connection = Connection()
+
+
 def register(cls):
     connection.register([cls])
     return cls
@@ -118,6 +118,7 @@ class Ambassador(BaseDocument):
       'country': unicode,
     }
 
+
 @register
 class Mayor(BaseDocument):
     __collection__ = 'mayors'
@@ -125,6 +126,7 @@ class Mayor(BaseDocument):
       'user': ObjectId,
       'location': ObjectId,
     }
+
 
 @register
 class UserSettings(BaseDocument):
@@ -222,6 +224,7 @@ class Job(BaseDocument):
       'category': ObjectId,
       'location': ObjectId,
     }
+
 
 @register
 class Question(BaseDocument):
