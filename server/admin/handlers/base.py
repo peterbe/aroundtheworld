@@ -1,12 +1,16 @@
 #from collections import defaultdict
 #from pymongo.objectid import InvalidId, ObjectId
 #import re
+import time
+import urllib
+from pprint import pprint
 import datetime
 #import urllib
 import tornado.web
 #from tornado.escape import json_decode, json_encode
 from tornado_utils.routes import route
 from core.handlers import BaseHandler as CoreBaseHandler
+from tornado_utils.timesince import smartertimesince
 
 
 class djangolike_request_dict(dict):
@@ -183,3 +187,80 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
         )
 
         self.render('admin/home.html', **options)
+
+@route('/admin/news.json', name='admin_news')
+class NewsAdminHandler(AuthenticatedBaseHandler):
+
+    MIN_ITEMS = 30
+    CUTOFF_DELTA = 60 * 60 * 24
+    MAX_ITERATIONS = 5
+
+    def get(self, cutoff_seconds=None, max_date=None, iteration=0):
+        items = []
+        if cutoff_seconds is None:
+            cutoff_seconds = self.CUTOFF_DELTA
+
+        no_items = int(self.get_argument('items', self.MIN_ITEMS))
+        now = datetime.datetime.utcnow()
+        cutoff = now - datetime.timedelta(seconds=cutoff_seconds)
+        filter_ = {'add_date': {'$gt': cutoff}}
+        if max_date:
+            filter_['add_date']['$lt'] = max_date
+        users = self.db.User.find(filter_)
+        for model in (self.db.User, self.db.Feedback, self.db.Question):
+            objects = model.find(filter_).sort('add_date', 1)
+            for item in objects:
+                items.append({
+                  'summary': self.get_summary(item),
+                  'url': self.get_url(item),
+                  'ts': time.mktime(item['add_date'].timetuple()),
+                  'date': smartertimesince(item['add_date'], now=now),
+                })
+        items.sort(lambda x,y: cmp(x['ts'], y['ts']))
+        if len(items) > no_items:
+            items = items[:no_items]
+
+        if len(items) < no_items and iteration < self.MAX_ITERATIONS:
+            items.extend(self.get(
+              cutoff_seconds=cutoff_seconds + self.CUTOFF_DELTA,
+              max_date=cutoff,
+              iteration=iteration + 1
+            ))
+
+        if max_date is None:
+            self.write_json({'items': items})
+        else:
+            return items
+
+    def get_url(self, item):
+        if item.__class__ == self.db.User._obj_class:
+            return (self.reverse_url('admin_users') +
+                    '?q=%s' % urllib.quote(item['username']))
+
+        if item.__class__ == self.db.Feedback._obj_class:
+            return self.reverse_url('admin_feedbacks')
+
+        if item.__class__ == self.db.Question._obj_class:
+            return self.reverse_url('admin_question', item['_id'])
+
+        raise NotImplementedError(item.__class__.__name__)
+
+    def get_summary(self, item):
+        if item.__class__ == self.db.Feedback._obj_class:
+            comment = item['comment']
+            if len(comment) > 30:
+                comment = comment[:30].strip() + '...'
+            return '<strong>New feedback!</strong> %s (%s)' % (item['what'], comment)
+
+        if item.__class__ == self.db.User._obj_class:
+            current_location = (self.db.Location
+                                .find_one({'_id': item['current_location']}))
+            return ('<strong>New user!</strong> %s (currently in %s)' %
+                    (item['username'], current_location))
+
+        if item.__class__ == self.db.Question._obj_class:
+            category = self.db.Category.find_one({'_id': item['category']})
+            return ('<strong>New question!</strong> %s (category: %s)' %
+                    (item['text'], category['name']))
+
+        raise NotImplementedError(item.__class__.__name__)

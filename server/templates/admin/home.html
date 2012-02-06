@@ -12,6 +12,22 @@ $(function() {
       return false;
     });
   }
+
+  $.getJSON('/admin/news.json', function(response) {
+    var container = $('#latest-news');
+    $('.loading', container).hide();
+    $.each(response.items, function(i, each) {
+      var c = $('<tr>');
+      $('<td>')
+        .append($('<a>').attr('href', each.url).html(each.summary))
+        .appendTo(c);
+      $('<td>')
+        .text(each.date)
+        .appendTo(c);
+      c.appendTo($('table'));
+    });
+    $('table', container).show();
+  });
 });
 </script>
 {% end %}
@@ -50,6 +66,15 @@ $(function() {
         </div>
         {% end %}
 
+      </div>
+
+      <div id="latest-news">
+      <h2>Latest News</h2>
+      <p class="loading">Loading latest news...</p>
+      <table class="table" style="display:none">
+        <tbody>
+        </tbody>
+      </table>
       </div>
 
 {% end %}
