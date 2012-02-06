@@ -260,7 +260,10 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
 
         if item.__class__ == self.db.Question._obj_class:
             category = self.db.Category.find_one({'_id': item['category']})
+            text = item['text']
+            if len(text) > 30:
+                text = text[:30].strip() + '...'
             return ('<strong>New question!</strong> %s (category: %s)' %
-                    (item['text'], category['name']))
+                    (text, category['name']))
 
         raise NotImplementedError(item.__class__.__name__)

@@ -22,7 +22,7 @@ $(function() {
         .append($('<a>').attr('href', each.url).html(each.summary))
         .appendTo(c);
       $('<td>')
-        .text(each.date)
+        .text(each.date + ' ago')
         .appendTo(c);
       c.appendTo($('table'));
     });
