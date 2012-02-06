@@ -1,3 +1,4 @@
+import logging
 import datetime
 import os
 from time import mktime
@@ -51,8 +52,19 @@ class QuestionPictureThumbnailMixin:
                                        ext))
         path.insert(0, settings.THUMBNAIL_DIRECTORY)
         path = os.path.join(*path)
-        (width, height) = get_thumbnail(path, image.read(),
+        try:
+            (width, height) = get_thumbnail(path, image.read(),
                                         (max_width, max_height))
+        except IOError:
+            logging.error("Unable to make thumbnail out of %r" % question_image,
+                          exc_info=True)
+            if max_width > 100 or max_height > 100:
+                path = '/static/images/file_broken_large.png'
+                width, height = (128, 128)
+            else:
+                path = '/static/images/file_broken_small.png'
+                width, height = (20, 20)
+
         return path.replace(settings.ROOT, ''), (width, height)
 
 

@@ -229,7 +229,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                     ok = False
                     image = form.picture.data
                     if not any([image['filename'].lower().endswith(x)
-                                for x in ('.png', '.jpg', '.gif', '.jpeg')]):
+                                for x in ('.png', '.jpg', '.jpeg')]):
                         raise HTTPError(400)
                     assert isinstance(image['body'], str), type(image['body'])
                     type_, __ = mimetypes.guess_type(image['filename'])

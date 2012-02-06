@@ -112,7 +112,7 @@ class QuestionForm(BaseForm):
           description="Whether or not the alternatives should appear exactly "
                       "in this order when shown")
 
-    picture = FileField("Picture",
+    picture = FileField("Picture (JPG or PNG)",
                         description="Optional picture to go with the question")
 
     points_value = SelectField("Points value",
@@ -154,6 +154,15 @@ class QuestionForm(BaseForm):
                 (self._fields['correct']
                   .errors.append("Answer not in alternatives"))
                 success = False
+            if self.data['picture']:
+                ext = self.data['picture']['filename'].split('.')[-1].lower()
+                if ext not in ('png', 'jpeg', 'jpg'):
+                    (self._fields['picture']
+                     .errors.append("Picture not a JPG or PNG"))
+                    success = False
+                #else:
+                #    print repr(self.data['picture']['body'])
+                #    print len(self.data['picture']['body'])
 
         return success
 

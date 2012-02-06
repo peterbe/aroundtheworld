@@ -248,8 +248,8 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
     def get_summary(self, item):
         if item.__class__ == self.db.Feedback._obj_class:
             comment = item['comment']
-            if len(comment) > 30:
-                comment = comment[:30].strip() + '...'
+            if len(comment) > 40:
+                comment = comment[:40].strip() + '...'
             return '<strong>New feedback!</strong> %s (%s)' % (item['what'], comment)
 
         if item.__class__ == self.db.User._obj_class:
@@ -261,8 +261,8 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         if item.__class__ == self.db.Question._obj_class:
             category = self.db.Category.find_one({'_id': item['category']})
             text = item['text']
-            if len(text) > 30:
-                text = text[:30].strip() + '...'
+            if len(text) > 40:
+                text = text[:40].strip() + '...'
             return ('<strong>New question!</strong> %s (category: %s)' %
                     (text, category['name']))
 
