@@ -116,9 +116,10 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
               each: regex,
               'airport_name': {'$ne': None}
             }
+            if locations:
+                filter_['_id'] = {'$nin': [x['_id'] for x in locations]}
             for location in self.db.Location.find(filter_):
-                if location not in locations:
-                    locations.append(location)
+                locations.append(location)
         return locations
 
     def find_users(self, search):
@@ -128,6 +129,8 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
             filter_ = {
               each: regex,
             }
+            if users:
+                filter_['_id'] = {'$nin': [x['_id'] for x in users]}
             for user in self.db.User.find(filter_):
                 users.append(user)
         return users

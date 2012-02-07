@@ -207,16 +207,21 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         if max_date:
             filter_['add_date']['$lt'] = max_date
         users = self.db.User.find(filter_)
-        for model in (self.db.User, self.db.Feedback, self.db.Question):
-            objects = model.find(filter_).sort('add_date', 1)
+        for model in (self.db.User,
+                      self.db.Feedback,
+                      self.db.Question,
+                      self.db.HTMLDocument):
+            objects = model.find(filter_).sort('add_date', -1)
             for item in objects:
+                print "\t",item['add_date']
                 items.append({
                   'summary': self.get_summary(item),
                   'url': self.get_url(item),
                   'ts': time.mktime(item['add_date'].timetuple()),
                   'date': smartertimesince(item['add_date'], now=now),
                 })
-        items.sort(lambda x,y: cmp(x['ts'], y['ts']))
+
+        items.sort(lambda x,y: cmp(y['ts'], x['ts']))
         if len(items) > no_items:
             items = items[:no_items]
 
@@ -243,6 +248,9 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         if item.__class__ == self.db.Question._obj_class:
             return self.reverse_url('admin_question', item['_id'])
 
+        if item.__class__ == self.db.HTMLDocument._obj_class:
+            return self.reverse_url('admin_document', item['_id'])
+
         raise NotImplementedError(item.__class__.__name__)
 
     def get_summary(self, item):
@@ -250,12 +258,13 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
             comment = item['comment']
             if len(comment) > 40:
                 comment = comment[:40].strip() + '...'
-            return '<strong>New feedback!</strong> %s (%s)' % (item['what'], comment)
+            return ("<strong>'%s' feedback!</strong> %s"
+                    % (item['what'], comment))
 
         if item.__class__ == self.db.User._obj_class:
             current_location = (self.db.Location
                                 .find_one({'_id': item['current_location']}))
-            return ('<strong>New user!</strong> %s (currently in %s)' %
+            return ('<strong>User!</strong> %s (currently in %s)' %
                     (item['username'], current_location))
 
         if item.__class__ == self.db.Question._obj_class:
@@ -263,7 +272,20 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
             text = item['text']
             if len(text) > 40:
                 text = text[:40].strip() + '...'
-            return ('<strong>New question!</strong> %s (category: %s)' %
-                    (text, category['name']))
+            text = ("<strong>'%s' question!</strong> %s" %
+                    (category['name'], text))
+            if item.has_picture():
+                text += ' (with picture)'
+            return text.strip()
 
+        if item.__class__ == self.db.HTMLDocument._obj_class:
+            text = "<strong>'%s' document!</strong> " % item['type']
+            if item['user']:
+                user = self.db.User.find_one({'_id': item['user']})
+                text += 'about user %s ' % user
+            if item['location']:
+                location = self.db.Location.find_one({'_id': item['location']})
+                text += 'about %s ' % location
+
+            return text.strip()
         raise NotImplementedError(item.__class__.__name__)

@@ -18,7 +18,7 @@ textarea[name="source"] { height:400px; }
 <script>
 $(function() {
   var t = $('textarea[name="source"]');
-  var c = t.parents('div.clearfix');
+  var c = t.parents('div.control-group');
   c.hide();
   $('#editor').text(t.val());
 
@@ -56,27 +56,9 @@ $(function() {
   {% include "_show_form_errors.html" %}
 
   <form action="." method="post">{% module xsrf_form_html() %}
-  <fieldset>
-
   <div id="editor" style="position:relative;height: 450px; width: 100%">
   </div>
-
-  {% for field in form %}
-    <div class="clearfix {% if field.errors %}error{% end %}">
-      {% raw field.label %}
-      <div class="input">
-      {% module RenderField(field) %}
-      {% if field.errors %}
-         <span class="help-inline">{% for error in field.errors %}{{ error }}<br>{% end %}</span>
-      {% end %}
-      </div>
-    </div>
-  {% end %}
-    <div class="actions">
-      <input type="submit" value="Save changes" class="btn primary">
-      <button class="btn" type="reset">Cancel</button>
-    </div>
-  </fieldset>
+  {% include "_show_fieldset.html" %}
 
   </form>
 {% end %}
