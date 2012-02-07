@@ -240,6 +240,7 @@ class Question(BaseDocument):
       'category': ObjectId,
       'published': bool,
       'notes': unicode,
+      'didyouknow': unicode,
     }
 
     default_values = {

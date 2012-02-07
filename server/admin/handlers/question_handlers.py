@@ -216,6 +216,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             question['points_value'] = int(form.points_value.data)
             question['published'] = form.published.data
             question['notes'] = form.notes.data.strip()
+            question['didyouknow'] = form.didyouknow.data.strip()
             location = (self.db.Location
                         .find_one({'_id': ObjectId(form.location.data)}))
             assert location
@@ -307,6 +308,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             question['points_value'] = int(form.points_value.data)
             question['published'] = form.published.data
             question['notes'] = form.notes.data.strip()
+            question['didyouknow'] = form.didyouknow.data.strip()
             location = (self.db.Location
                         .find_one({'_id': ObjectId(form.location.data)}))
             assert location

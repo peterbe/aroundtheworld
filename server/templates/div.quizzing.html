@@ -37,7 +37,6 @@
     <div class="timer" style="display:none"></div>
     <h2>Quiz job as: <span class="quiz-name"></span></h2>
 
-
     <div class="points-total-outer">
       <p>Points:</p>
       <p class="points-total">0</p>
@@ -52,23 +51,35 @@
       <strong>Question
       (<span class="no-questions"></span>):</strong>
     </p>
+
     <ol class="alternatives">
     </ol>
-    <p class="question-attention tooslow" style="display:none">
-     Sorry, too slow!
-     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-    </p>
-    <p class="question-attention pleasewait" style="display:none">
-    Wait! Checking your answer...
-    </p>
-    <p class="question-attention correct" style="display:none">
-     Yay! That's right!!<br>
-     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-    </p>
-    <p class="question-attention wrong" style="display:none">
-     Wrong! Sorry, the correct answer was: <strong class="correct-answer"></strong><br>
-     <span class="next-timer">Next question in <span class="timer"></span> seconds...</span>
-    </p>
+
+    <div class="question-attention tooslow" style="display:none">
+      <p class="verdict">Sorry, too slow!</p>
+      <p class="next-timer"><a href="#" class="next-question">Next question</a> in <span class="timer"></span> seconds...</p>
+    </div>
+
+    <div class="question-attention pleasewait" style="display:none">
+      <p>Wait! Checking your answer...</p>
+    </div>
+
+    <div class="question-attention correct" style="display:none">
+      <p class="verdict correct-message">Yay! That's right!!</p>
+      <div class="didyouknow">
+        <h3>Did you know...?</h3>
+      </div>
+      <p class="next-timer"><a href="#" class="next-question">Next question</a> in <span class="timer"></span> seconds...</p>
+    </div>
+
+    <div class="question-attention wrong" style="display:none">
+      <p class="verdict">Wrong!<br>
+         Correct answer was: <strong class="correct-answer"></strong></p>
+      <div class="didyouknow">
+        <h3>Did you know...?</h3>
+      </div>
+      <p class="next-timer"><a href="#" class="next-question">Next question</a> in <span class="timer"></span> seconds...</p>
+    </div>
 
   </div>
 

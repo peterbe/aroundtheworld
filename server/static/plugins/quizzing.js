@@ -6,7 +6,7 @@ var Quiz = (function() {
   var in_pause = false;
   var last_question = false;
   var _category;
-  var _next_is_last = false;
+  //var _next_is_last = false;
   var _next_is_first = true;
   var t0, t1;
 
@@ -28,7 +28,7 @@ var Quiz = (function() {
       if (response.quiz_name) {
         Quiz.show_name(response.quiz_name);
       }
-      _next_is_last = response.no_questions.last;
+      last_question = response.no_questions.last;
       _show_no_questions(response.no_questions['total'],
                          response.no_questions['number']);
       if (response.question) {
@@ -39,7 +39,6 @@ var Quiz = (function() {
 
   function _finish() {
     $.post('/quizzing.json', {finish: true}, function(response) {
-      L(response);
       $('.play', container).hide();
       $('.results', container).show();
       $('.short-summary .total-points', container)
@@ -109,7 +108,17 @@ var Quiz = (function() {
   }
 
   return {
+     setup: function() {
+       $('a.next-question', container)
+         .click(function() {
+           Quiz.rush_next_question();
+           return false;
+         });
+     },
      reset: function() {
+       $('a.next-question', container)
+         .off('click')
+         .text('Next question');
        if (timer) {
          clearTimeout(timer);
        }
@@ -129,8 +138,9 @@ var Quiz = (function() {
          dataType: 'json',
          success: function (response) {
            $('.pleasewait:visible', container).hide();
+           $('.didyouknow', container).hide();
            if (response.correct) {
-             $('.correct', container).fadeIn(200);
+             $('.correct', container).show();
              if (response.points_value) {
                var v = parseInt($('.points-total', container).text());
                $('.points-total', container).text(v + response.points_value);
@@ -139,9 +149,17 @@ var Quiz = (function() {
              if (response.correct_answer) {
                $('.correct-answer', container).text(response.correct_answer);
              }
-             $('.wrong', container).fadeIn(200);
+             $('.wrong', container).show();//fadeIn(200);
            }
-           Quiz.restart_timer(3);
+           if (response.didyouknow) {
+             $('.didyouknow p', container).remove();
+             $('.didyouknow', container)
+               .append(response.didyouknow)
+                 .fadeIn(300);
+             Quiz.restart_timer(last_question && 3 || 10);
+           } else {
+             Quiz.restart_timer(3);
+           }
          },
          error: function(xhr, status, error_thrown) {
            var msg = status;
@@ -153,7 +171,8 @@ var Quiz = (function() {
      },
     restart_timer: function(seconds) {
       if (last_question) {
-        $('.next-timer', container).hide();
+        $('a.next-question', container).text('Finish job');
+        //$('.next-timer', container).hide();
       }
       seconds = seconds || 4;  // 4 is the default
       Quiz.start_timer(seconds);
@@ -168,10 +187,15 @@ var Quiz = (function() {
         Quiz.tick_timer();
       }, 1000);
     },
+    rush_next_question: function() {
+      countdown = 0;
+      clearTimeout(timer);
+      Quiz.stop_timer(true);
+    },
     tick_timer: function() {
        countdown--;
        $('.timer', container).text(countdown);
-       if (countdown == 0) {
+       if (countdown <= 0) {
          Quiz.stop_timer(true);
        } else {
          timer = setTimeout(function() {
@@ -258,10 +282,9 @@ var Quiz = (function() {
        $('.quiz-name', container).text(name);
      },
     load_next: function(category) {
-      if (_next_is_last) {
+      if (last_question) {
         _finish();
       } else {
-
         _load_next_question(category);
       }
     },
@@ -276,6 +299,7 @@ var Quiz = (function() {
 Plugins.start('quizzing', function(category) {
   // called every time this plugin is loaded
   Quiz.reset();
+  Quiz.setup();
   Quiz.load_next(category);  // kick it off
 });
 

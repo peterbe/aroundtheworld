@@ -1,7 +1,16 @@
 from wtforms import (Form, BooleanField, TextField, TextAreaField, validators,
                      SelectField, SelectMultipleField, FileField)
-from wtforms.widgets import html_params, TextInput
+from wtforms.widgets import html_params, TextInput, TextArea as WTTextArea
 from wtforms.validators import ValidationError
+
+class TextArea(WTTextArea):
+    def __init__(self, **attrs):
+        self.attrs = attrs
+
+    def __call__(self, field, **kwargs):
+        self.attrs.update(kwargs)
+        print self.attrs
+        return super(TextArea, self).__call__(field, **self.attrs)
 
 
 class BaseForm(Form):
@@ -94,7 +103,7 @@ class QuestionForm(BaseForm):
                      description="Make sure the question ends with a ?",
                      widget=TextInputWithMaxlength(200, attrs={
                        'size': 200,
-                       'class': 'xlarge',
+                       'class': 'span5',
                      }),
                      id="id_text")
     correct = TextField("Answer",
@@ -128,9 +137,14 @@ class QuestionForm(BaseForm):
                       [validators.Required()])
     location = SelectField("City",
                       [validators.Required()])
+    didyouknow = TextAreaField("Did you know...",
+                     description="Some cute little extra fact that might brighten your day",
+                     widget=TextArea(**{'class': 'span5'})
+                     )
     notes = TextAreaField("Notes",
                           description="Any references or links to "\
-                                      "strengthen your answer")
+                                      "strengthen your answer",
+                         widget=TextArea(**{'class': 'span5'}))
 
     def __init__(self, *args, **kwargs):
         super(QuestionForm, self).__init__(*args, **kwargs)

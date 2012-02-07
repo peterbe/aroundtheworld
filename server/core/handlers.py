@@ -10,6 +10,7 @@ from pprint import pprint
 import tornado.auth
 import tornado.web
 import tornado.gen
+import markdown
 from tornado.web import HTTPError
 from tornado_utils.routes import route
 from tornado_utils.send_mail import send_email
@@ -305,6 +306,14 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
                                'finish_date': None})):
             session.delete()
 
+    def render_didyouknow(self, text):
+        #print repr(tornado.escape.linkify(text))
+        text = markdown.markdown(
+          tornado.escape.linkify(text, extra_params='target="_blank"')
+        )
+        #print repr(text)
+        return text
+
     def get(self):
         category = self.get_argument('category')
         category = category.replace('+', ' ')
@@ -501,12 +510,16 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
             question = (self.db.Question
                         .find_one({'_id': answer_obj['question']}))
 
+            if question.get('didyouknow'):
+                data['didyouknow'] = self.render_didyouknow(question['didyouknow'])
+
             answer = self.get_argument('answer')
             time_ = float(self.get_argument('time'))
             data['correct'] = question.check_answer(answer)
             if not data['correct']:
                 data['correct_answer'] = question['correct']
             data['points_value'] = question.get('points_value', 1)
+            assert isinstance(data['points_value'], int)
 
             answer_obj['time'] = time_
             answer_obj['answer'] = answer

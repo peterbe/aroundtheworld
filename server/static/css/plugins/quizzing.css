@@ -5,9 +5,16 @@
     z-index:3;
     margin:20px;
     padding:20px;
-    width:350px;
+    width:50%;
     text-align:center;
     background-color:#fff;
+    border-radius:4px;
+    box-shadow: 0 0 10px #ccc;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    -moz-box-shadow: 0 0 10px #ccc;
+    -webkit-box-shadow: 0 0 10px #ccc;
+
 }
 #quizzing .short-summary {
     text-align:center;
@@ -17,20 +24,29 @@
 #quizzing .pleasewait {
     border:1px solid green;
 }
-#quizzing .tooslow {
+#quizzing div.tooslow {
     border:1px solid red;
 }
-#quizzing p.correct {
-    color: white;
-    font-weight: bold;
-    background-color:green;
+#quizzing div.correct {
+    background-color:white;
+    background: white url(../../images/correct.png) 20px 5px no-repeat;
     border:1px solid green;
 }
-#quizzing p.wrong {
-    color: white;
+#quizzing .verdict {
     font-weight: bold;
-    background-color:red;
+    font-size: 1.2em;
+    margin-bottom:10px;
+}
+#quizzing div.wrong {
+    background: white url(../../images/wrong.png) 20px 5px no-repeat;
+    /*background-color:red;*/
     border:1px solid red;
+}
+#quizzing .didyouknow {
+    text-align:left;
+    border:1px dashed #ccc;
+    padding:10px;
+    margin:20px 5px;
 }
 
 #quizzing .points-total-outer {
