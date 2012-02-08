@@ -11,6 +11,7 @@ import tornado.web
 from tornado_utils.routes import route
 from core.handlers import BaseHandler as CoreBaseHandler
 from tornado_utils.timesince import smartertimesince
+from admin.utils import truncate_text
 
 
 class djangolike_request_dict(dict):
@@ -269,9 +270,7 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
 
         if item.__class__ == self.db.Question._obj_class:
             category = self.db.Category.find_one({'_id': item['category']})
-            text = item['text']
-            if len(text) > 40:
-                text = text[:40].strip() + '...'
+            text = truncate_text(item['text'], 80)
             text = ("<strong>'%s' question!</strong> %s" %
                     (category['name'], text))
             if item.has_picture():
@@ -286,6 +285,9 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
             if item['location']:
                 location = self.db.Location.find_one({'_id': item['location']})
                 text += 'about %s ' % location
+            if item['category']:
+                category = self.db.Category.find_one({'_id': item['category']})
+                text += 'for %s ' % category
 
             return text.strip()
         raise NotImplementedError(item.__class__.__name__)

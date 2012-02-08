@@ -84,7 +84,7 @@ tfoot th select[name="authors"] { width:100px; }
           {% for question, category, location, author in questions %}
           <tr>
             <td>
-              <a href="{{ reverse_url('admin_question', question['_id']) }}">{{ question['text'] }}</a>
+              <a href="{{ reverse_url('admin_question', question['_id']) }}">{% module Truncate(question['text'], 60) %}</a>
               {% if not question['published'] %}
                 <span class="label warning">Not published</span>
               {% end %}

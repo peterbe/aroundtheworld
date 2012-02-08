@@ -9,7 +9,6 @@ class TextArea(WTTextArea):
 
     def __call__(self, field, **kwargs):
         self.attrs.update(kwargs)
-        print self.attrs
         return super(TextArea, self).__call__(field, **self.attrs)
 
 
