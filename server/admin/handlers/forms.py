@@ -227,6 +227,7 @@ class AddDocumentForm(DocumentForm):
 
     location = TextField("Location")
     user = TextField("User")
+    category = TextField("Category")
 
 
 class UserForm(BaseForm):

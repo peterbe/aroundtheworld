@@ -287,6 +287,10 @@ class Category(BaseDocument):
     def __unicode__(self):
         return self['name']
 
+    def __str__(self):
+        return str(unicode(self))
+
+
 
 @register
 class QuestionSession(BaseDocument):
@@ -377,6 +381,7 @@ class HTMLDocument(BaseDocument):
       'location': ObjectId,
       'country': unicode,
       'user': ObjectId,
+      'category': ObjectId,
       'notes': unicode,
     }
 

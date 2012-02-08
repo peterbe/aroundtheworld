@@ -24,21 +24,38 @@ var Quiz = (function() {
       data.start = true;
       _next_is_first = false;
     }
-    $.getJSON('/quizzing.json', data, function(response) {
+    $.getJSON(URL, data, function(response) {
       if (response.quiz_name) {
         Quiz.show_name(response.quiz_name);
+      }
+      if (response.intro) {
       }
       last_question = response.no_questions.last;
       _show_no_questions(response.no_questions['total'],
                          response.no_questions['number']);
       if (response.question) {
-        Quiz.show_question(response.question);
+        if (response.intro) {
+          Quiz.show_intro(response.intro);
+          $('div.intro', container).show();
+          $('div.play', container).hide();
+          $('.intro .begin a', container).click(function() {
+            $('div.intro', container).hide();
+            $('div.play', container).show();
+            Quiz.start_timer(response.question.seconds);
+            return false;
+          });
+          Quiz.show_question(response.question, false);
+        } else {
+          $('div.intro', container).hide();
+          $('div.play', container).show();
+          Quiz.show_question(response.question, true);
+        }
       }
     });
   }
 
   function _finish() {
-    $.post('/quizzing.json', {finish: true}, function(response) {
+    $.post(URL, {finish: true}, function(response) {
       $('.play', container).hide();
       $('.results', container).show();
       $('.short-summary .total-points', container)
@@ -225,7 +242,7 @@ var Quiz = (function() {
          }
        }
      },
-     show_question: function(question) {
+     show_question: function(question, start_immediately) {
        if (question.picture) {
          Utils.preload_image(question.picture.url);
          $('.thumbnail-wrapper:hidden', container).show();
@@ -270,17 +287,24 @@ var Quiz = (function() {
            .addClass('thumbnail')
            .ready(function() {
              $('.thumbnail-wrapper .loading', container).hide();
-             Quiz.start_timer(question.seconds);
+             if (start_immediately) {
+               Quiz.start_timer(question.seconds);
+             }
            })
            .appendTo($('.thumbnail-wrapper', container))
            .attr('src', question.picture.url);
        } else {
-         Quiz.start_timer(question.seconds);
+         if (start_immediately) {
+           Quiz.start_timer(question.seconds);
+         }
        }
      },
     show_name: function (name) {
        $('.quiz-name', container).text(name);
      },
+    show_intro: function(intro_html) {
+      $('div.intro-text', container).html(intro_html);
+    },
     load_next: function(category) {
       if (last_question) {
         _finish();
@@ -291,7 +315,7 @@ var Quiz = (function() {
     teardown: function() {
       $('.thumbnail-wrapper:visible', container).hide();
       $('.thumbnail-wrapper img', container).remove();
-      $.post('/quizzing.json', {teardown: true});
+      $.post(URL, {teardown: true});
     }
   }
 })();

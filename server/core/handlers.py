@@ -314,6 +314,21 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
         #print repr(text)
         return text
 
+    def get_intro_html(self, category, location):
+        document = self.db.HTMLDocument.find_one({
+          'category': category['_id'],
+          'location': location['_id']
+        })
+        if not document:
+            document = self.db.HTMLDocument.find_one({
+              'category': category['_id'],
+            })
+
+        if document:
+            if not document['html']:
+                document.update_html()
+            return document['html']
+
     def get(self):
         category = self.get_argument('category')
         category = category.replace('+', ' ')
@@ -327,6 +342,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
         if self.get_argument('start', None):
             self._teardown(user, location)
             session = None
+            data['intro'] = self.get_intro_html(category, location)
+
         else:
             session = (self.db.QuestionSession
                        .find_one({'user': user['_id'],

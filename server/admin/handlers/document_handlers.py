@@ -41,6 +41,7 @@ class DocumentsAdminHandler(AmbassadorBaseHandler):
         data['filtering'] = bool(filter_)
         _users = {}
         _locations = {}
+        _categories = {}
         for each in (self.db.HTMLDocument
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
@@ -53,10 +54,18 @@ class DocumentsAdminHandler(AmbassadorBaseHandler):
             if each['user'] and each['user'] not in _users:
                 _users[each['user']] = \
                   self.db.User.find_one({'_id': each['user']})
+            try:each['category']
+            except KeyError:
+                each['category'] = None
+                each.save()
+            if each['category'] and each['category'] not in _categories:
+                _categories[each['category']] = \
+                  self.db.Category.find_one({'_id': each['category']})
             documents.append((
               each,
               each['location'] and _locations[each['location']] or None,
-              each['user'] and _users[each['user']] or None
+              each['user'] and _users[each['user']] or None,
+              each['category'] and _categories[each['category']] or None,
             ))
         data['documents'] = documents
         self.render('admin/documents.html', **data)
@@ -68,13 +77,18 @@ class DocumentAdminHandler(AmbassadorBaseHandler):
     def get(self, _id, form=None):
         data = {}
         document = self.db.HTMLDocument.find_one({'_id': ObjectId(_id)})
+        data['user'] = None
+        data['location'] = None
+        data['category'] = None
         if document['location']:
             data['location'] = (self.db.Location
                                 .find_one({'_id': document['location']}))
-            data['user'] = None
-        elif document['location']:
+        if document['user']:
             data['user'] = self.db.User.find_one({'_id': document['user']})
-            data['location'] = None
+        if document['category']:
+            data['category'] = (self.db.Category
+                                .find_one({'_id': document['category']}))
+
         if form is None:
             initial = dict(document)
             form = DocumentForm(**initial)
@@ -135,6 +149,13 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
                 users.append(user)
         return users
 
+    def find_categories(self, search):
+        categories = []
+        regex = re.compile('^%s' % re.escape(search), re.I)
+        for category in self.db.Category.find({'name': regex}).sort('name'):
+            categories.append(category)
+        return categories
+
     def get(self, form=None):
         data = {}
         if form is None:
@@ -153,9 +174,12 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
             if form.location.data:
                 location = self.find_locations(form.location.data)[0]
                 document['location'] = location['_id']
-            elif form.user.data:
+            if form.user.data:
                 user = self.find_users(form.user.data)[0]
                 document['user'] = user['_id']
+            if form.category.data:
+                category = self.find_categories(form.category.data)[0]
+                document['category'] = category['_id']
             document['type'] = form.type.data
             document.save()
 
@@ -189,4 +213,15 @@ class FindUserAdminHandler(AddDocumentAdminHandler):
             if user['email']:
                 r += ', %s' % user['email']
             results.append(r)
+        self.write_json({'results': results})
+
+@route('/admin/findcategory.json')
+class FindCategoryAdminHandler(AddDocumentAdminHandler):
+
+    def get(self):
+        search = self.get_argument('category')
+        categories = self.find_categories(search)
+        results = []
+        for category in categories:
+            results.append(category['name'])
         self.write_json({'results': results})

@@ -26,15 +26,13 @@ tfoot th select[name="countries"] { width:150px; }
       <table class="table condensed-table">
         <thead>
           <tr>
-            <th>User</th>
-            <th>Location</th>
+            <th>User/Location/Category</th>
             <th>Type</th>
             <th>Added</th>
           </tr>
         </thead>
         <tfoot>
           <tr>
-            <th>&nbsp;</th>
             <th>&nbsp;</th>
             <th>
               <select multiple name="types">
@@ -51,28 +49,28 @@ tfoot th select[name="countries"] { width:150px; }
           </tr>
         </tfoot>
         <tbody>
-          {% for document, location, user in documents %}
+          {% for document, location, user, category in documents %}
           <tr>
             <td>
-              {% if user %}
               <a href="{{ reverse_url('admin_document', document['_id']) }}">
-                {{ user['username'] or user['email'] }}</a>
+              {% if user %}
+                {{ user['username'] or user['email'] }}
               {% else %}
                 -
               {% end %}
-            </td>
-            <td>
-              {% if not user %}
-              <a href="{{ reverse_url('admin_document', document['_id']) }}">
+              /
               {% if location %}
-                  {{ location }}
+                {{ location }}
               {% else %}
-                  {{ document['country'] }}
+                -
+              {% end %}
+              /
+              {% if category %}
+                {{ category }}
+              {% else %}
+                -
               {% end %}
               </a>
-              {% else %}
-                -
-              {% end %}
             </td>
             <td>
               <span class="label">{{ document['type'] }}</span>

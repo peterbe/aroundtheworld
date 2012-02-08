@@ -51,6 +51,9 @@ $(function() {
     {% if user %}
     User: {{ user }}
     {% end %}
+    {% if category %}
+    Category: {{ category }}
+    {% end %}
   </h3>
 
   {% include "_show_form_errors.html" %}

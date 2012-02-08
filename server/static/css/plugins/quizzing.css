@@ -90,3 +90,11 @@
 #quizzing td.question {
     font-weight: bold;
 }
+#quizzing .intro-text {
+    margin: 30px;
+}
+#quizzing .intro .begin {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
