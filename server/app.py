@@ -18,6 +18,10 @@ import settings
 define("debug", default=False, help="run in debug mode", type=bool)
 define("database_name", default=settings.DATABASE_NAME, help="db name")
 define("port", default=8000, help="run on the given port", type=int)
+define("dont_optimize_static_content", default=False,
+       help="Don't combine static resources", type=bool)
+define("dont_embed_static_url", default=False,
+       help="Don't put embed the static URL in static_url()", type=bool)
 
 
 class Application(tornado.web.Application):
@@ -36,6 +40,17 @@ class Application(tornado.web.Application):
                     # most likely a builtin class or something
                     pass
 
+        try:
+            cdn_prefix = [x.strip() for x in open('cdn_prefix.conf')
+                          if x.strip() and not x.strip().startswith('#')][0]
+            logging.info("Using %r as static URL prefix" % cdn_prefix)
+        except (IOError, IndexError):
+            cdn_prefix = None
+
+        from tornado_utils import tornado_static
+        ui_modules_map['Static'] = tornado_static.Static
+        ui_modules_map['StaticURL'] = tornado_static.StaticURL
+        ui_modules_map['Static64'] = tornado_static.Static64
         routed_handlers = route.get_routes()
         app_settings = dict(
             title=settings.PROJECT_TITLE,
@@ -48,12 +63,16 @@ class Application(tornado.web.Application):
               or 'tornado_utils.send_mail.backends.pickle.EmailBackend',
             admin_emails=settings.ADMIN_EMAILS,
             ui_modules=ui_modules_map,
-            twitter_consumer_key=settings.TWITTER_CONSUMER_KEY,
-            twitter_consumer_secret=settings.TWITTER_CONSUMER_SECRET,
+            embed_static_url_timestamp=not options.dont_embed_static_url,
+            optimize_static_content=not options.dont_optimize_static_content,
+            cdn_prefix=cdn_prefix,
+            CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__),
+                                          "static", "compiler.jar"),
+
         )
-        if 0 or not options.debug:
+        if 1:#0 or not options.debug:
             routed_handlers.append(
-              tornado.web.url('/.*?',
+              tornado.web.url('/admin/.*?',
                               core.handlers.PageNotFoundHandler,
                               name='page_not_found')
             )
@@ -65,7 +84,6 @@ class Application(tornado.web.Application):
         from core.models import connection
         import admin.models  # so it gets registered
         self.db = connection[database_name or settings.DATABASE_NAME]
-
 
 
 def main():  # pragma: no cover

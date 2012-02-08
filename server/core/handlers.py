@@ -234,6 +234,23 @@ class BaseHandler(tornado.web.RequestHandler):
             options['page_title'] = settings.PROJECT_TITLE
         return super(BaseHandler, self).render(template, **options)
 
+    def static_url(self, path):
+        if self.application.settings['embed_static_url_timestamp']:
+            ui_module = self.application.ui_modules['StaticURL'](self)
+            try:
+                return ui_module.render(path)
+            except OSError:
+                logging.debug("%r does not exist" % path)
+        return super(BaseHandler, self).static_url(path)
+
+    def get_cdn_prefix(self):
+        """return something that can be put in front of the static filename
+        E.g. if filename is '/static/image.png' and you return '//cloudfront.com'
+        then final URL presented in the template becomes
+        '//cloudfront.com/static/image.png'
+        """
+        return self.application.settings.get('cdn_prefix')
+
 
 class AuthenticatedBaseHandler(BaseHandler):
 

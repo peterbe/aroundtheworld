@@ -189,6 +189,7 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
 
         self.render('admin/home.html', **options)
 
+
 @route('/admin/news.json', name='admin_news')
 class NewsAdminHandler(AuthenticatedBaseHandler):
 
@@ -214,7 +215,6 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
                       self.db.HTMLDocument):
             objects = model.find(filter_).sort('add_date', -1)
             for item in objects:
-                print "\t",item['add_date']
                 items.append({
                   'summary': self.get_summary(item),
                   'url': self.get_url(item),
