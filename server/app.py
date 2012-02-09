@@ -2,6 +2,7 @@
 import os
 import re
 import here
+import logging
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
