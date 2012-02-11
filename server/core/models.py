@@ -280,15 +280,22 @@ class Category(BaseDocument):
     structure = {
       'name': unicode,
       'description': unicode,
+      'manmade': bool,
     }
 
     required_fields = ['name']
+
+    default_values = {
+      'manmade': False,
+    }
 
     def __unicode__(self):
         return self['name']
 
     def __str__(self):
         return str(unicode(self))
+
+
 
 
 

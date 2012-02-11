@@ -148,7 +148,9 @@ class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
 
     @property
     def categories(self):
-        return self.db.Category.find({'name': {'$nin': ['Geographer']}})
+        return (self.db.Category
+                .find({'manmade': True})
+                .sort('name'))
 
     @property
     def locations(self):
@@ -390,6 +392,7 @@ class AddCategoryAdminHandler(BaseQuestionAdminHandler):
         if form.validate():
             category = self.db.Category()
             category['name'] = form.name.data
+            category['manmade'] = True
             category.save()
             url = self.reverse_url('admin_add_question')
             url += '?category=%s' % category['_id']
@@ -411,7 +414,9 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
                          .sort('code')):
             locations.append(location)
 
-        for category in self.db.Category.find().sort('name'):
+        for category in (self.db.Category
+                         .find({'manmade': True})
+                         .sort('name')):
             counts[category['name']] = {}
             categories.append(category)
             for location in locations:
