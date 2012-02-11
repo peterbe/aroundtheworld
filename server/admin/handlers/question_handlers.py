@@ -409,10 +409,12 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
         counts = {}
         categories = []
         locations = []
+        location_counts = {}
         for location in (self.db.Location
                          .find({'airport_name': {'$ne': None}})
                          .sort('code')):
             locations.append(location)
+            location_counts[location['code']] = 0
 
         for category in (self.db.Category
                          .find({'manmade': True})
@@ -425,7 +427,9 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
                                 'location': location['_id']})
                          .count())
                 counts[category['name']][location['code']] = count
+                location_counts[location['code']] += count
         data['categories'] = categories
         data['locations'] = locations
         data['counts'] = counts
+        data['location_counts'] = location_counts
         self.render('admin/categories.html', **data)
