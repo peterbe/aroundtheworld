@@ -16,6 +16,9 @@ REDIS_PORT = 6379
 ADMIN_EMAILS = (
 )
 
+NOREPLY_EMAIL = 'noreply@aroundtheworld.peterbe.com'
+
+
 THUMBNAIL_DIRECTORY = path('static/thumbnails')
 
 try:

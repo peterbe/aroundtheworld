@@ -8,6 +8,7 @@ import tornado.escape
 from pymongo.objectid import ObjectId
 from .base import BaseHTTPTestCase
 import settings
+import tornado_utils.send_mail as mail
 from core.handlers import (PinpointHandler, GoogleAuthHandler, QuizzingHandler,
                            CityHandler)
 
@@ -35,7 +36,8 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.tour_guide = tour_guide
 
     def _login(self, username=u'peterbe', email=u'mail@peterbe.com',
-               client=None, location=None):
+               client=None, location=None,
+               first_name=u'Peter', last_name=u'Bengtsson'):
 
         if client is None:
             client = self.client
@@ -49,7 +51,7 @@ class HandlersTestCase(BaseHTTPTestCase):
           make_google_get_authenticated_user({
             'username': username,
             'email': email,
-            'first_name': u'Peter',
+            'first_name': first_name,
             'last_name': u'Bengtsson',
           })
         url = self.reverse_url('auth_google')
@@ -542,9 +544,9 @@ class HandlersTestCase(BaseHTTPTestCase):
             _correct = (self.db.Location
                         .find_one({'city': r['question']['name']}))
             data = {
-              'lat': _correct['lat'] + random.random(),
               # the divide is the assure that the delta is not too big
               # to cause 0 points every single time
+              'lat': _correct['lat'] + random.random() / 2,
               'lng': _correct['lng'] - random.random() / 2,
               'time': random.random() * 10 / 2
             }
@@ -793,3 +795,34 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         response = self.get_struct(url, {'get': 'ambassadors'})
         self.assertTrue(u'Check <em>this</em> out!' in response['ambassadors'])
+
+    def test_signup_upon_invitation(self):
+        user = self._login(u'karl', email=u'karl@example.com',
+                           first_name=u'Karl', last_name=u'Ekberg')
+        assert user
+
+        invitation = self.db.Invitation()
+        invitation['user'] = user['_id']
+        invitation['email'] = u'Peter@example.com'
+        invitation.save()
+
+        self._login(username=u'peter', email=u'peter@example.com')
+        email_sent = mail.outbox[-1]
+        self.assertTrue(email_sent.from_email.startswith('noreply'))
+        self.assertEqual(email_sent.recipients(), [user['email']])
+        self.assertTrue('peter' in email_sent.subject)
+        from core.handlers import BaseAuthHandler
+        self.assertTrue(str(BaseAuthHandler.INVITATION_AWARD)
+                        in email_sent.body)
+        assert email_sent.body  # not decided what to actually test yet
+
+        job, = self.db.Job.find()
+        category = self.db.Category.find_one({'_id': job['category']})
+        self.assertEqual(category['name'], 'Recruiter')
+        self.assertEqual(job['coins'], BaseAuthHandler.INVITATION_AWARD)
+
+        # if 'peter' logs in again, it should be awarded a second time
+        emails_before = len(mail.outbox)
+        self._login(username=u'peter', email=u'peter@example.com')
+        emails_after = len(mail.outbox)
+        self.assertEqual(emails_before, emails_after)

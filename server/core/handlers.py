@@ -1292,6 +1292,8 @@ class StateHandler(BaseHandler):
 
 class BaseAuthHandler(BaseHandler):
 
+    INVITATION_AWARD = 100
+
     def get_next_url(self, default='/'):
         next = default
         if self.get_argument('next', None):
@@ -1335,7 +1337,83 @@ class BaseAuthHandler(BaseHandler):
     def post_login_successful(self, user):
         """executed by the Google, Twitter and Facebook
         authentication handlers"""
-        pass
+        try:
+            self._post_login_successful(user)
+        except:  # pragma: no cover
+            logging.error("Failed to post login successful user",
+                          exc_info=True)
+
+    def _post_login_successful(self, user):
+        if user['email']:
+            regex = re.compile(re.escape(user['email']), re.I)
+            invitation = (self.db.Invitation
+                          .find_one({'email': regex,
+                                     'signedup_user': None}))
+            if invitation:
+                invitation['signedup_user'] = user['_id']
+                invitation.save()
+
+                inviter = self.db.User.find_one({'_id': invitation['user']})
+                inviter_settings = self.get_user_settings(inviter)
+                inviter_settings.coins_total += self.INVITATION_AWARD
+                inviter_settings.save()
+
+                category = self.db.Category.find_one({'name': u'Recruiter'})
+                if not category:
+                    category = self.db.Category()
+                    category['name'] = u'Recruiter'
+                    category['manmade'] = False
+                    category.save()
+
+                job = self.db.Job()
+                job['user'] = inviter['_id']
+                job['coins'] = self.INVITATION_AWARD
+                job['category'] = category['_id']
+                job['location'] = inviter['current_location']
+                job.save()
+
+                self.email_inviter(inviter, invitation, user)
+
+    def email_inviter(self, inviter, invitation, user):
+        if not inviter['email']:
+            return
+        to = inviter['email']
+        from_ = getattr(settings, 'NOREPLY_EMAIL', None)
+        if not from_:
+            from_ = 'noreply@%s' % self.request.host
+        subject = (u"Congratulations! %s has now joined %s" %
+                   (user['username'], settings.PROJECT_TITLE))
+        body = []
+        if inviter['first_name']:
+            body.append('Hi %s' % inviter['first_name'])
+        else:
+            body.append('Hi %s' % inviter['username'])
+        body.append('')
+        body.append("Your invitation sent to %s did work out!" % invitation['email'])
+        if user['first_name']:
+            name = '%s %s' % (user['first_name'], user['last_name'])
+        else:
+            name = user['username']
+        body.append("Welcome %s to %s!" % (name, settings.PROJECT_TITLE))
+        body.append('')
+        body.append("For this recruitment you were awarded %s coins. Congratulations!" %
+                    self.INVITATION_AWARD)
+        inviter_settings = self.get_user_settings(inviter)
+        body.append("Your total coins is now: %s coins." % inviter_settings['coins_total'])
+        body.append('')
+        body.append('--')
+        full_url = '%s://%s' % (self.request.protocol, self.request.host)
+        body.append(full_url)
+        body = '\n'.join(body)
+        send_email(
+          self.application.settings['email_backend'],
+          subject,
+          body,
+          from_,
+          [to]
+        )
+
+
 
 
 @route('/auth/google/', name='auth_google')

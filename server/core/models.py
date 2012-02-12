@@ -426,3 +426,15 @@ class Feedback(BaseDocument):
     }
 
     required_fields = ['what', 'comment']
+
+
+@register
+class Invitation(BaseDocument):
+    __collection__ = 'invitations'
+    structure = {
+      'user': ObjectId,
+      'email': unicode,
+      'message': unicode,
+      'signedup_user': ObjectId,
+    }
+    required_fields = ['user', 'email']

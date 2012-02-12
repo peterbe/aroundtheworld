@@ -4,3 +4,4 @@ sleeping/
 ace-clone/
 server/vendor/bin/markdown_py
 server/static/thumbnails/
+server/.static_name_conversion
