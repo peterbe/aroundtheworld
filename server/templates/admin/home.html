@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 
+{% block extrahead %}
+<style>
+.question-statuses-country { width: 85%; }
+.question-statuses-country .category { margin-left:60px; }
+.question-statuses-country .number { float:right; }
+</style>
+{% end %}
+
 {% block extrajs %}
 <script src="{{ static_url('admin/jquery.cookie.js') }}"></script>
 <script>
@@ -35,9 +43,32 @@ $(function() {
 {% block content %}
       <!-- Main hero unit for a primary marketing message or call to action -->
       <div class="hero-unit" style="display:none">
+        {% if question_statuses %}
+          {% for location_name, stat_groups in question_statuses %}
+          <div class="question-statuses-country">
+          <h3>In {{ location_name }}</h3>
+            {% for stats in stat_groups %}
+              <div class="category">
+              <h4 class="number">
+                {% if stats['close'] %}
+                  only {{ stats['left'] }} more needed
+                {% else %}
+                  {{ stats['count'] }} questions, {{ stats['left'] }} left
+                {% end %}
+               </h4>
+              <h4>{{ stats['category'] }}</h4>
+              <div class="progress {% if stats['close'] %}progress-danger{% else %}progress-info{% end %} {% if not stats['excess'] %}progress-striped{% end %}">
+                <div class="bar" style="width: {{ stats['percentage'] }}%;"></div>
+              </div>
+              </div>
+            {% end %}
+          </div>
+          {% end %}
+        {% else %}
         <h1>Admin Home!</h1>
         <p>Wow! You must be awesomely amazing if you managed to get here. What are you going to do?</p>
         <p><a class="btn primary large">Alright alright &raquo;</a></p>
+        {% end %}
       </div>
 
       <!-- Example row of columns -->

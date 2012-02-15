@@ -1,18 +1,15 @@
-#from collections import defaultdict
-#from pymongo.objectid import InvalidId, ObjectId
-#import re
 import os
 import time
 import urllib
 from pprint import pprint
 import datetime
-#import urllib
+from collections import defaultdict
 import tornado.web
-#from tornado.escape import json_decode, json_encode
 from tornado_utils.routes import route
 from core.handlers import BaseHandler as CoreBaseHandler
 from tornado_utils.timesince import smartertimesince
 from admin.utils import truncate_text
+from core.handlers import QuizzingHandler
 
 
 class djangolike_request_dict(dict):
@@ -187,6 +184,33 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           self.db.Mayor
           .find().distinct('user')
         )
+
+        question_statuses = defaultdict(list)
+        min_no_countries = QuizzingHandler.NO_QUESTIONS
+        _categories = {}  # for optimization
+        for country in (self.db.Ambassador
+                        .find({'user': self.get_current_user()['_id']})
+                        .distinct('country')):
+            for location in (self.db.Location
+                             .find({'country': country,
+                                    'airport_name': {'$ne': None}})):
+                counts = defaultdict(int)
+                for q in self.db.Question.find({'location': location['_id']}):
+                    counts[q['category']] += 1
+                for cat, count in counts.items():
+                    if count >= min_no_countries:
+                        continue
+                    if cat not in _categories:
+                        _categories[cat] = self.db.Category.find_one({'_id': cat})
+                    question_statuses[unicode(location)].append(dict(
+                      category=_categories[cat]['name'],
+                      count=count,
+                      excess=max(0, count - min_no_countries),
+                      left=min_no_countries - count,
+                      percentage=int(min(100, 100.0 * count / min_no_countries)),
+                      close=float(count) / min_no_countries > 0.8 and count < min_no_countries
+                    ))
+        options['question_statuses'] = sorted(question_statuses.items())
 
         self.render('admin/home.html', **options)
 
