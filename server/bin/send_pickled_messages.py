@@ -27,6 +27,8 @@ def main():
     filenames = glob(os.path.join(config.PICKLE_LOCATION, '*.pickle'))
     filenames.sort()
     if not filenames:
+        if options.verbose:
+            print "No files in", config.PICKLE_LOCATION
         return
 
     t0 = time.time()
