@@ -19,6 +19,7 @@ define("debug", default=False, help="run in debug mode", type=bool)
 define("dry_run", default=False, help="print messages to send", type=bool)
 
 def main():
+    tornado.options.parse_command_line()
     try:
         from tornado_utils.send_mail import config
     except ImportError:
@@ -32,7 +33,6 @@ def main():
         return
 
     t0 = time.time()
-    tornado.options.parse_command_line()
     if options.debug or options.dry_run:
         from tornado_utils.send_mail.backends.console import EmailBackend
     else:
