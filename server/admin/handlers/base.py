@@ -1,6 +1,7 @@
 #from collections import defaultdict
 #from pymongo.objectid import InvalidId, ObjectId
 #import re
+import os
 import time
 import urllib
 from pprint import pprint
@@ -291,3 +292,26 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
 
             return text.strip()
         raise NotImplementedError(item.__class__.__name__)
+
+
+@route('/admin/git.log', name='admin_git_log')
+class GitLogHandler(AuthenticatedBaseHandler):
+
+    @tornado.web.asynchronous
+    def get(self):
+        self.ioloop = tornado.ioloop.IOLoop.instance()
+        cmd = 'git log master --date=iso --pretty=format:"%h%x09%an%x09%ad%x09%s"'
+        self.pipe = p = os.popen(cmd)
+        self.ioloop.add_handler(
+          p.fileno(),
+          self.async_callback(self.on_response),
+          self.ioloop.READ
+        )
+
+    def on_response(self, fd, events):
+        self.set_header('Content-Type', 'text/plain')
+        for line in self.pipe:
+            self.write(line)
+
+        self.ioloop.remove_handler(fd)
+        self.finish()
