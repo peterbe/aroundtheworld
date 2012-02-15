@@ -19,7 +19,11 @@ define("debug", default=False, help="run in debug mode", type=bool)
 define("dry_run", default=False, help="print messages to send", type=bool)
 
 def main():
-    from tornado_utils.send_mail import config
+    try:
+        from tornado_utils.send_mail import config
+    except ImportError:
+        import send_mail_config as config
+
     filenames = glob(os.path.join(config.PICKLE_LOCATION, '*.pickle'))
     filenames.sort()
     if not filenames:
