@@ -11,6 +11,7 @@ from tornado_utils.routes import route
 from .forms import QuestionForm, CategoryForm
 from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
 from .base import djangolike_request_dict
+from core.handlers import QuizzingHandler
 
 
 @route('/admin/questions/numbers/', name='admin_questions_numbers')
@@ -432,4 +433,5 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
         data['locations'] = locations
         data['counts'] = counts
         data['location_counts'] = location_counts
+        data['min_no_questions'] = QuizzingHandler.NO_QUESTIONS
         self.render('admin/categories.html', **data)

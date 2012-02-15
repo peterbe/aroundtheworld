@@ -24,8 +24,15 @@
       <tr>
         <td>{{ category['name'] }}</td>
         {% for location in locations %}
-        <td><a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}&amp;categories={{ category['name'].replace(' ', '+') }}">{{ counts[category['name']].get(location['code'], 0) }}</td>
+        <td>
+        <a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}&amp;categories={{ category['name'].replace(' ', '+') }}">{{ counts[category['name']].get(location['code'], 0) }}</a>
+          {% if counts[category['name']].get(location['code'], 0) > min_no_questions %}
+          <img src="{{ static_url('images/check-small.png') }}" title="Enough to play this category" alt="Enough to play this category">
+          {% end %}
+
+        </td>
         {% end %}
+
       </tr>
       {% end %}
     </tbody>
