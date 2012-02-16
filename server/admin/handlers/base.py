@@ -188,9 +188,8 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
         question_statuses = defaultdict(list)
         min_no_countries = QuizzingHandler.NO_QUESTIONS
         _categories = {}  # for optimization
-        for country in (self.db.Ambassador
-                        .find({'user': self.get_current_user()['_id']})
-                        .distinct('country')):
+        countries = self.get_relevant_status_countries()
+        for country in countries:
             for location in (self.db.Location
                              .find({'country': country,
                                     'airport_name': {'$ne': None}})):
@@ -213,6 +212,14 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
         options['question_statuses'] = sorted(question_statuses.items())
 
         self.render('admin/home.html', **options)
+
+    def get_relevant_status_countries(self):
+        current_user = self.get_current_user()
+        if current_user['superuser']:
+            return sorted(list(self.db.Location.find().distinct('country')))
+        return sorted(list(self.db.Ambassador
+                           .find({'user': current_user['_id']})
+                           .distinct('country')))
 
 
 @route('/admin/news.json', name='admin_news')

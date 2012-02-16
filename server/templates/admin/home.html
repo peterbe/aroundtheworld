@@ -46,18 +46,18 @@ $(function() {
         {% if question_statuses %}
           {% for location_name, stat_groups in question_statuses %}
           <div class="question-statuses-country">
-          <h3>In {{ location_name }}</h3>
+          <h3>{{ location_name }}</h3>
             {% for stats in stat_groups %}
               <div class="category">
               <h4 class="number">
                 {% if stats['close'] %}
                   only {{ stats['left'] }} more needed
                 {% else %}
-                  {{ stats['count'] }} questions, {{ stats['left'] }} left
+                  {{ stats['count'] }} questions <small>({{ stats['left'] }} left)</small>
                 {% end %}
                </h4>
               <h4>{{ stats['category'] }}</h4>
-              <div class="progress {% if stats['close'] %}progress-danger{% else %}progress-info{% end %} {% if not stats['excess'] %}progress-striped{% end %}">
+              <div class="progress {% if stats['close'] %}active progress-danger{% else %}progress-info{% end %} {% if not stats['excess'] %}progress-striped{% end %}">
                 <div class="bar" style="width: {{ stats['percentage'] }}%;"></div>
               </div>
               </div>
