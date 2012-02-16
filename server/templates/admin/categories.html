@@ -15,7 +15,7 @@
       <tr>
         <th>Total:</th>
 	{% for location in locations %}
-        <td><a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}">{{ location_counts[location['code']] }}</td>
+        <td><a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}">{{ location_counts[location['code']] }}</a></td>
 	{% end %}
       </tr>
     </tfoot>
