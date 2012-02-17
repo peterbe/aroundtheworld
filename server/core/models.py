@@ -339,6 +339,7 @@ class PinpointCenter(BaseDocument):
     __collection__ = 'pinpointcenters'
     structure = {
       'country': unicode,
+      'locality': unicode,
       'south_west': [float],
       'north_east': [float],
     }

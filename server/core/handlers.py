@@ -872,15 +872,20 @@ class CityHandler(AuthenticatedBaseHandler):
             }
             jobs.append(job)
 
-        _center = self.db.PinpointCenter.find({'country': location['country']})
-        if _center.count():
-            _center, = _center
-            _cities = self.db.Location.find({'country': _center['country']})
-            description = 'Geographer (%d cities)' % _cities.count()
-            jobs.append({
-              'type': 'pinpoint',
-              'description': description,
-            })
+        _center_search = {'country': location['country'],
+                          'locality': location['locality']}
+        _center = self.db.PinpointCenter.find_one(_center_search)
+        if not _center:
+            _center_search = {'country': location['country']}
+            _center = self.db.PinpointCenter.find_one(_center_search)
+        if _center:
+            _cities = self.db.Location.find(_center_search)
+            if _cities.count() > PinpointHandler.NO_QUESTIONS:
+                description = 'Geographer (%d cities)' % _cities.count()
+                jobs.append({
+                  'type': 'pinpoint',
+                  'description': description,
+                })
 
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
@@ -894,7 +899,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
     PERCENTAGE_COINS_RATIO = 1.0
 
     MIN_DISTANCE = 50.0
-    NO_QUESTIONS = 5
+    NO_QUESTIONS = 10
     SECONDS = 10
 
     CATEGORY_NAME = u'Geographer'
@@ -918,9 +923,18 @@ class PinpointHandler(AuthenticatedBaseHandler):
         user = self.get_current_user()
         current_location = self.get_current_location(user)
         country = current_location['country']
+
         data = {}
         filter_ = {'country': country}
+        if current_location['locality']:
+            filter_['locality'] = current_location['locality']
         center = self.db.PinpointCenter.find_one(filter_)
+        if not center and 'locality' in filter_:
+            filter_.popitem('locality')
+            center = self.db.PinpointCenter.find_one(filter_)
+        country = center['country']
+        locality = getattr(center, 'locality', None)
+
         assert center
 
         data['center'] = {
@@ -966,6 +980,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
                 location = self._get_next_location(
                   session,
                   country,
+                  locality=locality,
                   previous_location=(previous_answer['location']
                                      if previous_answer else None),
                 )
@@ -1007,11 +1022,15 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
         self.write_json(data)
 
-    def _get_next_location(self, session, country, allow_repeats=False,
+    def _get_next_location(self, session, country,
+                           locality=None,
+                           allow_repeats=False,
                            previous_location=None):
         filter_ = {
           'country': country,
         }
+        if locality:
+            filter_['locality'] = locality
         if previous_location:
             if not isinstance(previous_location, ObjectId):
                 previous_location = previous_location['_id']
@@ -1031,6 +1050,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             if allow_repeats:
                 raise NoLocationsError("Not enough locations")
             return self._get_next_location(session, country,
+                                           locality=locality,
                                            allow_repeats=True)
 
         nth = random.randint(0, count - 1)

@@ -103,11 +103,11 @@ LatLngControl.prototype.draw = function() {
   var point2 = this.getProjection().fromLatLngToContainerPixel(to);
 
   if (point1 === null) {
-    L('from?', from);
+    //L('from?', from);
     throw "point1 is null!";
   }
   if (point2 === null) {
-    L('to?', to);
+    //L('to?', to);
     throw "point2 is null!";
   }
   this.rotation_angle = calculateAngle(point1, point2);
@@ -128,7 +128,7 @@ LatLngControl.prototype.draw = function() {
   //else if (d > 6500) velocity *= 1.4; // 40% faster
 
   var t = d / velocity;
-  L("D", d, "V", velocity, "T", t);
+  //L("D", d, "V", velocity, "T", t);
   this.div_.style.left = (point1.x - IMAGE_RADIUS/2) + 'px';
   this.div_.style.top = (point1.y - IMAGE_RADIUS/2) + 'px';
   $(this.div_).show();
