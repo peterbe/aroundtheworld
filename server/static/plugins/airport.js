@@ -83,3 +83,8 @@ var Airport = (function() {
 Plugins.start('airport', function() {
   Airport.load();
 });
+
+
+Plugins.stop('airport', function() {
+  //Airport.teardown();
+});

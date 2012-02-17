@@ -55,3 +55,7 @@ Plugins.start('miles', function() {
   // called every time this plugin is loaded
   Miles.load();
 });
+
+Plugins.stop('miles', function() {
+  //Miles.teardown();
+});

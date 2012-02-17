@@ -5,6 +5,10 @@ var Coins = (function() {
   var jobs_page = 0;
   var jobs_shown = 0;
 
+  function remove_previous_count(text) {
+    return $.trim(text.replace(/\(\d+\)/g, ''));
+  }
+
   function _show_transactions(transactions, count, clear) {
     if (clear) {
       $('div.purchases tbody tr', container).remove();
@@ -100,12 +104,14 @@ var Coins = (function() {
          $.getJSON('/coins.json', {'transactions-page': 0}, function(response) {
            $('.loading:visible', container).hide();
            $('a[href="#tab-purchases"]', container).text(
-              $('a[href="#tab-purchases"]', container).text() + ' (' + response.count_transactions + ')');
+              remove_previous_count($('a[href="#tab-purchases"]', container).text())
+                 + ' (' + response.count_transactions + ')');
            _show_transactions(response.transactions, response.count_transactions, true);
            $('.purchases table:hidden', container).show();
            $.getJSON('/coins.json', {'jobs-page': 0}, function(response) {
              $('a[href="#tab-jobs"]', container).text(
-                $('a[href="#tab-jobs"]', container).text() + ' (' + response.count_jobs + ')');
+                remove_previous_count($('a[href="#tab-jobs"]', container).text())
+                    + ' (' + response.count_jobs + ')');
              _show_jobs(response.jobs, response.count_jobs, true);
            });
          });
@@ -145,8 +151,12 @@ Plugins.start('coins', function(table) {
   }
 });
 
-Plugins.stop('pinpoint', function() {
+Plugins.stop('coins', function() {
   if (window.removeEventListener) {
-    window.removeEventListener('keydown');
+    try {
+      window.removeEventListener('keydown');
+    } catch(e) {
+      L("ERROR on removeEventListener");
+    }
   }
 });

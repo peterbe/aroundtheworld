@@ -3,11 +3,10 @@ if (typeof PLUGINS !== 'object') throw "constant PLUGINS not defined";
 var Plugins = (function() {
   var loaded_plugins = [];
   var callbacks = {};
-  var stop_callbacks = [];
+  var stop_callback;
   var extra_args = {};
   return {
      load: function(id, extra_arg) {
-       //L('*load*', id);
        if (PLUGINS[id] && PLUGINS[id].length) {
          if ($.inArray(id, loaded_plugins) == -1) {
            $.each(PLUGINS[id], function (i, plugin_url) {
@@ -39,15 +38,21 @@ var Plugins = (function() {
            if (!c) {
              throw id + " doesn't have a callback";
            } else {
+             if (stop_callback) {
+               stop_callback();
+               stop_callback = null;
+             }
              c(extra_arg);
            }
          }
        }
      },
     start: function(id, callback) {
-      while (stop_callbacks.length) {
-        stop_callbacks.pop()();
+      if (stop_callback) {
+        stop_callback();
+        stop_callback = null;
       }
+
       callbacks[id] = callback;
       var extra_arg = extra_args[id] || null;
       if (extra_arg)
@@ -56,7 +61,7 @@ var Plugins = (function() {
         callback();
     },
     stop: function(id, callback) {
-      stop_callbacks.push(callback);
+      stop_callback = callback;
     }
   }
 })();
