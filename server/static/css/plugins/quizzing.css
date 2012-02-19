@@ -98,3 +98,9 @@
     font-weight: bold;
     font-size: 1.2em;
 }
+
+span.question {
+    font-size: 1.2em;
+    background-color:#efefef;
+    padding: 3px;
+}

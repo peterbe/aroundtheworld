@@ -313,8 +313,14 @@ var Quiz = (function() {
       }
     },
     teardown: function() {
-      $('.thumbnail-wrapper:visible', container).hide();
+      // reset everything!
+      if (timer) clearTimeout(timer);
+      last_question = false;
+      in_pause = false;
+      _next_is_first = true;
+      $('.thumbnail-wrapper', container).hide();
       $('.thumbnail-wrapper img', container).remove();
+      $('.results', container).hide();
       $.post(URL, {teardown: true});
     }
   }

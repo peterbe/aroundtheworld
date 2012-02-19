@@ -309,7 +309,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
     PERCENTAGE_COINS_RATIO = 1.0
 
     SECONDS = 10
-    NO_QUESTIONS = 10
+    NO_QUESTIONS = 4
 
     def points_to_coins(self, points):
         max_ = self.NO_QUESTIONS * Question.HIGHEST_POINTS_VALUE
@@ -1186,6 +1186,8 @@ class AirportHandler(AuthenticatedBaseHandler):
         for location in (self.db.Location
                           .find({'_id': {'$ne': current_location['_id']},
                                  'airport_name': {'$ne': None}})):
+            if not self.enough_questions(location):
+                continue
             distance = calculate_distance(current_location, location)
             cost = self.calculate_cost(distance.miles, user)
             destination = {
@@ -1216,6 +1218,20 @@ class AirportHandler(AuthenticatedBaseHandler):
 
     def calculate_cost(self, miles, user):
         return self.BASE_PRICE + int(round(miles * .1))
+
+    def enough_questions(self, location):
+        qs = defaultdict(int)
+        search = {'location': location['_id'], 'published': True}
+        for q in self.db.Question.find(search, ('category',)):
+            qs[q['category']] += 1
+
+        min_ = QuizzingHandler.NO_QUESTIONS
+        for count in qs.values():
+            if count >= min_:
+                return True
+
+        return False
+
 
 
 @route('/fly.json$', name='fly')
