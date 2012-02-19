@@ -175,8 +175,6 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
         data = {}
         if form is None:
             initial = {}
-            if self.get_argument('category', None):
-                initial['category'] = self.get_argument('category')
             _cutoff = (datetime.datetime.utcnow() -
                        datetime.timedelta(seconds=60 * 10))  # 10 min
             for q in (self.db.Question
@@ -187,6 +185,17 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                 initial['published'] = q['published']
                 initial['category'] = str(q['category'])
                 initial['location'] = str(q['location'])
+
+            if self.get_argument('category', None):
+                cat = self.get_argument('category')
+                category = self.db.Category.find_one({'name': cat})
+                if category:
+                    initial['category'] = str(category['_id'])
+            if self.get_argument('location', None):
+                location = self.db.Location.find_one({
+                  'code': self.get_argument('location')})
+                if location:
+                    initial['location'] = str(location['_id'])
 
             form = QuestionForm(categories=self.categories,
                                 locations=self.locations,

@@ -201,7 +201,7 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
                         continue
                     if cat not in _categories:
                         _categories[cat] = self.db.Category.find_one({'_id': cat})
-                    question_statuses[unicode(location)].append(dict(
+                    question_statuses[location].append(dict(
                       category=_categories[cat]['name'],
                       count=count,
                       excess=max(0, count - min_no_countries),

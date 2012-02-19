@@ -44,18 +44,18 @@ $(function() {
       <!-- Main hero unit for a primary marketing message or call to action -->
       <div class="hero-unit" style="display:none">
         {% if question_statuses %}
-          {% for location_name, stat_groups in question_statuses %}
+          {% for location, stat_groups in question_statuses %}
           <div class="question-statuses-country">
-          <h3>{{ location_name }}</h3>
+          <h3>{{ location }}</h3>
             {% for stats in stat_groups %}
               <div class="category">
               <h4 class="number">
                 {% if stats['close'] %}
-                  only {{ stats['left'] }} more needed
+                  <a href="{{ reverse_url('admin_add_question') }}?location={{ location['code'] }}&amp;category={{ stats['category'] }}">only {{ stats['left'] }} more needed</a>
                 {% else %}
-                  {{ stats['count'] }} questions <small>({{ stats['left'] }} left)</small>
+                  {{ stats['count'] }} questions <small>(<a href="{{ reverse_url('admin_add_question') }}?location={{ location['code'] }}&amp;category={{ stats['category'] }}">{{ stats['left'] }} left</a>)</small>
                 {% end %}
-               </h4>
+              </h4>
               <h4>{{ stats['category'] }}</h4>
               <div class="progress {% if stats['close'] %}active progress-danger{% else %}progress-info{% end %} {% if not stats['excess'] %}progress-striped{% end %}">
                 <div class="bar" style="width: {{ stats['percentage'] }}%;"></div>
