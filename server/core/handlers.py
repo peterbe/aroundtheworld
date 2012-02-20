@@ -930,7 +930,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             filter_['locality'] = current_location['locality']
         center = self.db.PinpointCenter.find_one(filter_)
         if not center and 'locality' in filter_:
-            filter_.popitem('locality')
+            filter_.pop('locality')
             center = self.db.PinpointCenter.find_one(filter_)
         country = center['country']
         locality = getattr(center, 'locality', None)
