@@ -309,7 +309,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
     PERCENTAGE_COINS_RATIO = 1.0
 
     SECONDS = 10
-    NO_QUESTIONS = 4
+    NO_QUESTIONS = 10
 
     def points_to_coins(self, points):
         max_ = self.NO_QUESTIONS * Question.HIGHEST_POINTS_VALUE
