@@ -92,9 +92,9 @@ tfoot th select[name="authors"] { width:100px; }
             <td>
             {% if question.has_picture() %}
             <a title="Question has an picture" class="thumbnail-preview"
-               data-toggle="modal" data-question="{{ question['text'] }}"
-               href="{% module GetQuestionPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
-               >{% module ShowQuestionPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
+               data-toggle="modal" data-title="{{ question['text'] }}"
+               href="{% module GetPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
+               >{% module ShowPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
             {% else %}
              -
             {% end %}

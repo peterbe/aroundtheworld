@@ -1,8 +1,9 @@
 var City = (function() {
+  var URL = '/city.json';
   var container = $('#city');
 
   function _load_jobs(callback) {
-    $.getJSON('/city.json', {get: 'jobs'}, function(response) {
+    $.getJSON(URL, {get: 'jobs'}, function(response) {
     $('ul.jobs li', container).remove();
       var c = $('ul.jobs', container);
       $.each(response.jobs, function(i, each) {
@@ -22,8 +23,48 @@ var City = (function() {
     });
   }
 
+  function _load_pictures(callback) {
+    $.getJSON(URL, {get: 'pictures'}, function(response) {
+      var parent = $('#picture-carousel .carousel-inner');
+      $.each(response.pictures, function(i, each) {
+        var item = $('<div>').addClass('item');
+        $('<img>')
+          .attr('src', this.src)
+            .attr('alt', this.title)
+              .appendTo(item);
+        var caption = $('<div>')
+          .addClass('carousel-caption')
+            .append($('<h4>').text(this.title));
+        if (this.description) {
+          caption.append($('<p>').text(this.description));
+        }
+        if (this.copyright) {
+          if (this.copyright_url) {
+            caption.append($('<p>')
+                           .addClass('copyright')
+                           .append($('<a>')
+                                   .attr('href', this.copyright_url)
+                                   .text(this.copyright))
+                          );
+          } else {
+            caption.append($('<p>')
+                           .addClass('copyright')
+                           .text(this.copyright)
+                          );
+          }
+        }
+        caption.appendTo(item);
+        if (!$('.active', parent).size()) {
+          item.addClass('active');
+        }
+        item.appendTo(parent);
+      });
+      callback();
+    });
+  }
+
   function _load_embassy(callback) {
-    $.getJSON('/city.json', {get: 'ambassadors'}, function(response) {
+    $.getJSON(URL, {get: 'ambassadors'}, function(response) {
       if (response.ambassadors) {
         $('.embassy .none:visible', container).hide();
         $('.embassy .html-container', container).html(response.ambassadors);
@@ -35,7 +76,7 @@ var City = (function() {
   }
 
   function _load_intro(callback) {
-    $.getJSON('/city.json', {get: 'intro'}, function(response) {
+    $.getJSON(URL, {get: 'intro'}, function(response) {
       if (response.intro) {
         $('.intro .none:visible', container).hide();
         $('.intro .html-container', container).html(response.intro);
@@ -48,7 +89,7 @@ var City = (function() {
 
   return {
      load: function(page) {
-       $.getJSON('/city.json', function(response) {
+       $.getJSON(URL, function(response) {
          $('h2 strong', container).text(response.name);
          if (map && map.getZoom() < 15) {
            var p = new google.maps.LatLng(response.lat, response.lng);
@@ -74,6 +115,11 @@ var City = (function() {
          } else if (page == 'jobs') {
            _load_jobs(function() {
              $('.jobs', container).show();
+           });
+         } else if (page == 'pictures') {
+           _load_pictures(function() {
+             //$('.pictures .none', container).hide();
+             $('.pictures', container).show();
            });
          } else {
            $('.home', container).show();

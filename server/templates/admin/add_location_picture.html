@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block extrajs %}
+{% end %}
+
+{% block content %}
+
+  <h2>Add location picture</h2>
+
+  {% include "_show_form_errors.html" %}
+  <form action="." method="post" enctype="multipart/form-data" class="form-horizontal">{% module xsrf_form_html() %}
+  {% include "_show_fieldset.html" %}
+  </form>
+{% end %}

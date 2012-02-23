@@ -269,9 +269,31 @@ class QuestionPicture(BaseDocument):
     structure = {
       'question': ObjectId,
       'render_attributes': dict,
+      'copyright': unicode,
+      'copyright_url': unicode,
     }
     required_fields = ['question']
     gridfs = {'files': ['original']}
+
+
+@register
+class LocationPicture(BaseDocument):
+    __collection__ = 'location_pictures'
+    structure = {
+      'location': ObjectId,
+      'title': unicode,
+      'description': unicode,
+      'copyright': unicode,
+      'copyright_url': unicode,
+      'index': int,
+      'notes': unicode,
+      'render_attributes': dict,
+    }
+    gridfs = {'files': ['original']}
+    required_fields = ['location', 'title']
+    default_values = {
+      'index': 1,
+    }
 
 
 @register

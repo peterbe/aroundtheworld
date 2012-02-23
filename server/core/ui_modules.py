@@ -29,7 +29,7 @@ class JSON(tornado.web.UIModule):
         return tornado.escape.json_encode(data)
 
 
-class QuestionPictureThumbnailMixin:
+class PictureThumbnailMixin:
 
     def make_thumbnail(self, question_image, (max_width, max_height)):
         timestamp = int(mktime(question_image.modify_date.timetuple()))
@@ -68,8 +68,8 @@ class QuestionPictureThumbnailMixin:
         return path.replace(settings.ROOT, ''), (width, height)
 
 
-class ShowQuestionPictureThumbnail(tornado.web.UIModule,
-                                 QuestionPictureThumbnailMixin):
+class ShowPictureThumbnail(tornado.web.UIModule,
+                                 PictureThumbnailMixin):
     def render(self, question_image, (max_width, max_height), alt="",
                return_json=False, return_args=False,
                **kwargs):
@@ -93,8 +93,8 @@ class ShowQuestionPictureThumbnail(tornado.web.UIModule,
         return ' '.join(tag)
 
 
-class GetQuestionPictureThumbnailSrc(ShowQuestionPictureThumbnail):
+class GetPictureThumbnailSrc(ShowPictureThumbnail):
     def render(self, *args, **kwargs):
-        attrs = (super(GetQuestionPictureThumbnailSrc, self)
+        attrs = (super(GetPictureThumbnailSrc, self)
                        .render(*args, return_args=True, **kwargs))
         return attrs['src']

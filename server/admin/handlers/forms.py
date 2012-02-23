@@ -242,3 +242,48 @@ class UserForm(BaseForm):
         super(UserForm, self).__init__(*args, **kwargs)
         self.ambassador.choices = [(x, x)
                                    for x in kwargs['countries']]
+
+
+class LocationPictureForm(BaseForm):
+    location = SelectField("City",
+                      [validators.Required()])
+
+    picture = FileField("Picture (JPG or PNG)")#, [validators.Required()])
+
+    title = TextField("Title",
+                     [validators.Required(),
+                      validators.Length(min=5, max=100)],
+                     description="Single line short description",
+                     widget=TextInputWithMaxlength(100, attrs={
+                       'size': 100,
+                       'class': 'span5',
+                     }))
+
+    description = TextAreaField("Description",
+                   description="Slightly longer description about the picture",
+                   widget=TextArea(**{'class': 'span5'}))
+
+
+    copyright = TextField("Copyright")
+    copyright_url = TextField("Copyright URL")
+
+    index = TextField("Sort index",
+             description="The higher the number the latest the picture appears"
+             )
+
+    notes = TextAreaField("Notes",
+                          description="Any other private notes",
+                         widget=TextArea(**{'class': 'span5'}))
+
+
+    def __init__(self, *args, **kwargs):
+        super(LocationPictureForm, self).__init__(*args, **kwargs)
+        self.location.choices = [
+          (str(x['_id']), '%s (%s)' % (x['code'], x['country']))
+          for x in kwargs['locations']
+        ]
+        if kwargs.get('location'):
+            self.location.data = kwargs['location']
+
+        if kwargs.get('picture_required'):
+            self.picture.validators.append(validators.Required())

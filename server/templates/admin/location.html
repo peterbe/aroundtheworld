@@ -11,16 +11,6 @@
 
 {% block extrajs %}
 <script src="{{ static_url('admin/location.js') }}"></script>
-<script>
-$(function() {
-  $('button[type="reset"]').click(function() {
-    window.location = '../';
-  });
-  $('.error input', 'form').change(function() {
-    $(this).parents('.error').removeClass('error');
-  });
-});
-</script>
 {% end %}
 
 {% block content %}

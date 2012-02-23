@@ -8,7 +8,7 @@ $(function() {
     $('.thumbnail-preview-wrapper').detach().insertBefore($('input[type="file"]'));
   }
   if ($('a.thumbnail-preview').size()) {
-    $('#id_text').change(function() {
+    $('#title').change(function() {
       $('a.thumbnail-preview').data('question', $(this).val());
     });
   }
@@ -18,21 +18,21 @@ $(function() {
 
 {% block content %}
 
-  <h2>Edit question</h2>
+  <h2>Edit location picture</h2>
 
   {% include "_show_form_errors.html" %}
-  <form class="form-horizontal" enctype="multipart/form-data" action="." method="post">{% module xsrf_form_html() %}
+
+  <form action="." enctype="multipart/form-data" class="form-horizontal" method="post">{% module xsrf_form_html() %}
   {% include "_show_fieldset.html" %}
   </form>
 
-  {% if question.has_picture() %}
     <p class="thumbnail-preview-wrapper">
-        <a title="Question has an picture" class="thumbnail-preview"
-           data-toggle="modal" data-title="{{ question['text'] }}"
-           href="{% module GetPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
-           >{% module ShowPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
+        <a title="Existing picture" class="thumbnail-preview"
+           data-toggle="modal" data-title="{{ location_picture['title'] }}"
+           href="{% module GetPictureThumbnailSrc(location_picture, (300,300)) %}"
+           >{% module ShowPictureThumbnail(location_picture, (20, 20)) %}</a>
         &larr; existing picture
     </p>
-  {% end %}
+
 
 {% end %}

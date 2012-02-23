@@ -25,9 +25,11 @@
           <ul class="nav">
             <li {% if current_url == reverse_url('admin_home') %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_home') }}">Home</a></li>
+
+            <!-- questions -->
             <li class="dropdown{% if '/questions/' in current_url %} active{% end %}"
 	        id="question-menu">
-             <a class="dropdown-toggle" data-toggle="dropdown" 
+             <a class="dropdown-toggle" data-toggle="dropdown"
 	         href="#question-menu">Questions <b class="caret"></b>
 	     </a>
 	     <ul class="dropdown-menu">
@@ -39,8 +41,21 @@
                 <li><a href="{{ reverse_url('admin_add_category') }}">Add a new category</a></li>
               </ul>
 	    </li>
-            <li {% if '/locations/' in current_url %}class="active"{% end %}
-              ><a href="{{ reverse_url('admin_locations') }}">Locations</a></li>
+
+            <!-- Locations -->
+            <li class="dropdown{% if '/locations/' in current_url %} active{% end %}">
+              <a class="dropdown-toggle" data-toggle="dropdown"
+  	         href="#location-menu">Locations <b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ reverse_url('admin_locations') }}">All locations</a></li>
+                <li><a href="{{ reverse_url('admin_add_location') }}">Add a new location</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ reverse_url('admin_location_pictures') }}">Location pictures</a></li>
+                <li><a href="{{ reverse_url('admin_add_location_picture') }}">Add a new location picture</a></li>
+              </ul>
+            </li>
+
             {% if is_superuser or is_ambassador %}
             <li {% if '/documents/' in current_url %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_documents') }}">Documents</a></li>
@@ -127,15 +142,14 @@
   }
   $(function() {
     $('.dropdown-toggle').dropdown();
-    
+
     $('a.close').click(function() {
       $(this).parents('.alert').fadeOut(400);
       return false;
     });
 
     $('a.thumbnail-preview').click(function() {
-      $('h3', '#picture-modal').text($(this).data('question'));
-      L($(this).data('question'));
+      $('h3', '#picture-modal').text($(this).data('title'));
       $('img', '#picture-modal').attr('src', $(this).attr('href'));
       $('#picture-modal').modal('show');
       return false;
@@ -146,6 +160,14 @@
     });
 
     $('a[rel="tooltip"]').tooltip();
+
+    $('button[type="reset"]').click(function() {
+      window.location = '..';
+    });
+
+    $('.error input', 'form').change(function() {
+      $(this).parents('.error').removeClass('error');
+    });
 
   });
   </script>

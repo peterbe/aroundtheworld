@@ -238,6 +238,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                 picture = self.db.QuestionPicture()
                 picture['question'] = question['_id']
                 picture.save()
+
                 try:
                     ok = False
                     image = form.picture.data
@@ -284,6 +285,8 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
     def get(self, _id, form=None):
         data = {}
         data['question'] = self.db.Question.find_one({'_id': ObjectId(_id)})
+        if not data['question']:
+            raise HTTPError(404)
         if form is None:
             initial = dict(data['question'])
             initial['category'] = str(initial['category'])

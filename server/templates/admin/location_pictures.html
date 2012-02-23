@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th select[name="locations"] { width:70px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} location pictures {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+
+  <form action=".">
+      <table class="condensed-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Location</th>
+            <th>Picture</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th><input name="q" value="{{ q }}" placeholder="Title search..."></th>
+            <th>
+              <select multiple name="locations">
+                {% for location in all_locations %}
+                <option value="{{ location['code'] }}"
+                  {% if location['code'] in locations %}selected{% end %}
+                >{{ location['code'] }}<!-- ({{ location['country'] }})--></option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for picture, location in pictures %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_location_picture', picture['_id']) }}">{% module Truncate(picture['title'], 60) %}</a>
+            </td>
+            <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
+            <td>
+            <a title="{{ picture['title'] }}" class="thumbnail-preview"
+               data-toggle="modal" data-title="{{ picture['title'] }}"
+               href="{% module GetPictureThumbnailSrc(picture, (300,300)) %}"
+               >{% module ShowPictureThumbnail(picture, (20, 20)) %}</a>
+            </td>
+            <td>{{ picture['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+
+      {% include "_pagination.html" %}
+    </form>
+
+
+{% end %}

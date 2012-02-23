@@ -16,7 +16,7 @@ from tornado_utils.routes import route
 from tornado_utils.send_mail import send_email
 from pymongo.objectid import InvalidId, ObjectId
 from geopy.distance import distance as geopy_distance
-from core.ui_modules import QuestionPictureThumbnailMixin
+from core.ui_modules import PictureThumbnailMixin
 
 from models import Question
 import settings
@@ -302,7 +302,7 @@ class FlightPathsHandler(BaseHandler):
 
 
 @route('/quizzing.json$', name='quizzing')
-class QuizzingHandler(AuthenticatedBaseHandler, QuestionPictureThumbnailMixin):
+class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
     # number between 0 and (inclusive) 1.0 that decides how many coins to
     # give for a percentage.
@@ -787,7 +787,7 @@ class LocationHandler(AuthenticatedBaseHandler):
 
 
 @route('/city.json$', name='city')
-class CityHandler(AuthenticatedBaseHandler):
+class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
     FLAGS = {
       'Sweden': 'sweden.png',
@@ -835,6 +835,8 @@ class CityHandler(AuthenticatedBaseHandler):
             data['jobs'] = self.get_available_jobs(user, location)
         elif get == 'intro':
             data['intro'] = self.get_intro_html(location)
+        elif get == 'pictures':
+            data['pictures'] = self.get_pictures(location)
         elif get:
             raise tornado.web.HTTPError(404, 'Invalid get')
         else:
@@ -847,6 +849,28 @@ class CityHandler(AuthenticatedBaseHandler):
             #data['jobs'] = self.get_jobs(user, location)
 
         self.write_json(data)
+
+    def get_pictures(self, location):
+        pictures = []
+        for item in (self.db.LocationPicture
+                     .find({'location': location['_id']})
+                     .sort('index')):
+            uri, (width, height) = self.make_thumbnail(item, (700, 700))  # XXX might need some more thought
+            picture = {
+              'src': uri,
+              'width': width,
+              'height': height,
+              'title': item['title'],
+            }
+            if item['description']:
+                picture['description'] = item['description']  # XXX should this be markdown?
+            if item['copyright']:
+                picture['copyright'] = item['copyright']
+                if item['copyright_url']:
+                    picture['copyright_url'] = item['copyright_url']
+            pictures.append(picture)
+        return pictures
+
 
     def get_available_jobs(self, user, location):
         categories = defaultdict(int)
