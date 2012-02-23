@@ -50,7 +50,7 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
                     series[location].append(_previous.get(location, 0))
 
         #print series
-        _names = dict((x['_id'], x['country'])
+        _names = dict((x['_id'], x['city'])
                       for x in self.db.Location.find())
         series = [{'name': _names[x], 'data': y}
                   for x, y in series.items()]
