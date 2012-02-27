@@ -846,14 +846,19 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['country'] = location['country']
             data['lat'] = location['lat']
             data['lng'] = location['lng']
-            #data['jobs'] = self.get_jobs(user, location)
+            data['count_pictures']=0#data['count_pictures'] = self.get_pictures_count(location)
 
-        self.write_json(data)
+        self.write(data)
+
+    def get_pictures_count(self, location):
+        search = {'location': location['_id'], 'published': True}
+        return self.db.LocationPicture.find(search).count()
 
     def get_pictures(self, location):
         pictures = []
+        search = {'location': location['_id'], 'published': True}
         for item in (self.db.LocationPicture
-                     .find({'location': location['_id']})
+                     .find(search)
                      .sort('index')):
             uri, (width, height) = self.make_thumbnail(item, (700, 700))  # XXX might need some more thought
             picture = {
@@ -866,8 +871,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 picture['description'] = item['description']  # XXX should this be markdown?
             if item['copyright']:
                 picture['copyright'] = item['copyright']
-                if item['copyright_url']:
-                    picture['copyright_url'] = item['copyright_url']
+            if item['copyright_url']:
+                picture['copyright_url'] = item['copyright_url']
             pictures.append(picture)
         return pictures
 

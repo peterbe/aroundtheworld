@@ -288,11 +288,13 @@ class LocationPicture(BaseDocument):
       'index': int,
       'notes': unicode,
       'render_attributes': dict,
+      'published': bool,
     }
     gridfs = {'files': ['original']}
     required_fields = ['location', 'title']
     default_values = {
       'index': 1,
+      'published': False,
     }
 
 

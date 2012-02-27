@@ -241,6 +241,7 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
                 if not form.copyright_url.data.count('://'):
                     form.copyright_url.data = 'http://' + form.copyright_url.data
                 picture['copyright_url'] = form.copyright_url.data
+            picture['published'] = form.published.data
             if form.notes.data:
                 picture['notes'] = form.notes.data
             if not form.index.data:
@@ -277,7 +278,7 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
                       type_='error'
                       )
 
-            self.redirect(self.reverse_url('admin_locations'))
+            self.redirect(self.reverse_url('admin_location_pictures'))
         else:
             self.get(form=form)
 
@@ -325,6 +326,7 @@ class LocationPictureAdminHandler(BaseLocationPictureHandler):
                 picture['notes'] = form.notes.data
             if form.index.data:
                 picture['index'] = int(form.index.data)
+            picture['published'] = form.published.data
 
             if form.picture.data:
                 ok = False

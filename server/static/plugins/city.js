@@ -26,32 +26,45 @@ var City = (function() {
   function _load_pictures(callback) {
     $.getJSON(URL, {get: 'pictures'}, function(response) {
       var parent = $('#picture-carousel .carousel-inner');
+      var no_pictures = response.pictures.length;
       $.each(response.pictures, function(i, each) {
         var item = $('<div>').addClass('item');
         $('<img>')
           .attr('src', this.src)
             .attr('alt', this.title)
               .appendTo(item);
+        var index = '(' + (i + 1) + ' of ' + no_pictures + ') ';
         var caption = $('<div>')
           .addClass('carousel-caption')
-            .append($('<h4>').text(this.title));
-        if (this.description) {
-          caption.append($('<p>').text(this.description));
-        }
-        if (this.copyright) {
+            .append($('<h4>').text(index + this.title));
+        if (this.copyright || this.copyright_url) {
+          var copyright_text;
+          if (this.copyright) {
+            copyright_text = 'Copyright: ' + this.copyright;
+          } else {
+            copyright_text = 'Copyright';
+          }
           if (this.copyright_url) {
             caption.append($('<p>')
                            .addClass('copyright')
                            .append($('<a>')
                                    .attr('href', this.copyright_url)
-                                   .text(this.copyright))
+                                   .text(copyright_text)
+                                   .click(function() {
+                                     window.open($(this).attr('href'));
+                                     return false;
+                                   })
+                                   )
                           );
           } else {
             caption.append($('<p>')
                            .addClass('copyright')
-                           .text(this.copyright)
+                           .text(copyright_text)
                           );
           }
+        }
+        if (this.description) {
+          caption.append($('<p>').text(this.description));
         }
         caption.appendTo(item);
         if (!$('.active', parent).size()) {
@@ -102,6 +115,10 @@ var City = (function() {
          if (response.name) {
            $('.location-name', container).text(response.name);
          }
+         if (response.count_pictures) {
+           $('.pictures-link', container).show();
+
+         }
          if (page == 'embassy') {
            _load_embassy(function() {
              $('.embassy .none', container).hide();
@@ -127,10 +144,18 @@ var City = (function() {
 
          //_load_jobs(response.jobs);
        });
-     }
+     },
+    teardown: function() {
+      $('.pictures-link', container).hide();
+    }
   };
 })();
 
 Plugins.start('city', function(page) {
   City.load(page);
+});
+
+
+Plugins.stop('city', function() {
+  City.teardown();
 });

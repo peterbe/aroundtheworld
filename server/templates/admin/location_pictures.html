@@ -48,6 +48,9 @@ tfoot th select[name="locations"] { width:70px; }
           <tr>
             <td>
               <a href="{{ reverse_url('admin_location_picture', picture['_id']) }}">{% module Truncate(picture['title'], 60) %}</a>
+              {% if not picture['published'] %}
+                <span class="label warning">Not published</span>
+              {% end %}
             </td>
             <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
             <td>

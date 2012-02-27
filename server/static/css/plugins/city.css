@@ -3,3 +3,11 @@
   margin-right:20px;
   margin-bottom:20px;
 }
+
+#city p.copyright {
+  float:right;
+}
+#city p.copyright a {
+  font-size:0.9em;
+  color:#efefef;
+}

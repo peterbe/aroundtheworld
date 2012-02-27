@@ -271,6 +271,9 @@ class LocationPictureForm(BaseForm):
              description="The higher the number the latest the picture appears"
              )
 
+    published = BooleanField("Published",
+                    description="Whether it should immediately appear")
+
     notes = TextAreaField("Notes",
                           description="Any other private notes",
                          widget=TextArea(**{'class': 'span5'}))
