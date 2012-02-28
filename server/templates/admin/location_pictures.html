@@ -3,6 +3,7 @@
 {% block extrahead %}
 <style>
 tfoot th select[name="locations"] { width:70px; }
+tfoot th select[name="authors"] { width:100px; }
 </style>
 {% end %}
 
@@ -20,6 +21,7 @@ tfoot th select[name="locations"] { width:70px; }
             <th>Title</th>
             <th>Location</th>
             <th>Picture</th>
+            <th>Author</th>
             <th>Added</th>
           </tr>
         </thead>
@@ -39,12 +41,25 @@ tfoot th select[name="locations"] { width:70px; }
               &nbsp;
             </th>
             <th>
+              <select multiple name="authors">
+                {% for user in all_authors %}
+                <option value="{{ user['_id'] }}"
+                 {% if user['_id'] in authors %}selected{% end %}
+                 >{% if user['username'] %}
+                   {{ user['username'] }}
+                 {% else %}
+                   {{ user['email'] }}
+                 {% end %}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
               <input type="submit" value="Filter">
             </th>
           </tr>
         </tfoot>
         <tbody>
-          {% for picture, location in pictures %}
+          {% for picture, location, author in pictures %}
           <tr>
             <td>
               <a href="{{ reverse_url('admin_location_picture', picture['_id']) }}">{% module Truncate(picture['title'], 60) %}</a>
@@ -58,6 +73,17 @@ tfoot th select[name="locations"] { width:70px; }
                data-toggle="modal" data-title="{{ picture['title'] }}"
                href="{% module GetPictureThumbnailSrc(picture, (300,300)) %}"
                >{% module ShowPictureThumbnail(picture, (20, 20)) %}</a>
+            </td>
+            <td>
+              {% if author %}
+                {% if author['username'] %}
+                  {{ author['username'] }}
+                {% else %}
+                  {{ author['email'] }}
+                {% end %}
+              {% else %}
+                &nbsp;
+              {% end %}
             </td>
             <td>{{ picture['add_date'].strftime('%d %b %Y') }}</td>
           </tr>

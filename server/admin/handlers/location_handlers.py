@@ -1,3 +1,4 @@
+import datetime
 import mimetypes
 import re
 import urllib
@@ -179,6 +180,11 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
                        self.db.Location
                         .find({'code': {'$in': data['locations']}})]
             }
+        data['authors'] = self.get_arguments('authors', [])
+        if data['authors']:
+            filter_['author'] = {
+              '$in': [ObjectId(x) for x in data['authors']]
+            }
 
         args = dict(self.request.arguments)
         if 'page' in args:
@@ -192,6 +198,7 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
         data['filtering'] = bool(filter_)
         _locations = {}
+        _users = {}
         for each in (self.db.LocationPicture
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
@@ -201,11 +208,17 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
                 _locations[each['location']] = \
                   self.db.Location.find_one({'_id': each['location']})
 
+            if each['author'] not in _users:
+                _users[each['author']] = \
+                  self.db.User.find_one({'_id': each['author']})
+
             pictures.append((
               each,
               _locations[each['location']],
+              _users[each['author']],
             ))
         data['pictures'] = pictures
+        data['all_authors'] = _users.values()
         self.render('admin/location_pictures.html', **data)
 
 
@@ -215,9 +228,22 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
 
     def get(self, form=None):
         data = {}
+        initial = {}
+        _cutoff = (datetime.datetime.utcnow() -
+                   datetime.timedelta(seconds=60 * 10))  # 10 min
+        for q in (self.db.LocationPicture
+                  .find({'author': self.get_current_user()['_id'],
+                         'add_date': {'$gt': _cutoff}})
+                  .sort('add_date', -1)  # newest first
+                  .limit(1)):
+            initial['published'] = q['published']
+            initial['location'] = str(q['location'])
+            initial['index'] = q['index'] + 1
+
         if form is None:
             form = LocationPictureForm(locations=self.locations,
-                                       picture_required=True)
+                                       picture_required=True,
+                                       **initial)
         data['form'] = form
         self.render('admin/add_location_picture.html', **data)
 
@@ -254,6 +280,7 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
                 picture['index'] = highest
             else:
                 picture['index'] = int(form.index.data)
+            picture['author'] = self.get_current_user()['_id']
             picture.save()
 
             try:

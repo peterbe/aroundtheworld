@@ -289,6 +289,7 @@ class LocationPicture(BaseDocument):
       'notes': unicode,
       'render_attributes': dict,
       'published': bool,
+      'author': ObjectId,
     }
     gridfs = {'files': ['original']}
     required_fields = ['location', 'title']
