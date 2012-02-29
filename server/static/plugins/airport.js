@@ -7,7 +7,7 @@ var Airport = (function() {
        var c = $('.confirm', container);
        c.show();
        $('.cant-afford:visible', c).hide();
-       $('input[name="yes"]', c).removeAttr('disabled');
+       $('button[type="submit"]', c).removeAttr('disabled');
        $('em', c).text(name);
        $('input[name="id"]', c).val(id);
        $('.cost', c).text(Utils.formatCost(cost, true));
