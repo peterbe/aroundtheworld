@@ -1,6 +1,7 @@
 var City = (function() {
   var URL = '/city.json';
   var container = $('#city');
+  var _message_form_setup = false;
 
   function _load_jobs(callback) {
     $.getJSON(URL, {get: 'jobs'}, function(response) {
@@ -100,6 +101,30 @@ var City = (function() {
     });
   }
 
+  function _load_messages(callback) {
+    $.getJSON(URL, {get: 'messages'}, function(response) {
+      $('.messages-outer .message', container).remove();
+      _append_messages(response.messages);
+    });
+    callback();
+  }
+  function _append_messages(messages) {
+    $.each(messages, function(i, each) {
+      var c = $('<blockquote>').appendTo($('<div>').addClass('message'));
+      var html = '<b>' + this.username + '</b>';
+      html += ' (' + Utils.formatMiles(this.miles, true);
+      html += ' currently in ' + this.current_location + ')';
+      html += ' ' + this.time_ago + ' ago';
+      $('<p>')
+        .text(this.message)
+          .appendTo(c);
+      $('<small>')
+        .html(html)
+          .appendTo(c);
+      c.appendTo($('.messages-outer', container));
+    });
+  }
+
   return {
      load: function(page) {
        $.getJSON(URL, function(response) {
@@ -138,6 +163,10 @@ var City = (function() {
              //$('.pictures .none', container).hide();
              $('.pictures', container).show();
            });
+         } else if (page == 'messages') {
+           _load_messages(function() {
+             $('.messages', container).show();
+           });
          } else {
            $('.home', container).show();
          }
@@ -145,6 +174,21 @@ var City = (function() {
          //_load_jobs(response.jobs);
        });
      },
+    setup_message_post: function() {
+      if (_message_form_setup) return;
+      $('.messages form', container).submit(function() {
+        $('textarea', this).val($.trim($('textarea', this).val()));
+        var message = $('textarea', this).val();
+        if (message.length) {
+          $.post(URL, {message: message}, function(response) {
+            $('textarea', this).val('');
+            _append_messages(response.messages);
+          });
+        }
+        return false;
+      });
+      _message_form_setup = true;
+    },
     teardown: function() {
       $('.pictures-link', container).hide();
     }
@@ -153,6 +197,7 @@ var City = (function() {
 
 Plugins.start('city', function(page) {
   City.load(page);
+  City.setup_message_post();
 });
 
 

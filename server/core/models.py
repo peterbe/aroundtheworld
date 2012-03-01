@@ -464,3 +464,19 @@ class Invitation(BaseDocument):
       'signedup_user': ObjectId,
     }
     required_fields = ['user', 'email']
+
+
+@register
+class LocationMessage(BaseDocument):
+    __collection__ = 'location_messages'
+    structure = {
+      'user': ObjectId,
+      'location': ObjectId,
+      'message': unicode,
+      'censored': bool,
+    }
+
+    required_fields = ['user', 'location', 'message']
+    default_values = {
+      'censored': False,
+    }

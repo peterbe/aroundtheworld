@@ -14,10 +14,10 @@ import markdown
 from tornado.web import HTTPError
 from tornado_utils.routes import route
 from tornado_utils.send_mail import send_email
+from tornado_utils.timesince import smartertimesince
 from pymongo.objectid import InvalidId, ObjectId
 from geopy.distance import distance as geopy_distance
 from core.ui_modules import PictureThumbnailMixin
-
 from models import Question
 import settings
 
@@ -823,6 +823,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         return self.static_url(os.path.join('images/flags',
                                             self.FLAGS[country]))
 
+
     def get(self):
         data = {}
         user = self.get_current_user()
@@ -837,6 +838,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['intro'] = self.get_intro_html(location)
         elif get == 'pictures':
             data['pictures'] = self.get_pictures(location)
+        elif get == 'messages':
+            data['messages'] = self.get_messages(location, limit=10)
         elif get:
             raise tornado.web.HTTPError(404, 'Invalid get')
         else:
@@ -847,6 +850,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['lat'] = location['lat']
             data['lng'] = location['lng']
             data['count_pictures']=0#data['count_pictures'] = self.get_pictures_count(location)
+            data['count_messages'] = self.get_messages_count(location)
 
         self.write(data)
 
@@ -876,6 +880,43 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             pictures.append(picture)
         return pictures
 
+    def get_messages(self, location, limit=5):
+        search = {'location': location['_id']}
+        messages = []
+        _users = {}
+        _users_settings = {}
+        _locations = {}
+        for item in (self.db.LocationMessage
+                     .find(search)
+                     .limit(limit)
+                     .sort('add_date', -1)):
+            if item['user'] not in _users:
+                _users[item['user']] = (self.db.User
+                                        .find_one({'_id': item['user']}))
+            if item['user'] not in _users_settings:
+                _users_settings[item['user']] = (self.db.UserSettings
+                                            .find_one({'user': item['user']}))
+            user = _users[item['user']]
+            user_settings = _users_settings[item['user']]
+
+            if user['current_location'] not in _locations:
+                _locations[user['current_location']] = (self.db.Location
+                                 .find_one({'_id': user['current_location']}))
+            current_location = _locations[user['current_location']]
+
+            messages.append({
+              'message': item['message'],
+              'username': user['first_name'] or user['username'],
+              'miles': user_settings['miles_total'],
+              'current_location': unicode(current_location),
+              'time_ago': smartertimesince(item['add_date']),
+            })
+        return messages
+
+    def get_messages_count(self, location):
+        return (self.db.LocationMessage
+                .find({'location': location['_id']})
+                .count())
 
     def get_available_jobs(self, user, location):
         categories = defaultdict(int)
@@ -918,6 +959,18 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
+
+    def post(self):
+        # Currently used for posting messages.
+        message = self.get_argument('message').strip()
+        user = self.get_current_user()
+        location = self.get_current_location(user)
+        location_message = self.db.LocationMessage()
+        location_message['message'] = message
+        location_message['user'] = user['_id']
+        location_message['location'] = location['_id']
+        location_message.save()
+        return {'messages': self.get_messages(location, limit=1)}
 
 
 @route('/pinpoint.json$', name='pinpoint')
