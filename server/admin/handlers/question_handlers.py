@@ -167,6 +167,17 @@ class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
                 .find(filter_)
                 .sort('code', 1))
 
+    def can_delete(self, question):
+        if self.db.SessionAnswer.find({'question': question['_id']}).count():
+            return False
+
+        user = self.get_current_user()
+        if not user['superuser']:
+            if user['_id'] != question['author']:
+                return False
+
+        return True
+
 
 @route('/admin/questions/add/', name='admin_add_question')
 class AddQuestionAdminHandler(BaseQuestionAdminHandler):
@@ -279,6 +290,20 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             self.get(form=form)
 
 
+@route('/admin/questions/(\w{24})/delete', name='admin_delete_question')
+class DeleteQuestionAdminHandler(BaseQuestionAdminHandler):
+
+    def post(self, _id):
+        question = self.db.Question.find_one({'_id': ObjectId(_id)})
+        assert question
+        assert self.can_delete(question)
+        for picture in (self.db.QuestionPicture
+                        .find({'question': question['_id']})):
+            picture.delete()
+        question.delete()
+        self.redirect(self.reverse_url('admin_questions'))
+
+
 @route('/admin/questions/(\w{24})/', name='admin_question')
 class QuestionAdminHandler(BaseQuestionAdminHandler):
 
@@ -295,6 +320,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
                                 locations=self.locations,
                                 **initial)
         data['form'] = form
+        data['can_delete'] = self.can_delete(data['question'])
         self.render('admin/question.html', **data)
 
     def post(self, _id):

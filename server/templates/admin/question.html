@@ -25,6 +25,13 @@ $(function() {
   {% include "_show_fieldset.html" %}
   </form>
 
+  {% if can_delete %}
+  <form action="delete" method="post">{% module xsrf_form_html() %}
+    <p>Because the question hasn't been used yet you can delete this question.</p>
+    <button type="submit" class="btn btn-danger">Delete question</button>
+  </form>
+  {% end %}
+
   {% if question.has_picture() %}
     <p class="thumbnail-preview-wrapper">
         <a title="Question has an picture" class="thumbnail-preview"
