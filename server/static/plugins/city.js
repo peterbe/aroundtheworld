@@ -197,7 +197,6 @@ var City = (function() {
         window.location.hash = '#city,messages';
         City.load('messages');
         setTimeout(function() {
-          L($('input[name="teaser"]', container).val());
           $('.messages textarea', container).focus();
         }, 500);
       });

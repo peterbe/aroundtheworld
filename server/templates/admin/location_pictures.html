@@ -19,6 +19,7 @@ tfoot th select[name="authors"] { width:100px; }
         <thead>
           <tr>
             <th>Title</th>
+            <th>Index</th>
             <th>Location</th>
             <th>Picture</th>
             <th>Author</th>
@@ -28,6 +29,9 @@ tfoot th select[name="authors"] { width:100px; }
         <tfoot>
           <tr>
             <th><input name="q" value="{{ q }}" placeholder="Title search..."></th>
+            <th>
+              &nbsp;
+            </th>
             <th>
               <select multiple name="locations">
                 {% for location in all_locations %}
@@ -67,6 +71,7 @@ tfoot th select[name="authors"] { width:100px; }
                 <span class="label warning">Not published</span>
               {% end %}
             </td>
+            <td>{{ picture['index'] }}</td>
             <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
             <td>
             <a title="{{ picture['title'] }}" class="thumbnail-preview"
