@@ -51,6 +51,7 @@ var Quiz = (function() {
           Quiz.show_question(response.question, true);
         }
       }
+      Utils.update_title();
     });
   }
 
@@ -121,7 +122,10 @@ var Quiz = (function() {
 
       $('tfoot .points-total-total', container)
         .text(_total_points);
+
+      Utils.update_title();
     });
+
   }
 
   return {
@@ -131,6 +135,7 @@ var Quiz = (function() {
            Quiz.rush_next_question();
            return false;
          });
+       Utils.update_title();
      },
      reset: function() {
        $('a.next-question', container)

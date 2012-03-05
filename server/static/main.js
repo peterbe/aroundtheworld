@@ -15,20 +15,22 @@ var Loader = (function() {
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
          $(hash + '.overlay').show();
-         Plugins.load(hash.substr(1, hash.length - 1), arg);
+         Plugins.load(hash.substr(1, hash.length - 1), arg, function() {
+           Loader.update_title();
+         });
        } else if (hash == '#fly') {
          $('.overlay:visible').hide();
-         Plugins.load('flying', arg);
+         Plugins.load('flying', arg, function() {
+           Loader.update_title();
+         });
        } else {
          L('ignoring: ' + hash); // xxx: console.warn(..) instead??
        }
 
        // when blanking the location hash, don't bubble
        if (blank_location_hash) return false;
-
        return true;
-    }
-
+     }
   }
 })();
 
@@ -143,6 +145,17 @@ var Utils = (function() {
     preload_image: function(url) {
       var i = document.createElement('img');
       i.src = url;
+    },
+    update_title: function () {
+      var title = null;
+      if ($('h1:visible').size()) {
+        title = $('h1:visible').text();
+      } else if ($('h2:visible').size()) {
+        title = $('h2:visible').text();
+      }
+      if (title) {
+        document.title = title;
+      }
     }
   }
 })();

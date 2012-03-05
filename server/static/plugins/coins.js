@@ -113,6 +113,7 @@ var Coins = (function() {
                 remove_previous_count($('a[href="#tab-jobs"]', container).text())
                     + ' (' + response.count_jobs + ')');
              _show_jobs(response.jobs, response.count_jobs, true);
+             Utils.update_title();
            });
          });
        });

@@ -7,6 +7,8 @@ var Signout = (function() {
        $.post('/logout/', function(response) {
          $('.pleasewait:visible', container).hide();
          $('.success:hidden', container).show();
+         State.update();
+         Utils.update_title();
        });
      }
   };

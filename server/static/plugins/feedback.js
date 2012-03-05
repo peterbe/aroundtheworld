@@ -25,7 +25,8 @@ var Feedback = (function() {
         });
         return false;
       });
-    },
+      Utils.update_title();
+   },
     reset: function() {
       $('textarea', container).val('');
       //$('button[type="reset"]', container).click();

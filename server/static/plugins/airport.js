@@ -75,6 +75,8 @@ var Airport = (function() {
              played_sound.push(response.airport_name);
            }
          }
+         Utils.update_title();
+
        });
      }
   };

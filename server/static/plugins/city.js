@@ -148,27 +148,33 @@ var City = (function() {
            _load_embassy(function() {
              $('.embassy .none', container).hide();
              $('.embassy', container).show();
+             Utils.update_title();
            });
          } else if (page == 'intro') {
            _load_intro(function() {
              $('.intro .none', container).hide();
              $('.intro', container).show();
+             Utils.update_title();
            });
          } else if (page == 'jobs') {
            _load_jobs(function() {
              $('.jobs', container).show();
+             Utils.update_title();
            });
          } else if (page == 'pictures') {
            _load_pictures(function() {
              //$('.pictures .none', container).hide();
              $('.pictures', container).show();
+             Utils.update_title();
            });
          } else if (page == 'messages') {
            _load_messages(function() {
              $('.messages', container).show();
+             Utils.update_title();
            });
          } else {
            $('.home', container).show();
+           Utils.update_title();
          }
 
          //_load_jobs(response.jobs);
@@ -187,6 +193,14 @@ var City = (function() {
         }
         return false;
       });
+      $('input[name="teaser"]', container).on('focus', function() {
+        window.location.hash = '#city,messages';
+        City.load('messages');
+        setTimeout(function() {
+          L($('input[name="teaser"]', container).val());
+          $('.messages textarea', container).focus();
+        }, 500);
+      });
       _message_form_setup = true;
     },
     teardown: function() {
@@ -195,9 +209,9 @@ var City = (function() {
   };
 })();
 
-Plugins.start('city', function(page) {
-  City.load(page);
+Plugins.start('city', function(page, callback) {
   City.setup_message_post();
+  City.load(page);
 });
 
 

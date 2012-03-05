@@ -51,7 +51,7 @@ var Settings = (function() {
          });
          return false;
        });
-
+       Utils.update_title();
      }
   };
 })();

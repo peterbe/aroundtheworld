@@ -40,6 +40,7 @@ var Miles = (function() {
          $('.no-cities', container).text(response.no_cities + ' cities');
          $('.short-stats:hidden', container).fadeIn(100);
          _show_flights(response.flights);
+         Utils.update_title();
        });
        if (STATE.location) {
          $('.exit:hidden', container).show();
