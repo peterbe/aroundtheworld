@@ -1,4 +1,5 @@
 var Miles = (function() {
+  var URL = '/miles.json';
   var container = $('#miles');
 
   function _show_flights(flights) {
@@ -32,7 +33,7 @@ var Miles = (function() {
 
   return {
      load: function() {
-       $.getJSON('/miles.json', function(response) {
+       $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          $('.miles-friendly', container)
            .text(Utils.formatMiles(STATE.user.miles_total) + ' miles');

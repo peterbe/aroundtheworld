@@ -21,7 +21,7 @@ NOREPLY_EMAIL = 'noreply@aroundtheworld.peterbe.com'
 
 THUMBNAIL_DIRECTORY = path('static/thumbnails')
 QUIZ_MIN_NO_QUESTIONS = 10
-
+PINPOINT_NO_QUESTIONS = 10
 
 try:
     from local_settings import *

@@ -282,6 +282,13 @@ class OfflineHomeHandler(HomeHandler):
         options = {}
         self.render('offline.html', **options)
 
+@route('/mobile/')
+class MobileHomeHandler(HomeHandler):
+
+    def get(self):
+        options = {}
+        self.render('mobile.html', **options)
+
 
 @route('/flightpaths/')
 class FlightPathsHandler(BaseHandler):
@@ -981,7 +988,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
     PERCENTAGE_COINS_RATIO = 1.0
 
     MIN_DISTANCE = 50.0
-    NO_QUESTIONS = 10
+    NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
     SECONDS = 10
 
     CATEGORY_NAME = u'Geographer'

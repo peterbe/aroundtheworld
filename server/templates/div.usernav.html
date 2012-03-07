@@ -2,7 +2,8 @@
     <ul>
 
       <li class="user-location logged-in" {% if not state.get('location') %}style="display:none"{% end %}>
-        Currently in: <a href="#city" class="overlay-changer">
+        <span class="city-prefix">Currently in: </span>
+        <a href="#city" class="overlay-changer">
         {% if state.get('location') %}
           {{ state['location']['name'] }}
         {% end %}
@@ -34,7 +35,7 @@
         <a href="/admin/" title="Because you deserve it!">Admin</a>
       </li>
 
-      <li class="user-profile logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="signout logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
         <a href="#signout" class="overlay-changer" title="Sign out">Sign out</a>
       </li>
 

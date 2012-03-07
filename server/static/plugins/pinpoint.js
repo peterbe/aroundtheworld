@@ -3,6 +3,8 @@ var Pinpoint = (function() {
   var timer;
   var skip_timer;
   var countdown;
+  var begin_timer;
+  var next_timer;
   var click_listener, dblclick_listener;
   var _cities_removed = false;
   var count_questions = 0;
@@ -27,7 +29,7 @@ var Pinpoint = (function() {
     $('#pinpoint-tucked p.skip:visible').hide();
     $('#pinpoint-splash:hidden').show();
     //$('#pinpoint:hidden').show();
-    var begin_timer = setTimeout(function() {
+    begin_timer = setTimeout(function() {
       _begin(question.seconds);
     }, 2 * 1000);
     $('#pinpoint-splash').unbind('click').click(function() {
@@ -122,9 +124,6 @@ var Pinpoint = (function() {
      start: function () {
        t0 = new Date();
        Pinpoint.tick();
-       //timeout_timer = setTimeout(function() {
-       //  L("time out!");
-       //}, seconds * 1000);
        click_listener = google.maps.event.addListener(map, 'click', function(event) {
          t1 = new Date();
          Pinpoint.place_marker(event.latLng, (t1 - t0) / 1000);
@@ -134,7 +133,7 @@ var Pinpoint = (function() {
        google.maps.event.removeListener(click_listener);
        Pinpoint.stop_timer(false);
        if (!countdown) {
-         L('sorry too late!');
+         //L('sorry too late!');
          Pinpoint.prepare_next(3);
          return;
        }
@@ -173,7 +172,7 @@ var Pinpoint = (function() {
            infowindow.open(map, dropped_marker);
          }, 1000);
 
-         setTimeout(function() {
+         next_timer = setTimeout(function() {
            if (_next_is_last) {
              _finish();
            } else {
@@ -186,7 +185,9 @@ var Pinpoint = (function() {
     prepare_next: function(seconds) {
       countdown = seconds;
       var c = $('#pinpoint-tucked');
-      $('.skip a', c).text('Next!');
+      var s = $('.skip a', c);
+      s.data('originaltext', s.text());
+      s.text('Next!');
       c.show();
       $('p.skip:hidden', c).show();
       $('.current:visible', c).hide();
@@ -208,8 +209,12 @@ var Pinpoint = (function() {
      },
      setup: function (callback) {
        if (map == null) {
-         throw "Can't run flying plugin without map";
+         throw "Can't run pinpoint plugin without a map";
        }
+
+       $('a.restart', container).click(function() {
+         Pinpoint.teardown();
+       });
 
        $.getJSON('/pinpoint.json', function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
@@ -236,8 +241,9 @@ var Pinpoint = (function() {
 
          $('.begin form', container).off('submit').submit(function() {
            container.hide();
+
            $('#pinpoint-tucked .skip:hidden').show();
-           $('#pinpoint-tucked .skip a').click(function() {
+           $('#pinpoint-tucked .skip a').off('click').click(function() {
              Pinpoint.stop_timer(true);
              return false;
            });
@@ -289,8 +295,19 @@ var Pinpoint = (function() {
       });
     },
     teardown: function() {
+      // reset all locally scoped variables with defaults
+      count_questions = 0;
+      _next_is_last = false;
+      _cities_removed = false;
+
       if (skip_timer) clearTimeout(skip_timer);
+      if (begin_timer) clearTimeout(begin_timer);
       if (timer) clearTimeout(timer);
+      if (next_timer) clearTimeout(next_timer);
+      $('.begin', container).show();
+      $('.finish', container).hide();
+      $('.skip a', '#pinpoint-tucked')
+        .text("Ok. I'm ready!");
       $('#pinpoint-splash').hide();
       $('#pinpoint-tucked').hide();
       if (dropped_marker || correct_marker || infowindow) {
@@ -317,7 +334,6 @@ Plugins.start('pinpoint', function() {
 });
 
 
-// XXX: this is not implemented yet
 Plugins.stop('pinpoint', function() {
   Pinpoint.teardown();
 });
