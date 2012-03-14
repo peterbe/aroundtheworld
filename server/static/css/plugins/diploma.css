@@ -1,0 +1,39 @@
+#diploma .wrapper {
+    background-image: url(../../images/diploma.jpg);
+    background-repeat: no-repeat;
+    width: 760px;
+    max-width: 760px;
+    height: 548px;
+    border: 1px solid #ccc;
+    text-align:center;
+    padding: 0;
+}
+
+#diploma .wrapper h2 {
+    margin-top: 125px;
+    margin-bottom: 20px;
+
+    color: black;
+    font-family: 'UnifrakturCook', cursive;
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 45px;
+    font-weight: normal;
+    text-align: center;
+    /*position: relative;
+    top: 135px;*/
+    /*left: 160px;*/
+}
+
+#diploma .wrapper p {
+    font-family: 'Tangerine', cursive;
+    font-size: 28px;
+/*    position: relative;
+    top: 135px;*/
+    margin-bottom: 10px;
+    line-height: 1em;
+}
+
+#diploma .wrapper p.category,
+#diploma .wrapper p.name {
+    font-size: 50px;
+}
