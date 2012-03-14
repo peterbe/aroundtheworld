@@ -1142,6 +1142,14 @@ class HandlersTestCase(BaseHTTPTestCase):
         locmessage['censored'] = False
         locmessage.save()
 
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['location'] = loc['_id']
+        award['category'] = category['_id']
+        award['description'] = u'Best ever'
+        award.save()
+
+
     def test_anonymous_to_real_user(self):
         url = self.reverse_url('auth_anonymous')
         response = self.client.post(url, {})
@@ -1168,6 +1176,7 @@ class HandlersTestCase(BaseHTTPTestCase):
           self.db.Feedback,
           self.db.Invitation,
           self.db.LocationMessage,
+          self.db.Award,
         )
 
         for each in models:
@@ -1232,6 +1241,7 @@ class HandlersTestCase(BaseHTTPTestCase):
           self.db.Feedback,
           self.db.Invitation,
           self.db.LocationMessage,
+          self.db.Award,
         )
 
         peter_user_settings, = self.db.UserSettings.find({'user': peter['_id']})

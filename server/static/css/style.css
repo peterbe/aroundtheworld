@@ -78,23 +78,27 @@ html, body {
     http://glue.readthedocs.org/en/latest/index.html
    */
   #usernav .sprite {
-    background: url(../images/sprite-20120603.png) no-repeat top left;
+    background: url(../images/sprite-20120629.png) no-repeat top left;
   }
-  #usernav .sprite-feedback{
-    background-position: 0 0; width: 16px; height: 16px;
-  }
-  #usernav .sprite-coins{
-    background-position: 0 -66px; width: 16px; height: 16px;
-  }
-  #usernav .sprite-miles{
-    background-position: 0 -132px; width: 16px; height: 16px;
-  }
-  #usernav .sprite-settings{
+  #usernav .sprite-feedback{ /* mini-feedback.png */
     background-position: 0 -198px; width: 16px; height: 16px;
   }
-  #usernav .sprite-signout{
+  #usernav .sprite-coins{ /* mini-coins.png */
+    background-position: 0 -132px; width: 16px; height: 16px;
+  }
+  #usernav .sprite-miles{ /* mini-airplane.png */
+    background-position: 0 0; width: 16px; height: 16px;
+  }
+  #usernav .sprite-settings{ /* mini-settings.png */
     background-position: 0 -264px; width: 16px; height: 16px;
   }
+  #usernav .sprite-signout{ /* mini-signout.png */
+    background-position: 0 -330px; width: 16px; height: 16px;
+  }
+  #usernav .sprite-awards{ /* mini-awards.png */
+    background-position: 0 -66px; width: 16px; height: 16px;
+  }
+
 
   #usernav .login {
     font-size:1.2em;
@@ -118,6 +122,12 @@ html, body {
   }
   #usernav .signout a {
     padding-left: 17px;
+  }
+  #usernav .user-awards a {
+    padding-left: 17px;
+  }
+  #usernav .user-awards a.unread {
+    font-weight: bold;
   }
 
 

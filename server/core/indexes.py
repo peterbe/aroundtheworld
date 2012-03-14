@@ -65,6 +65,11 @@ def run(**options):
     yield ensure(collection, 'category')
     yield ensure(collection, 'location')
 
+    collection = db.Award.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+
     test()
 
 

@@ -99,6 +99,15 @@ var Quiz = (function() {
     }
   }
 
+  function _show_award_link(award) {
+    var c = $('.award', container);
+    $('a', c)
+      .attr('href', '#awards,' + award.id)
+        .attr('title', award.description);
+    $('a strong', c).text(award.description);
+    c.show();
+  }
+
   function _finish() {
     $.post(URL, {finish: true}, function(response) {
       $('.play', container).hide();
@@ -109,6 +118,9 @@ var Quiz = (function() {
       $('.short-summary .coins', container)
         .text(Utils.formatCost(response.results.coins, true));
       $('.pre-finish:visible', container).hide();
+      if (response.award) {
+        _show_award_link(response.award);
+      }
       $('.post-finish:hidden', container).show();
       State.show_coin_change(response.results.coins, true);
       State.update(function() {
@@ -456,6 +468,7 @@ var Quiz = (function() {
       $('.thumbnail-wrapper', container).hide();
       $('.thumbnail-wrapper img', container).remove();
       $('.results', container).hide();
+      $('.award', container).hide();
       $.post(URL, {teardown: true});
     }
   }

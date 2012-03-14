@@ -37,6 +37,10 @@ MOBILE_USER_AGENTS = re.compile(
   re.I
 )
 
+AWARDTYPE_JOB = u'job'
+AWARDTYPE_TUTORIAL = u'tutorial'
+AWARDTYPE_SIGNIN = u'signin'
+
 TUTORIAL_INTRO = u"""
 **This is the tutorial job.**
 
@@ -106,7 +110,11 @@ class BaseHandler(tornado.web.RequestHandler):
       'questionwriter': ['//api.filepicker.io/v0/filepicker.js',
                          'css/plugins/questionwriter.css',
                          'lib/bootstrap-tab.js',
-                         'plugins/questionwriter.js']
+                         'plugins/questionwriter.js'],
+      'awards': ['css/plugins/awards.css',
+                 'lib/jwerty.js',
+                 'plugins/awards.js'],
+
     }
 
 
@@ -217,6 +225,11 @@ class BaseHandler(tornado.web.RequestHandler):
             state['user']['miles_total'] = int(user_settings['miles_total'])
             state['user']['coins_total'] = user_settings['coins_total']
             state['user']['disable_sound'] = user_settings['disable_sound']
+            count_awards = self.db.Award.find({'user': user['_id']}).count()
+            count_awards_unread = self.db.Award.find({'user': user['_id'], 'read': False}).count()
+            state['user']['awards'] = {
+              'count': count_awards, 'unread': count_awards_unread
+            }
             location = self.get_current_location(user)
             if user['superuser'] or (self.db.Ambassador
                                      .find({'user': user['_id']})
@@ -359,6 +372,67 @@ class BaseHandler(tornado.web.RequestHandler):
                 return True
 
         return False
+
+    ## Award stuff
+
+    def create_job_award(self, user, location, category, reward, data):
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'%s in %s' % (category, location)
+        award['data'] = data
+        award['location'] = location['_id']
+        award['category'] = category['_id']
+        award['type'] = AWARDTYPE_JOB
+        award['reward'] = reward
+        award.save()
+        return award
+
+    def has_job_award(self, user, location, category):
+        filter_ = {
+          'user': user['_id'],
+          'location': location['_id'],
+          'category': category['_id'],
+          'type': AWARDTYPE_JOB,
+        }
+        return self.db.Award.find(filter_).count()
+
+    def create_tutorial_award(self, user, reward, data):
+        location = self.db.Location.find_one({'code': self.NOMANSLAND['code']})
+        category = self.db.Category.find_one({'name': 'Tutorial'})
+        data['finishing_tutorial'] = True
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'Finishing the tutorial'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['category'] = category['_id']
+        award['type'] = AWARDTYPE_TUTORIAL
+        award['reward'] = reward
+        award.save()
+        return award
+
+    def has_tutorial_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_TUTORIAL})
+                .count())
+
+    def has_signin_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_SIGNIN})
+                .count())
+
+    def create_signin_award(self, user, location, reward, data):
+        data['sign_in'] = True
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'Signing in properly'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['type'] = AWARDTYPE_SIGNIN
+        award['reward'] = reward
+        award.save()
 
 @route('/plugins.js', name='plugins_js')
 class PluginsJSHandler(BaseHandler):
@@ -745,13 +819,41 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             job['user'] = user['_id']
             job['coins'] = coins
             job['category'] = session['category']
-            job['location'] = session['location']
+            job['location'] = location['_id']
             job.save()
+
+            percentage = 100.0 * sum(rights) / len(rights)
+
+            if percentage >= 100.0 and tutorial['_id'] != session['category']:
+                category = self.db.Category.find_one({'_id': session['category']})
+                if not self.has_job_award(user, location, category):
+                    data = {
+                      'perfect': percentage == 100.0,
+                      'percentage': percentage,
+                      'coins': coins,
+                    }
+                    reward = 100
+                    award = self.create_job_award(
+                      user,
+                      location,
+                      category,
+                      reward,
+                      data
+                    )
+                    user_settings['coins_total'] += reward
+                    user_settings.save()
+
+                    data['award'] = {
+                      'description': award['description'],
+                      'id': str(award['_id'])
+                    }
+            # XXX should make it so that an award is given for completing the
+            # tutorial (when you can afford to fly somewhere)
 
             data['results'] = {
               'total_points': total_points,
               'coins': coins,
-              'percentage_right': 100.0 * sum(rights) / len(rights)
+              'percentage_right': percentage
             }
 
         else:
@@ -797,6 +899,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 earning.save()
 
         self.write(data)
+
 
 
 @route('/questionrating.json$', name='question_rating')
@@ -1903,7 +2006,7 @@ class AirportHandler(AuthenticatedBaseHandler):
               'miles': 238857,
             })
         data['destinations'] = destinations
-        self.write_json(data)
+        self.write(data)
 
     def calculate_cost(self, miles, user):
         return self.BASE_PRICE + int(round(miles * .05))
@@ -1991,13 +2094,29 @@ class FlyHandler(AirportHandler):
         transaction['cost'] = cost
         transaction['flight'] = flight['_id']
         transaction.save()
+        if current_location['code'] == self.NOMANSLAND['code']:
+            # you have left the tutorial
+            if not self.has_tutorial_award(user):
+                data = {
+                  #'perfect': percentage == 100.0,
+                  #'percentage': percentage,
+                  #'coins': coins,
+                }
+                reward = 50
+                award = self.create_tutorial_award(
+                  user,
+                  reward,
+                  data
+                )
+                user_settings['coins_total'] += reward
+                user_settings.save()
 
         data = {
           'from_code': current_location['code'],
           'to_code': location['code'],
           'cost': cost,
         }
-        self.write_json(data)
+        self.write(data)
 
 
 @route('/state.json$', name='state')
@@ -2005,10 +2124,7 @@ class StateHandler(BaseHandler):
 
     def get(self):
         state = self.get_state()
-        #if format == 'html':
-        #    self.render('div.usernav.html', state=state)
-        #else:
-        self.write_json({'state': state})
+        self.write({'state': state})
 
 
 class BaseAuthHandler(BaseHandler):
@@ -2121,6 +2237,22 @@ class BaseAuthHandler(BaseHandler):
 
             if previous_user and previous_user['anonymous'] and not user['anonymous']:
                 self._transferUser(previous_user, user)
+                if not self.has_signin_award(user):
+                    data = {
+
+                    }
+                    reward = 100
+                    award = self.create_signin_award(
+                      user,
+                      self.get_current_location(user),
+                      reward,
+                      data
+                    )
+                    user_settings = (self.db.UserSettings
+                                     .find_one({'user': user['_id']}))
+                    user_settings['coins_total'] += reward
+                    user_settings.save()
+
 
     def _transferUser(self, old, new):
         models = (
@@ -2134,6 +2266,7 @@ class BaseAuthHandler(BaseHandler):
           self.db.Invitation,
           self.db.LocationMessage,
           self.db.QuestionRating,
+          self.db.Award,
         )
 
         for each in models:
@@ -2811,6 +2944,105 @@ class ErrorsHandler(BaseHandler):
         error_event['url'] = data.get('url')
         error_event.save()
         logging.warn("Saved ErrorEvent: %s", data)
+
+
+@route('/awards.json$', name='awards')
+class AwardsHandler(BaseHandler):
+
+    def get(self):
+        data = {}
+
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+
+        _locations = {}
+        _categories = {}
+
+        def describe_award(award):
+            if award['location'] not in _locations:
+                _locations[award['location']] = \
+                  self.db.Location.find_one({'_id': award['location']})['city']
+            if award['category'] and award['category'] not in _categories:
+                _categories[award['category']] = \
+                  unicode(self.db.Category.find_one({'_id': award['category']}))
+            info = {
+              'id': str(award['_id']),
+              'description': award['description'],
+              'location': _locations[award['location']],
+              'category': award['category'] and _categories[award['category']] or None,
+              'type': award['type'],
+              'read': award['read'],
+              'date': award['add_date'].strftime('%d %B %Y')
+            }
+            return info
+
+        if self.get_argument('id', None):
+            award = self._get_award(self.get_argument('id'), user)
+            if not award:
+                self.write({'error': 'INVALIDAWARD'})
+                return
+            if award['user'] == user['_id']:
+                award['read'] = True
+                award.save()
+            info = describe_award(award)
+            if user['first_name']:
+                name = u'%s %s' % (user['first_name'], user['last_name'])
+                name = name.strip()
+            elif user['anonymous']:
+                name = u"You"
+            else:
+                name = user['username']
+            info['name'] = name
+            if award['ambassador']:
+                ambassador = self.db.User.find_one({'_id': award['ambassador']})
+            else:
+                # hackish exception
+                ambassador = self.db.User.find_one({'username': 'peterbe'})
+
+            ambassador = u'%s %s' % (ambassador['first_name'],
+                                     ambassador['last_name'])
+            ambassador = ambassador.strip()
+            info['ambassador'] = ambassador
+            info['long_description'] = self.get_long_description(award)
+            data['award'] = info
+        else:
+            awards = []
+            for each in (self.db.Award.find({'user': user['_id']})
+                          .sort('add_date', -1)):
+                awards.append(describe_award(each))
+
+            data['awards'] = awards
+
+        self.write(data)
+
+    def get_long_description(self, award):
+        data = award['data']
+        desc = ("You earned this award %s ago. "
+          % smartertimesince(award['add_date'], datetime.datetime.utcnow())
+        )
+        if award['type'] == 'job':
+            category = self.db.Category.find_one({'_id': award['category']})
+            if category.name == u'Tutorial':
+                desc += "You completed the tutorial. "
+            else:
+                desc += "You completed the award as %s" % category.name
+                if data.get('percentage') == 100:
+                    desc += " with perfect results. "
+                else:
+                    desc += ". "
+        if award['reward']:
+            desc += "As a reward you earned an extra %s coins" % award['reward']
+
+        return desc
+
+    def _get_award(self, _id, user):
+        try:
+            award = self.db.Award.find_one({'_id': ObjectId(_id)})
+        except:
+            return
+        if award['user'] != user['_id']:
+            return
+        return award
 
 
 # this handler gets automatically appended last to all handlers inside app.py

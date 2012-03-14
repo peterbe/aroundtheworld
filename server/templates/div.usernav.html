@@ -21,6 +21,11 @@
         {% if state.get('user') %}{% module Thousands(state['user']['coins_total']) %} coins{% end %}</a>
       </li>
 
+      <li class="user-awards logged-in sprite sprite-awards" style="display:none">
+        <a href="#awards" class="overlay-changer {% if state.get('user') and state['user']['awards'].get('unread') %}unread{% end %}">
+        {% if state.get('user') %}Awards{% if state['user']['awards']['count'] %} ({{ state['user']['awards']['count'] }}){% end %}{% end %}</a>
+      </li>
+
       <li class="user-name logged-in sprite sprite-settings" style="display:none">
         <a href="#settings" class="overlay-changer" title="Settings">{% if state['user'] %}
           {% if state['user']['anonymous'] %}

@@ -116,6 +116,17 @@ var State = (function() {
           .text(Utils.formatMiles(state.user.miles_total, true));
         $('.user-coins a', container)
           .text(Utils.formatCost(state.user.coins_total, true));
+        if (state.user.awards.count) {
+          $('.user-awards a', container)
+          .text('Awards (' + state.user.awards.count + ')');
+        } else {
+          $('.user-awards a', container).text('Awards')
+        }
+        if (state.user.awards.unread) {
+          $('.user-awards a', container).addClass('unread');
+        } else {
+          $('.user-awards a.unread', container).removeClass('unread');
+        }
         if (!MOBILE) {
           if (state.user.admin_access) {
             $('.admin', container).show();
@@ -221,12 +232,13 @@ var Utils = (function() {
         });
       }
     },
-    update_title: function () {
-      var title = null;
-      if ($('h1:visible').size()) {
-        title = $('h1:visible').text();
-      } else if ($('h2:visible').size()) {
-        title = $('h2:visible').text();
+    update_title: function (title) {
+      if (!title) {
+        if ($('h1:visible').size()) {
+          title = $('h1:visible').text();
+        } else if ($('h2:visible').size()) {
+          title = $('h2:visible').text();
+        }
       }
       if (title) {
         document.title = title;

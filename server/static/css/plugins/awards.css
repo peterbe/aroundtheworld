@@ -1,0 +1,92 @@
+#awards .wrapper-metadata {
+
+}
+#awards .wrapper {
+    margin-right: 10px;
+    background-image: url(../../images/diploma.jpg);
+    background-repeat: no-repeat;
+    width: 760px;
+    max-width: 760px;
+    height: 548px;
+    border: 1px solid #ccc;
+    text-align:center;
+    padding: 0;
+}
+
+#awards .wrapper h2 {
+    margin-top: 125px;
+    margin-bottom: 20px;
+
+    color: black;
+    /*font-family: 'UnifrakturCook', cursive;*/
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: 45px;
+    font-weight: normal;
+    text-align: center;
+    /*position: relative;
+    top: 135px;*/
+    /*left: 160px;*/
+}
+
+#awards .wrapper p {
+    font-family: 'Tangerine', cursive;
+    font-size: 27px;
+/*    position: relative;
+    top: 135px;*/
+    margin-bottom: 10px;
+    line-height: 1em;
+}
+
+#awards .wrapper p.description,
+#awards .wrapper p.name {
+    font-family: 'Monsieur La Doulaise', cursive;
+    font-size: 50px;
+}
+#awards .wrapper .description-job {
+    font-size: 38px;
+}
+#awards .wrapper .description-tutoral {
+    font-size: 55px;
+}
+
+
+#awards .wrapper .footer {
+    margin-left: 190px;
+    margin-right: 140px;
+    margin-top: 50px;
+}
+
+#awards .wrapper p.signature,
+#awards .wrapper p.date {
+    font-family: 'Homemade Apple', cursive;
+    font-size: 14px;
+    color: #0000A0;  /* dark blue */
+    border-bottom: 1px solid rgb(220,220,220);
+    width: 140px;
+    /*
+    position: relative;
+    top: 40px;
+    left: 190px;*/
+}
+
+#awards .wrapper p.date {
+    float: right;
+}
+
+
+#awards .award img {
+    float: left;
+    margin-right: 10px;
+
+}
+#awards .award a.title {
+    font-weight: bold;
+    font-size: 120%;
+}
+#awards .award {
+    margin: 30px;
+    border-bottom: 1px solid #efefef;
+}
+#awards .new-award {
+    margin-left: 10px;
+}
