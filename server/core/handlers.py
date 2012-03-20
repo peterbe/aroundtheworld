@@ -1556,7 +1556,11 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
 
     def _on_auth(self, user):
         if not user:
-            raise HTTPError(500, "Google auth failed")
+            self.write("""<html>Error. Unable to log in.
+            Did you not allow any login details to be shared?</html>""")
+            self.finish()
+            return
+            #raise HTTPError(500, "Google auth failed")
         if not user.get('email'):
             raise HTTPError(500, "No email provided")
 

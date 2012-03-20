@@ -110,7 +110,7 @@ class DocumentAdminHandler(AmbassadorBaseHandler):
             document['source_format'] = form.source_format.data
             document['type'] = form.type.data
             document['notes'] = form.notes.data
-            document.save()
+            document.update_html()  # calls self.save()
             self.redirect(self.reverse_url('admin_documents'))
         else:
             self.get(_id, form=form)

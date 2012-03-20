@@ -437,6 +437,8 @@ class HTMLDocument(BaseDocument):
         if self['source_format'] == 'markdown':
             self['html'] = markdown.markdown(self['source'])
             self.save()
+        elif self['source_format'] == 'html':
+            self['html'] = self['source']  # any clean up needed?
         else:
             raise NotImplementedError(self['source_format'])
 
