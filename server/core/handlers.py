@@ -234,11 +234,11 @@ class BaseHandler(tornado.web.RequestHandler):
             options['page_title'] = settings.PROJECT_TITLE
         return super(BaseHandler, self).render(template, **options)
 
-    def static_url(self, path):
+    def static_url(self, path, **kwargs):
         if self.application.settings['embed_static_url_timestamp']:
             ui_module = self.application.ui_modules['StaticURL'](self)
             try:
-                return ui_module.render(path)
+                return ui_module.render(path, **kwargs)
             except OSError:
                 logging.debug("%r does not exist" % path)
         return super(BaseHandler, self).static_url(path)
