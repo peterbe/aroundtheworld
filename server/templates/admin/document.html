@@ -8,7 +8,7 @@ textarea[name="source"] { height:400px; }
 {% end %}
 
 {% block extrajs %}
-<script src="{{ static_url('lib/ace/ace.js') }}" type="text/javascript" charset="utf-8"></script>
+<script src="{{ static_url('lib/ace/ace.min.js') }}" type="text/javascript" charset="utf-8"></script>
 {% if document['source_format'] == 'html' %}
 <script src="{{ static_url('lib/ace/mode-html.js') }}" type="text/javascript" charset="utf-8"></script>
 {% end %}
