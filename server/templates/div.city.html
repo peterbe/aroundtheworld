@@ -13,7 +13,7 @@
       <li><a href="#city,messages" class="overlay-changer">Writings on the wall</a></li>
     </ul>
 
-    <form class="message-teaser">
+    <form class="message-teaser" style="display:none">
     <input name="teaser" placeholder="Write something about your visit...">
     </form>
   </div>
@@ -22,11 +22,19 @@
     <h2>Messages from visitors of <strong></strong></h2>
     <div class="messages-outer">
     </div>
-    <form action="." class="post-message">
+
+    <form action="." class="post-message" style="display:none">
       <h4>Write something about your visit to <span class="location-name"></span></h4>
       <textarea name="message"></textarea>
       <button type="submit" class="btn">Post it</button>
     </form>
+
+    <form action="." class="cant-post-message" style="display:none">
+      <h4>Write something about your visit to <span class="location-name"></span></h4>
+      <p><a href="#login" class="overlay-changer">To be able to do that, sign in properly</a></p>
+    </form>
+
+
 
     <p>
       <a href="#city" class="overlay-changer">Back to the city</a>

@@ -1,0 +1,22 @@
+#login a.btn {
+    text-decoration: none;
+}
+#login .left,
+#login .right {
+    width:48%;
+}
+
+#login .left h3,
+#login .right h3 {
+    margin-top: 15px;
+}
+
+#login .right {
+    float:right
+}
+
+
+#login .right p,
+#login .left p {
+    margin:40px;
+}

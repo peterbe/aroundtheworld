@@ -49,40 +49,49 @@ var State = (function() {
     }
   }
 
-  function _render_state(state) {
-    var container = $('#usernav');
-    if (state.user) {
-      $('.user-login:visible', container).hide();
-      $('.logged-in:hidden', container).show();
-      if (state.location) {
-        $('.user-location:hidden', container).show();
-        $('.user-location a', container).text(state.location.name);
-      } else {
-        $('.user-location:visible', container).hide();
-      }
-      $('.user-name a', container).text(state.user.name);
-      $('.user-miles a', container)
-        .text(Utils.formatMiles(state.user.miles_total, true));
-      $('.user-coins a', container)
-        .text(Utils.formatCost(state.user.coins_total, true));
-      if (state.user.admin_access) {
-        $('.admin', container).show();
-      } else {
-        $('.admin', container).hide();
-      }
-    } else {
-      $('.logged-in:visible', container).hide();
-      $('.user-login:hidden', container).show();
-    }
-  }
+
 
   return {
      update: function() {
        $.getJSON('/state.json', function(response) {
          STATE = response.state;
-         _render_state(STATE);
+         State.render(STATE);
        });
      },
+    render: function(state) {
+      var container = $('#usernav');
+      if (state.user) {
+        $('.user-login:visible', container).hide();
+        $('.logged-in:hidden', container).show();
+        if (state.location) {
+          $('.user-location:hidden', container).show();
+          $('.user-location a', container).text(state.location.name);
+        } else {
+          $('.user-location:visible', container).hide();
+        }
+        if (state.user.anonymous) {
+          $('.user-name a', container).text('Settings');
+          $('.user-un-anonymous', container).show();
+          $('.signout', container).hide();
+        } else {
+          $('.user-name a', container).text(state.user.name);
+          $('.user-un-anonymous', container).hide();
+          $('.signout', container).show();
+        }
+        $('.user-miles a', container)
+          .text(Utils.formatMiles(state.user.miles_total, true));
+        $('.user-coins a', container)
+          .text(Utils.formatCost(state.user.coins_total, true));
+        if (state.user.admin_access) {
+          $('.admin', container).show();
+        } else {
+          $('.admin', container).hide();
+        }
+      } else {
+        $('.logged-in:visible', container).hide();
+        $('.user-login:hidden', container).show();
+      }
+    },
     show_coin_change: function(delta, animated) {
       _show_change(delta, animated, '.user-coins', 'coins');
     },
@@ -159,6 +168,14 @@ var Utils = (function() {
     }
   }
 })();
+
+// some things can't wait for the map to load
+$(function() {
+  // here 'STATE' is a inline defined variable.
+  // This makes it so that the usernav can be populate quickly on
+  // loading time without having to do a JSON pull first
+  State.render(STATE);
+});
 
 mapInitialized(function(map) {
 

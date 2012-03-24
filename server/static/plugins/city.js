@@ -106,6 +106,13 @@ var City = (function() {
       $('.messages-outer .message', container).remove();
       _append_messages(response.messages);
     });
+    if (STATE.user.anonymous) {
+      $('form.post-message:visible', container).hide();
+      $('form.cant-post-message:hidden', container).show();
+    } else {
+      $('form.post-message:hidden', container).show();
+      $('form.cant-post-message:visible', container).hide();
+    }
     callback();
   }
   function _append_messages(messages) {
@@ -181,6 +188,12 @@ var City = (function() {
        });
      },
     setup_message_post: function() {
+      if (STATE.user.anonymous) {
+        $('form.message-teaser', container).hide();
+      } else {
+        $('form.message-teaser:hidden', container).show();
+      }
+
       if (_message_form_setup) return;
       $('.messages form', container).submit(function() {
         $('textarea', this).val($.trim($('textarea', this).val()));

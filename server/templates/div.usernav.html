@@ -1,7 +1,7 @@
 <div id="usernav">
     <ul>
 
-      <li class="user-location logged-in" {% if not state.get('location') %}style="display:none"{% end %}>
+      <li class="user-location logged-in" style="display:none">
         <span class="city-prefix">Currently in: </span>
         <a href="#city" class="overlay-changer">
         {% if state.get('location') %}
@@ -10,36 +10,44 @@
         </a>
       </li>
 
-      <li class="user-miles logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="user-miles logged-in" style="display:none">
         <a href="#miles" class="overlay-changer">
           {% if state.get('user') %}
             {% module Thousands(state['user']['miles_total']) %} miles{% end %}</a>
       </li>
 
-      <li class="user-coins logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="user-coins logged-in" style="display:none">
         <a href="#coins" class="overlay-changer">
         {% if state.get('user') %}{% module Thousands(state['user']['coins_total']) %} coins{% end %}</a>
       </li>
 
-      <li class="user-name logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="user-name logged-in" style="display:none">
         <a href="#settings" class="overlay-changer" title="Settings">{% if state['user'] %}
+          {% if state['user']['anonymous'] %}
+          Settings
+          {% else %}
           {{ state['user']['name'] }}
+          {% end %}
         {% end %}</a>
       </li>
 
-      <li class="feedback logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="feedback logged-in" style="display:none">
         <a href="#feedback" class="overlay-changer" title="Give feedback">Feedback</a>
       </li>
 
-      <li class="admin logged-in" {% if not (state.get('user') and state['user']['admin_access']) %}style="display:none"{% end %}>
+      <li class="admin logged-in" style="display:none">
         <a href="/admin/" title="Because you deserve it!">Admin</a>
       </li>
 
-      <li class="signout logged-in" {% if not state.get('user') %}style="display:none"{% end %}>
+      <li class="signout logged-in" style="display:none">
         <a href="#signout" class="overlay-changer" title="Sign out">Sign out</a>
       </li>
 
-      <li class="user-login" {% if state.get('user') %}style="display:none"{% end %}>
+      <li class="user-un-anonymous" style="display:none">
+        <a href="#login" class="overlay-changer login">Sign in properly</a>
+      </li>
+
+      <li class="user-login" style="display:none">
         <a href="#login" class="overlay-changer login"><strong>Sign in</strong> to get going!</a>
       </li>
 

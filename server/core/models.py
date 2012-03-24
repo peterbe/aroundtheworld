@@ -52,13 +52,15 @@ class User(BaseDocument):
       'first_name': unicode,
       'last_name': unicode,
       'current_location': ObjectId,
-      'superuser': bool
+      'superuser': bool,
+      'anonymous': bool,
     }
 
     use_autorefs = False
     required_fields = ['username']
     default_values = {
-      'superuser': False
+      'superuser': False,
+      'anonymous': False,
     }
 
     def __unicode__(self):

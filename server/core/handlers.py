@@ -1,3 +1,4 @@
+import uuid
 import re
 import datetime
 import random
@@ -118,7 +119,20 @@ class BaseHandler(tornado.web.RequestHandler):
         if user:
             user_settings = self.get_current_user_settings()
             state['user'] = {}
-            state['user']['name'] = user.get_full_name()
+
+            # legacy
+            try:
+                user['anonymous']
+            except KeyError:
+                user['anonymous'] = False
+                user.save()
+
+            if user['anonymous']:
+                state['user']['name'] = ''
+                state['user']['anonymous'] = True
+            else:
+                state['user']['name'] = user.get_full_name()
+                state['user']['anonymous'] = False
             state['user']['miles_total'] = int(user_settings['miles_total'])
             state['user']['coins_total'] = user_settings['coins_total']
             state['user']['disable_sound'] = user_settings['disable_sound']
@@ -1539,6 +1553,33 @@ class BaseAuthHandler(BaseHandler):
         )
 
 
+@route('/auth/anonymous/', name='auth_anonymous')
+class AnonymousAuthHandler(BaseAuthHandler):
+
+    def get(self):
+        user = self.db.User()
+        user.username = self._anonymous_username()
+        user.anonymous = True
+        user.set_password(unicode(uuid.uuid4()))
+        user.save()
+
+        user_settings = self.get_user_settings(user)
+        if not user_settings:
+            user_settings = self.create_user_settings(user)
+        user_settings.save()
+
+        self.post_login_successful(user)
+        self.set_secure_cookie("user", str(user._id), expires_days=1)
+        self.redirect(self.get_next_url())
+
+    def _anonymous_username(self):
+        prefix = u'anonymous'
+        def mk():
+            return prefix + uuid.uuid4().hex[:4]
+        name = mk()
+        while self.db.User.find({'username': name}).count():
+            name = mk()
+        return name
 
 
 @route('/auth/google/', name='auth_google')
@@ -1589,7 +1630,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
                 user.first_name = first_name
             if last_name:
                 user.last_name = last_name
-            import uuid
+
             user.set_password(unicode(uuid.uuid4()))
             user.save()
             self.notify_about_new_user(user,
