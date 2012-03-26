@@ -238,6 +238,7 @@ class Question(BaseDocument):
       'alternatives_sorted': bool,
       'author': ObjectId,
       'points_value': int,
+      'seconds': int,
       'location': ObjectId,
       'category': ObjectId,
       'published': bool,
@@ -351,7 +352,7 @@ class SessionAnswer(BaseDocument):
       'answer': unicode,
       'correct': bool,
       'time': float,
-      'points': int,
+      'points': float,
       'timedout': bool,
     }
 

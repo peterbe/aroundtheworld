@@ -70,6 +70,21 @@ class MultilinesWidget(object):
         return '\n'.join(htmls)
 
 
+class SecondsValidator(object):
+
+    def __init__(self, min_, max_):
+        self.min_ = min_
+        self.max_ = max_
+
+    def __call__(self, form, field):
+        if field.data:
+            if int(field.data) < self.min_:
+                raise ValidationError("Must be at least %s" % self.min_)
+            if int(field.data) > self.max_:
+                raise ValidationError("Must be at max %s" % self.max_)
+
+
+
 class CategoryForm(BaseForm):
     name = TextField("Category",
                     [validators.Required(),
@@ -129,6 +144,11 @@ class QuestionForm(BaseForm):
                    ('3', '3'),
                    ('4', '4'),
                    ('5', '5 (hard)')])
+
+    seconds = TextField("Seconds",
+                        [validators.Required(), SecondsValidator(10, 30)],
+                        description="Number of seconds to think (min. 10, max. 30)"
+                        )
 
     published = BooleanField("Published",
                     description="Whether it should immediately appear")

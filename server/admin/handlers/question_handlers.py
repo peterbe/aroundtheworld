@@ -185,7 +185,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
     def get(self, form=None):
         data = {}
         if form is None:
-            initial = {}
+            initial = {'seconds': 10}
             _cutoff = (datetime.datetime.utcnow() -
                        datetime.timedelta(seconds=60 * 10))  # 10 min
             for q in (self.db.Question
@@ -239,6 +239,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
             question['points_value'] = int(form.points_value.data)
             question['published'] = form.published.data
             question['notes'] = form.notes.data.strip()
+            question['seconds'] = int(form.seconds.data)
             question['didyouknow'] = form.didyouknow.data.strip()
             location = (self.db.Location
                         .find_one({'_id': ObjectId(form.location.data)}))
@@ -316,6 +317,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             initial = dict(data['question'])
             initial['category'] = str(initial['category'])
             initial['location'] = str(initial['location'])
+            #initial['seconds'] = str(initial['seconds'])
             form = QuestionForm(categories=self.categories,
                                 locations=self.locations,
                                 **initial)
@@ -349,6 +351,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             question['points_value'] = int(form.points_value.data)
             question['published'] = form.published.data
             question['notes'] = form.notes.data.strip()
+            question['seconds'] = int(form.seconds.data)
             question['didyouknow'] = form.didyouknow.data.strip()
             location = (self.db.Location
                         .find_one({'_id': ObjectId(form.location.data)}))

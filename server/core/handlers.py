@@ -329,7 +329,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
     # give for a percentage.
     PERCENTAGE_COINS_RATIO = 1.0
 
-    SECONDS = 10
+    #SECONDS = 10
     NO_QUESTIONS = settings.QUIZ_MIN_NO_QUESTIONS
 
     def points_to_coins(self, points):
@@ -452,7 +452,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
               'width': width,
               'height': height,
             }
-        data['question']['seconds'] = self.SECONDS
+        data['question']['seconds'] = question['seconds']
         self.write_json(data)
 
     def _get_next_question(self, session, category, location,
@@ -573,13 +573,18 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['correct'] = question.check_answer(answer)
             if not data['correct']:
                 data['correct_answer'] = question['correct']
+
+            time_left = question['seconds'] - time_
+            time_bonus_p = round(float(time_left) / question['seconds'], 1)
+            data['time_bonus'] = 1 + time_bonus_p
             data['points_value'] = question.get('points_value', 1)
+            data['points'] = data['time_bonus'] * data['points_value'] * data['correct']
             assert isinstance(data['points_value'], int)
 
             answer_obj['time'] = time_
             answer_obj['answer'] = answer
             answer_obj['correct'] = data['correct']
-            answer_obj['points'] = data['points_value'] * data['correct']
+            answer_obj['points'] = data['points']
             answer_obj['timedout'] = False
             answer_obj.save()
 

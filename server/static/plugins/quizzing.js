@@ -121,7 +121,7 @@ var Quiz = (function() {
       });
 
       $('tfoot .points-total-total', container)
-        .text(_total_points);
+        .text(Utils.formatPoints(_total_points));
 
       Utils.update_title();
     });
@@ -164,9 +164,9 @@ var Quiz = (function() {
            $('.didyouknow', container).hide();
            if (response.correct) {
              $('.correct', container).show();
-             if (response.points_value) {
+             if (response.points) {
                var v = parseInt($('.points-total', container).text());
-               $('.points-total', container).text(v + response.points_value);
+               $('.points-total', container).text(v + response.points);
              }
            } else {
              if (response.correct_answer) {

@@ -26,7 +26,7 @@ define("dont_embed_static_url", default=False,
 
 
 class Application(tornado.web.Application):
-    def __init__(self, database_name=None):
+    def __init__(self, database_name=None, optimize_static_content=None):
         ui_modules_map = {}
         for each in ('core.ui_modules', 'admin.ui_modules'):
             _ui_modules = __import__(each, globals(), locals(),
@@ -40,6 +40,9 @@ class Application(tornado.web.Application):
                 except TypeError:  # pragma: no cover
                     # most likely a builtin class or something
                     pass
+
+        if optimize_static_content is None:
+            optimize_static_content = options.dont_optimize_static_content
 
         try:
             cdn_prefix = [x.strip() for x in open('cdn_prefix.conf')
@@ -65,7 +68,7 @@ class Application(tornado.web.Application):
             admin_emails=settings.ADMIN_EMAILS,
             ui_modules=ui_modules_map,
             embed_static_url_timestamp=not options.dont_embed_static_url,
-            optimize_static_content=not options.dont_optimize_static_content,
+            optimize_static_content=not optimize_static_content,
             cdn_prefix=cdn_prefix,
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__),
                                           "static", "compiler.jar"),

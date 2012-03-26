@@ -62,7 +62,8 @@ class BaseHTTPTestCase(BaseAsyncTestCase, HTTPClientMixin):
         self.redis.flushall()
 
     def get_app(self):
-        return app.Application(database_name='test')
+        return app.Application(database_name='test',
+                               optimize_static_content=False)
 
     @property
     def redis(self):
