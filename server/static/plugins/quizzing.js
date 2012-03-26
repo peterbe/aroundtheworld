@@ -129,13 +129,14 @@ var Quiz = (function() {
   }
 
   return {
-     setup: function() {
+     setup: function(category) {
        $('a.next-question', container)
          .click(function() {
            Quiz.rush_next_question();
            return false;
          });
        Utils.update_title();
+       $('a.restart', container).attr('href', '#quizzing,' + category.replace(' ', '+'));
      },
      reset: function() {
        $('a.next-question', container)
@@ -334,7 +335,7 @@ var Quiz = (function() {
 Plugins.start('quizzing', function(category) {
   // called every time this plugin is loaded
   Quiz.reset();
-  Quiz.setup();
+  Quiz.setup(category);
   Quiz.load_next(category);  // kick it off
 });
 

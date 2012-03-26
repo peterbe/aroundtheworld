@@ -104,3 +104,11 @@ span.question {
     background-color:#efefef;
     padding: 3px;
 }
+
+#quizzing table.results {
+    margin-bottom: 5px;
+}
+
+#quizzing a.restart {
+    font-weight: bold;
+}
