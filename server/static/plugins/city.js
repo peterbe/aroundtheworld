@@ -199,8 +199,9 @@ var City = (function() {
         $('textarea', this).val($.trim($('textarea', this).val()));
         var message = $('textarea', this).val();
         if (message.length) {
+          var self = this;
           $.post(URL, {message: message}, function(response) {
-            $('textarea', this).val('');
+            $('textarea', self).val('');
             _append_messages(response.messages);
           });
         }

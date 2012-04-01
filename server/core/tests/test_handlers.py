@@ -833,3 +833,17 @@ class HandlersTestCase(BaseHTTPTestCase):
         self._login(username=u'peter', email=u'peter@example.com')
         emails_after = len(mail.outbox)
         self.assertEqual(emails_before, emails_after)
+
+    def test_city(self):
+        user = self._login(location=self.newyork)
+        url = self.reverse_url('city')
+        structure = self.get_struct(url)
+        self.assertEqual(structure['count_messages'], 0)
+        data = {
+          'message': "Hi it's me",
+        }
+        structure = self.post_struct(url, data)
+        messages = structure['messages']
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(messages[0]['time_ago'], 'seconds')
+        self.assertEqual(messages[0]['message'], data['message'])

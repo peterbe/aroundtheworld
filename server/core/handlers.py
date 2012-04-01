@@ -935,7 +935,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
               'username': user['first_name'] or user['username'],
               'miles': user_settings['miles_total'],
               'current_location': unicode(current_location),
-              'time_ago': smartertimesince(item['add_date']),
+              'time_ago': smartertimesince(item['add_date'],
+                                           datetime.datetime.utcnow()),
             })
         return messages
 
@@ -996,7 +997,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         location_message['user'] = user['_id']
         location_message['location'] = location['_id']
         location_message.save()
-        return {'messages': self.get_messages(location, limit=1)}
+        messages = self.get_messages(location, limit=1)
+        self.write({'messages': messages})
 
 
 @route('/pinpoint.json$', name='pinpoint')
