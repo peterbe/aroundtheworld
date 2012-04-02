@@ -1662,6 +1662,11 @@ class AuthLogoutHandler(BaseAuthHandler):
         self.clear_all_cookies()
         self.redirect(self.get_next_url())
 
+    def get(self):  # not sure if we need this other than for debugging
+        self.clear_all_cookies()
+        self.redirect(self.get_next_url())
+
+
 
 @route(r'/iplookup/', name='iplookup')
 class IPLookupHandler(BaseHandler):

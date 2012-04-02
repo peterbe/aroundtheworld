@@ -29,11 +29,17 @@ var Mobile = (function() {
            .addClass('open-menu').addClass('menu-toggle')
              .prependTo(usernav);
        Mobile.collapse_usernav();
-     }
+     },
+    hack_external_links: function() {
+      $('a.auth', '#login').each(function() {
+        $(this).attr('href', $(this).attr('href') + '?next=/mobile/');
+      });
+    }
   }
 })();
 
 
 mapInitialized(function(map) {
   Mobile.setup_usernav();
+  Mobile.hack_external_links();
 });

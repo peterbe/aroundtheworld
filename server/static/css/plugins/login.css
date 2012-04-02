@@ -11,12 +11,29 @@
     margin-top: 15px;
 }
 
+#login .left {
+    float: left;
+}
 #login .right {
-    float:right
+    float: right;
 }
 
 
 #login .right p,
 #login .left p {
     margin:40px;
+}
+
+#login .other-note {
+    clear: both;
+}
+
+@media (max-width: 480px) {
+  #login .left,
+  #login .right {
+      width: 100%;
+  }
+  #login .left {
+      float: none;
+  }
 }

@@ -1,11 +1,25 @@
 <div id="login" class="overlay">
   <h2>Sign in and registration</h2>
 
+
+  <div class="left">
+    <h3>Secure login</h3>
+
+    <p>
+    <a class="btn btn-large auth" href="/auth/google/">
+      <img src="{{ static_url('images/google-login-small.png') }}" alt="Sign in with Google">
+      Sign in with Google
+    </a>
+
+    </p>
+
+  </div>
+
   <div class="right">
     <h3>Or...</h3>
 
     <p>
-    <a class="btn btn-large" href="/auth/anonymous/">
+    <a class="btn btn-large auth" href="/auth/anonymous/">
       <img src="{{ static_url('images/anonymous.png') }}" alt="Play anonymously">
       Play anonymously
     </a>
@@ -13,20 +27,6 @@
 
   </div>
 
-  <div class="left">
-    <h3>Secure login</h3>
-
-    <p>
-    <a class="btn btn-large" href="/auth/google/">
-      <img src="{{ static_url('images/google-login-small.png') }}" alt="Sign in with Google">
-      Sign in with Google
-    </a>
-
-    </p>
-
-    <p>Other forms of signing in is coming in a future version.</p>
-  </div>
-
-
+  <p class="other-note">Other forms of signing in is coming in a future version.</p>
 
 </div>

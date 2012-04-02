@@ -44,6 +44,8 @@ var Airport = (function() {
        $('.confirm:visible', container).hide();
        $('.choices:hidden', container).show();
        $.getJSON('/airport.json', function(response) {
+         if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+
          $('h2', container).text(response.airport_name);
          $('.current-total', container).text(STATE.user.coins_total);
          //var c = $('.destinations', container);
