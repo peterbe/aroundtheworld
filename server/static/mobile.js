@@ -28,7 +28,9 @@ var Mobile = (function() {
            })
            .addClass('open-menu').addClass('menu-toggle')
              .prependTo(usernav);
-       Mobile.collapse_usernav();
+       //Mobile.collapse_usernav();
+       $('li.user-location').show();
+       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.user-un-anonymous').show();
      },
     hack_external_links: function() {
       $('a.auth', '#login').each(function() {

@@ -27,6 +27,10 @@ ONE_HOUR = 60 * 60
 ONE_DAY = ONE_HOUR * 24
 ONE_WEEK = ONE_DAY * 7
 FULL_DATE_FMT = '%d %b %Y'
+MOBILE_USER_AGENTS = re.compile(
+  'android|fennec|ipad|iemobile|iphone|opera (?:mini|mobi)',
+  re.I
+)
 
 
 def calculate_distance(from_location, to_location):
@@ -286,6 +290,10 @@ class HomeHandler(BaseHandler):
 
     def get(self):
         options = {}
+        ua = self.request.headers.get('User-Agent')
+        if MOBILE_USER_AGENTS.search(ua) and not self.get_cookie('no-mobile'):
+            self.redirect('/mobile/')
+            return
         self.render('home.html', **options)
 
 
