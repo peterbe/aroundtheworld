@@ -9,6 +9,12 @@ from geopy import geocoders
 from .base import djangolike_request_dict, AmbassadorBaseHandler
 
 
+def _bool(s):
+    if s in ('yes', 'true'):
+        return True
+    return False
+
+
 @route('/admin/locations/', name='admin_locations')
 class LocationsAdminHandler(AmbassadorBaseHandler):
     LIMIT = 20
@@ -31,6 +37,15 @@ class LocationsAdminHandler(AmbassadorBaseHandler):
         data['countries'] = self.get_arguments('countries', [])
         if data['countries']:
             filter_['country'] = {'$in': data['countries']}
+
+        data['available'] = self.get_argument('available', '')
+        if data['available']:
+            # temporary legacy fix
+            for x in self.db.Location.find({'available': {'$exists': False}}):
+                x['available'] = False
+                x.save()
+
+            filter_['available'] = _bool(data['available'])
 
         args = dict(self.request.arguments)
         if 'page' in args:
@@ -82,6 +97,7 @@ class LocationAdminHandler(AmbassadorBaseHandler):
             location['airport_name'] = form.airport_name.data or None
             location['lat'] = float(form.lat.data)
             location['lng'] = float(form.lng.data)
+            location['available'] = bool(form.available.data)
             location.save()
             self.redirect(self.reverse_url('admin_locations'))
         else:
@@ -145,7 +161,7 @@ class BaseLocationPictureHandler(AmbassadorBaseHandler):
     @property
     def locations(self):
         user = self.get_current_user()
-        filter_ = {'airport_name': {'$ne': None}}
+        filter_ = {'available': True}
         if not user['superuser']:
             countries = (self.db.Ambassador
                          .find({'user': user['_id']})
@@ -170,7 +186,7 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
             filter_['title'] = re.compile('|'.join(_q), re.I)
         data['all_locations'] = (
           self.db.Location
-          .find({'airport_name': {'$ne': None}})
+          .find({'available': True})
           .sort('code')
         )
         data['locations'] = self.get_arguments('locations', [])

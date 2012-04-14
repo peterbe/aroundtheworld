@@ -72,7 +72,7 @@ class QuestionsAdminHandler(AuthenticatedBaseHandler):
             filter_['text'] = re.compile('|'.join(_q), re.I)
         data['all_locations'] = (
           self.db.Location
-          .find({'airport_name': {'$ne': None}})
+          .find({'available': True})
           .sort('code')
         )
         data['all_categories'] = (
@@ -156,7 +156,7 @@ class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
     @property
     def locations(self):
         user = self.get_current_user()
-        filter_ = {'airport_name': {'$ne': None}}
+        filter_ = {'available': True}
         if not user['superuser']:
             countries = (self.db.Ambassador
                          .find({'user': user['_id']})
@@ -403,7 +403,7 @@ class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
     @property
     def locations(self):
         user = self.get_current_user()
-        filter_ = {'airport_name': {'$ne': None}}
+        filter_ = {'available': True}
         if not user['superuser']:
             countries = (self.db.Ambassador
                          .find({'user': user['_id']})
@@ -453,7 +453,7 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
         locations = []
         location_counts = {}
         for location in (self.db.Location
-                         .find({'airport_name': {'$ne': None}})
+                         .find({'available': True})
                          .sort('code')):
             locations.append(location)
             location_counts[location['code']] = 0

@@ -160,6 +160,7 @@ class Location(BaseDocument):
       'locality': unicode,  # e.g. US states
       'code': unicode,
       'airport_name': unicode,
+      'available': bool,
       'lat': float,
       'lng': float,
     }
@@ -170,6 +171,10 @@ class Location(BaseDocument):
       'lat',
       'lng',
       ]
+
+    default_values = {
+      'available': False,
+    }
 
     def __unicode__(self):
         name = self['city']

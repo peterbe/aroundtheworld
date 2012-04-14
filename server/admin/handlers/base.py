@@ -151,9 +151,9 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
            .find({'published': False})
            .count()
         )
-        options['count_locations_with_airport_name'] = (
+        options['count_locations_available'] = (
           self.db.Location
-          .find({'airport_name': {'$ne': None}})
+          .find({'available': True})
           .count()
         )
         options['count_locations_total'] = (

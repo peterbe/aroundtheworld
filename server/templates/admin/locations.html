@@ -4,6 +4,7 @@
 <style>
 tfoot th input[name="q_city"],
 tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="available"] { width:50px; }
 tfoot th select[name="countries"] { width:150px; }
 </style>
 {% end %}
@@ -23,8 +24,9 @@ tfoot th select[name="countries"] { width:150px; }
             <th>City</th>
             <th>Country</th>
             <th>Locality</th>
+            <th>Available</th>
             <th>Code</th>
-            <th>Airport</th>
+            <!--<th>Airport</th>-->
             <th>Added</th>
           </tr>
         </thead>
@@ -41,7 +43,13 @@ tfoot th select[name="countries"] { width:150px; }
               </select>
             </th>
             <th><input name="q_locality" value="{{ q_locality }}" placeholder="Search..."></th>
-            <th>&nbsp;</th>
+            <th><select name="available">
+              <option value="">--</option>
+              <option value="yes" {% if available == 'yes' %}selected{% end %}>yes</option>
+              <option value="no" {% if available == 'no' %}selected{% end %}>no</option>
+            </select>
+            </th>
+            <!--<th>&nbsp;</th>-->
             <th>&nbsp;</th>
             <th>
               <input type="submit" value="Filter">
@@ -56,8 +64,13 @@ tfoot th select[name="countries"] { width:150px; }
             </td>
             <td>{{ location['country'] }}</td>
             <td>{{ location['locality'] or '-' }}</td>
+            <td>{% if location.get('available') %}
+            <img src="{{ static_url('images/check-small.png') }}" title="You can fly to this destination" alt="You can fly to this destination">
+            {% else %}-
+            {% end %}
+            </td>
             <td>{{ location['code'] or '-' }}</td>
-            <td>{{ location['airport_name'] or '-' }}</td>
+            <!--<td>{{ location['airport_name'] or '-' }}</td>-->
             <td>{{ location['add_date'].strftime('%d %b %Y') }}</td>
           </tr>
           {% end %}

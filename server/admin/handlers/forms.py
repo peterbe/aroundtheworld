@@ -84,7 +84,6 @@ class SecondsValidator(object):
                 raise ValidationError("Must be at max %s" % self.max_)
 
 
-
 class CategoryForm(BaseForm):
     name = TextField("Category",
                     [validators.Required(),
@@ -226,6 +225,8 @@ class LocationForm(BaseForm):
                       validators.Length(min=3, max=100)])
     lat = TextField("Latitude", [validators.Required(), Floatable()])
     lng = TextField("Longitude", [validators.Required(), Floatable()])
+    available = BooleanField("Available", [],
+                             description="Decides if you can fly to it")
 
 
 class DocumentForm(BaseForm):

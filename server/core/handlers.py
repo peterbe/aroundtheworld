@@ -639,7 +639,7 @@ class MilesHandler(AuthenticatedBaseHandler):
         filter_ = {'user': user['_id']}
         _locations = {}
         for location in (self.db.Location
-                         .find({'airport_name': {'$ne': None}})):
+                         .find({'available': True})):
             _locations[location['_id']] = location.dictify()
 
         for each in (self.db.Flight
@@ -789,7 +789,7 @@ class LocationHandler(AuthenticatedBaseHandler):
 
         locations = []
         for location in (self.db.Location
-                         .find({'airport_name': {'$ne': None}})
+                         .find({'available': True})
                          .sort('city', 1)):
             option = {
               'name': unicode(location),
@@ -1303,7 +1303,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         destinations = []
         for location in (self.db.Location
                           .find({'_id': {'$ne': current_location['_id']},
-                                 'airport_name': {'$ne': None}})):
+                                 'available': True})):
             if not self.enough_questions(location):
                 continue
             distance = calculate_distance(current_location, location)

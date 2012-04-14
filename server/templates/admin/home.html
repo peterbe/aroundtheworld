@@ -77,12 +77,12 @@ $(function() {
           <h2>Questions</h2>
           <p>There are currently <strong>{{ count_questions_published }} questions</strong>
           ({{ count_questions_not_published }} not published)
-          spread across <strong>{{ count_locations_with_airport_name }} cities</strong>.</p>
+          spread across <strong>{{ count_locations_available }} cities</strong>.</p>
           <p><a class="btn" href="{{ reverse_url('admin_questions') }}">Add/Edit questions &raquo;</a></p>
         </div>
         <div class="span4">
           <h2>Locations</h2>
-           <p><strong>{{ count_locations_with_airport_name }} destinations</strong>
+           <p><strong>{{ count_locations_available }} destinations</strong>
            ({{ count_locations_total }} cities in total) across {{ count_countries }} countries.
            </p>
           <p><a class="btn" href="{{ reverse_url('admin_locations') }}">Add/Edit locations &raquo;</a></p>
