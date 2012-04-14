@@ -47,7 +47,7 @@ var Airport = (function() {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
 
          $('h2', container).text(response.airport_name);
-         $('.current-total', container).text(STATE.user.coins_total);
+         $('.current-total', container).text(Utils.formatCost(STATE.user.coins_total, true));
          //var c = $('.destinations', container);
          $('.destinations tbody', container).remove();
          var r;

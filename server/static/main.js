@@ -1,3 +1,5 @@
+var MOBILE = false;
+
 var Loader = (function() {
   return {
      load_hash: function (hash, blank_location_hash) {
@@ -49,8 +51,6 @@ var State = (function() {
     }
   }
 
-
-
   return {
      update: function() {
        $.getJSON('/state.json', function(response) {
@@ -61,35 +61,49 @@ var State = (function() {
     render: function(state) {
       var container = $('#usernav');
       if (state.user) {
-        $('.user-login:visible', container).hide();
-        $('.logged-in:hidden', container).show();
+        if (!MOBILE) {
+          $('.user-login:visible', container).hide();
+          $('.logged-in:hidden', container).show();
+        }
         if (state.location) {
-          $('.user-location:hidden', container).show();
+          if (!MOBILE) {
+            $('.user-location:hidden', container).show();
+          }
           $('.user-location a', container).text(state.location.name);
         } else {
-          $('.user-location:visible', container).hide();
+          if (!MOBILE) {
+            $('.user-location:visible', container).hide();
+          }
         }
         if (state.user.anonymous) {
           $('.user-name a', container).text('Settings');
-          $('.user-un-anonymous', container).show();
-          $('.signout', container).hide();
+          if (!MOBILE) {
+            $('.user-un-anonymous', container).show();
+            $('.signout', container).hide();
+          }
         } else {
           $('.user-name a', container).text(state.user.name);
-          $('.user-un-anonymous', container).hide();
-          $('.signout', container).show();
+          if (!MOBILE) {
+            $('.user-un-anonymous', container).hide();
+            $('.signout', container).show();
+          }
         }
         $('.user-miles a', container)
           .text(Utils.formatMiles(state.user.miles_total, true));
         $('.user-coins a', container)
           .text(Utils.formatCost(state.user.coins_total, true));
-        if (state.user.admin_access) {
-          $('.admin', container).show();
-        } else {
-          $('.admin', container).hide();
+        if (!MOBILE) {
+          if (state.user.admin_access) {
+            $('.admin', container).show();
+          } else {
+            $('.admin', container).hide();
+          }
         }
       } else {
-        $('.logged-in:visible', container).hide();
-        $('.user-login:hidden', container).show();
+        if (!MOBILE) {
+          $('.logged-in:visible', container).hide();
+          $('.user-login:hidden', container).show();
+        }
       }
     },
     show_coin_change: function(delta, animated) {

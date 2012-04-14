@@ -1,10 +1,52 @@
 /* Some overrides from the bootstrap */
 a:link { text-decoration: underline; }
 li { color:rgb(64,64,64); }
-a { color:rgb(60, 60, 60); }
+a,
+a:visited { color:rgb(60, 60, 60); }
 /* end overrides from bootstrap */
 
+html, body {
+  height: 100%;
+  /*margin: 0;
+  padding: 0;
+  font-family: sans-serif;*/
+}
 
+#map_canvas {
+  height: 100%;
+}
+body {
+  margin: 0;
+}
+#usernav {
+  position:fixed;
+  opacity:0.9;
+  top:0;
+  right:0;
+  background-color:#fff;
+  z-index:2;
+}
+.overlay {
+  margin:0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  opacity: 0.9;
+  background-color:#fff;
+}
+/*.overlay {
+  margin: 0;
+  opacity: 1.0;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-radius: none;
+  padding: 5px;
+  height: 100%;
+}*/
 #usernav {
   background-color: rgb(240,240,240);
   border:1px solid #ccc;
@@ -84,4 +126,12 @@ a { color:rgb(60, 60, 60); }
 
 thead td {
   font-weight: bold;
+}
+
+@media (max-width: 480px) {
+  h2 { font-size: 18px; line-height: 22px; }
+  .overlay { margin: 5px; }
+  img.overlay-image { width: 64px; }
+  ul li { padding: 2px; }
+  ul, ol { padding: 0 0 0 20px; }
 }

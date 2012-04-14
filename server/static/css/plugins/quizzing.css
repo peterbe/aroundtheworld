@@ -112,3 +112,27 @@ span.question {
 #quizzing a.restart {
     font-weight: bold;
 }
+
+@media (max-width: 480px) {
+  #quizzing ol.alternatives li {
+    padding: 3px;
+  }
+  #quizzing .thumbnail-wrapper {
+    float: none;
+  }
+  #quizzing .didyouknow {
+    padding: 5px;
+    margin: 10px 5px;
+  }
+  #quizzing .question-attention {
+    margin: 1px;
+    padding: 2px;
+    width: 90%;
+  }
+  #quizzing span.question {
+    display: block;
+  }
+  #quizzing h2 {
+    display: none;
+  }
+}

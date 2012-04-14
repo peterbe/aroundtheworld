@@ -311,6 +311,13 @@ class MobileHomeHandler(HomeHandler):
         options = {}
         self.render('mobile.html', **options)
 
+@route('/mobile/exit/')
+class ExitMobileHomeHandler(HomeHandler):
+
+    def get(self):
+        self.set_cookie('no-mobile', '1')
+        self.redirect('/')
+
 
 @route('/flightpaths/')
 class FlightPathsHandler(BaseHandler):
@@ -1292,7 +1299,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
 
-    BASE_PRICE = 100  # coins
+    BASE_PRICE = 20  # coins
 
     def get(self):
         user = self.get_current_user()
@@ -1330,12 +1337,11 @@ class AirportHandler(AuthenticatedBaseHandler):
           'cost': 1000000,
           'miles': 238857,
         })
-
         data['destinations'] = destinations
         self.write_json(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .1))
+        return self.BASE_PRICE + int(round(miles * .05))
 
     def enough_questions(self, location):
         qs = defaultdict(int)
@@ -1388,6 +1394,8 @@ class FlyHandler(AirportHandler):
           },
           'miles': calculate_distance(from_, to).miles,
         }
+        print "FINAL"
+        pprint(data)
         self.write_json(data)
 
     def post(self):
