@@ -1,21 +1,34 @@
+var MOBILE = true;
+
 var Mobile = (function() {
   var usernav = $('#usernav');
+  var _nav_expansion = true;
   return {
      expand_usernav: function() {
-       $('li.was-visible', usernav).removeClass('was-visible').show();
+       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile', usernav).show();
+       $('.menu-toggle', usernav).text('Close');
+       if (STATE.user.anonymous) {
+         $('li.user-un-anonymous', usernav).show();
+       } else {
+         $('li.signout', usernav).show();
+       }
      },
      collapse_usernav: function() {
-       $('li:visible', usernav)
-         .not('.user-location')
-           .addClass('was-visible').hide();
+       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile', usernav).hide();
+       $('.menu-toggle', usernav).text('Menu');
+       if (STATE.user.anonymous) {
+         $('li.user-un-anonymous', usernav).hide();
+       } else {
+         $('li.signout', usernav).hide();
+       }
      },
      toggle_usernav: function() {
-       if ($('li.was-visible').size()) {
+       if (_nav_expansion) {
          Mobile.expand_usernav();
-         $('.menu-toggle', usernav).text('Close');
+         _nav_expansion = false;
        } else {
          Mobile.collapse_usernav();
-         $('.menu-toggle', usernav).text('Menu');
+         _nav_expansion = true;
        }
      },
      setup_usernav: function() {
@@ -28,9 +41,11 @@ var Mobile = (function() {
            })
            .addClass('open-menu').addClass('menu-toggle')
              .prependTo(usernav);
-       //Mobile.collapse_usernav();
        $('li.user-location').show();
-       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.user-un-anonymous').show();
+       $('a', usernav).not('.menu-toggle').click(function() {
+         _nav_expansion = true;
+         Mobile.collapse_usernav();
+       });
      },
     hack_external_links: function() {
       $('a.auth', '#login').each(function() {

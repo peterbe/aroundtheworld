@@ -18,3 +18,13 @@
 #picturedetective a.start-over {
     font-weight: bold;
 }
+
+
+@media (max-width: 480px) {
+    #picturedetective .intro-text {
+        margin: 10px;
+    }
+    #picturedetective h2 {
+        display: none;
+    }
+}

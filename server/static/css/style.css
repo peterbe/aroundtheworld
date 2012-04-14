@@ -1,7 +1,8 @@
 /* Some overrides from the bootstrap */
 a:link { text-decoration: underline; }
 li { color:rgb(64,64,64); }
-a { color:rgb(60, 60, 60); }
+a,
+a:visited { color:rgb(60, 60, 60); }
 /* end overrides from bootstrap */
 
 html, body {
@@ -92,13 +93,9 @@ html, body {
   top:10%;
   padding:10px;
   background-color:#fff;
-  min-height:300px;
-  -moz-border-radius:    9px;
-  -webkit-border-radius: 9px;
-          border-radius: 9px;
-  -moz-box-shadow:    0 0 50px #ccc;
-  -webkit-box-shadow: 0 0 50px #ccc;
-          box-shadow: 0 0 50px #ccc;
+  min-height: 300px;
+  border-radius: 9px;
+  box-shadow: 0 0 50px #ccc;
   }
   .overlay .exit {
     margin-top: 30px;

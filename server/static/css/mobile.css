@@ -1,20 +1,46 @@
 /* Some overrides from the bootstrap */
 a:link { text-decoration: underline; }
 li { color:rgb(64,64,64); }
-a { color:rgb(60, 60, 60); }
+a,
+a:visited { color:rgb(60, 60, 60); }
 /* end overrides from bootstrap */
 
+html, body {
+  height: 100%;
+  /*margin: 0;
+  padding: 0;
+  font-family: sans-serif;*/
+}
 
+#map_canvas {
+  height: 100%;
+}
+body {
+  margin: 0;
+}
+.overlay {
+  width: 92%;
+  position: absolute;
+  z-index: 1;
+  top: 30px;
+  left: 0;
+  opacity: 0.9;
+  background-color:#fff;
+  padding:10px;
+  border-radius: 6px;
+}
 #usernav {
+  width: 92%;
+  position:fixed;
+  opacity:1.0;
+  top:0;
+  right:0;
+  z-index:2;
+
   background-color: rgb(240,240,240);
   border:1px solid #ccc;
   margin:0 4px 7px 4px;
-  -moz-border-bottom-left-radius:     6px;
-  -webkit-border-bottom-left-radius:  6px;
   border-bottom-left-radius:          6px;
-
-  -moz-border-bottom-right-radius:    6px;
-  -webkit-border-bottom-right-radius: 6px;
   border-bottom-right-radius:         6px;
   }
   #usernav a.menu-toggle {
@@ -84,4 +110,12 @@ a { color:rgb(60, 60, 60); }
 
 thead td {
   font-weight: bold;
+}
+
+@media (max-width: 480px) {
+  h2 { font-size: 18px; line-height: 22px; }
+  .overlay { margin: 3px; }
+  img.overlay-image { width: 64px; }
+  ul li { padding: 2px; }
+  ul, ol { padding: 0 0 0 20px; }
 }

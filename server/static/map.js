@@ -92,12 +92,8 @@ function calculate_angle(center, p1) {
 
 //-------
 //------
-
 var map, latlngcontrol;
 function initialize(callback) {
-
-  //preload_sound('jet-taking-off');
-  //sounds.preload('jet-taking-off');
 
   // somewhere in north-western Afria somewhere
   var center = new google.maps.LatLng(26.6093, 7.1498);
@@ -131,7 +127,6 @@ function initialize(callback) {
         });
    *
    */
-
   callback(map);
 }
 

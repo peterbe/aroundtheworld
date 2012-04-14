@@ -5,9 +5,7 @@
 
 <head>
   <meta charset="utf-8">
-
   <title>Around the world</title>
-
   <meta name="HandheldFriendly" content="True">
   <meta name="MobileOptimized" content="320">
   <meta name="viewport" content="width=device-width">
@@ -27,18 +25,18 @@
 
   <link rel="stylesheet" href="{{ static_url('css/lib/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ static_url('css/lib/mobile-style.css') }}">
+<!--  <link rel="stylesheet" href="{{ static_url('css/style.css') }}">-->
   <link rel="stylesheet" href="{{ static_url('css/mobile.css') }}">
 
   <script src="{{ static_url('lib/modernizr-2.0.6.min.js') }}"></script>
+  <script src="{{ static_url('lib/jquery-1.7.1.min.js') }}"></script>
+  <script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
+  <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
 </head>
 
 <body>
+<div id="map_canvas"></div>
 {% include "_divs.html" %}
-
-
-
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
-  <script>window.jQuery || document.write('<script src="{{ static_url('lib/jquery-1.7.2.min.js') }}"><\/script>')</script>
 
 
   <!-- scripts concatenated and minified via ant build script -->
@@ -49,7 +47,8 @@
 <script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
 {% include "_js_templates.html" %}
 <script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('mobile_map.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('latlngcontrol.js') }}"></script>
+<script type="text/javascript" src="{{ static_url('map.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('main.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('mobile.js') }}"></script>
 

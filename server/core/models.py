@@ -181,7 +181,8 @@ class Location(BaseDocument):
         name = self['city']
         if self['locality']:
             name += ', %s' % self['locality']
-        name += ', %s' % self['country']
+        else:
+            name += ', %s' % self['country']
         return name
 
     def __str__(self):

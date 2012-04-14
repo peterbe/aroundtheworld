@@ -269,6 +269,19 @@ class BaseHandler(tornado.web.RequestHandler):
         """
         return self.application.settings.get('cdn_prefix')
 
+    def enough_questions(self, location):
+        qs = defaultdict(int)
+        search = {'location': location['_id'], 'published': True}
+        for q in self.db.Question.find(search, ('category',)):
+            qs[q['category']] += 1
+
+        min_ = QuizzingHandler.NO_QUESTIONS
+        for count in qs.values():
+            if count >= min_:
+                return True
+
+        return False
+
 
 class AuthenticatedBaseHandler(BaseHandler):
 
@@ -310,6 +323,13 @@ class MobileHomeHandler(HomeHandler):
     def get(self):
         options = {}
         self.render('mobile.html', **options)
+
+@route('/mobile/exit/')
+class ExitMobileHomeHandler(HomeHandler):
+
+    def get(self):
+        self.set_cookie('no-mobile', '1')
+        self.redirect('/')
 
 
 @route('/flightpaths/')
@@ -791,6 +811,9 @@ class LocationHandler(AuthenticatedBaseHandler):
         for location in (self.db.Location
                          .find({'available': True})
                          .sort('city', 1)):
+            if not self.enough_questions(location):
+                continue
+
             option = {
               'name': unicode(location),
               'id': str(location['_id'])
@@ -1046,7 +1069,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         self.write({'messages': messages})
 
 @route('/picturedetective.json$', name='picturedetective')
-class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+class PictureDetectiveHandler(QuizzingHandler):
 
     CATEGORY_NAME = u'Picture Detective'
 
@@ -1535,7 +1558,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
 
-    BASE_PRICE = 100  # coins
+    BASE_PRICE = 20  # coins
 
     def get(self):
         user = self.get_current_user()
@@ -1573,26 +1596,11 @@ class AirportHandler(AuthenticatedBaseHandler):
           'cost': 1000000,
           'miles': 238857,
         })
-
         data['destinations'] = destinations
         self.write_json(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .1))
-
-    def enough_questions(self, location):
-        qs = defaultdict(int)
-        search = {'location': location['_id'], 'published': True}
-        for q in self.db.Question.find(search, ('category',)):
-            qs[q['category']] += 1
-
-        min_ = QuizzingHandler.NO_QUESTIONS
-        for count in qs.values():
-            if count >= min_:
-                return True
-
-        return False
-
+        return self.BASE_PRICE + int(round(miles * .05))
 
 
 @route('/fly.json$', name='fly')
@@ -1631,6 +1639,8 @@ class FlyHandler(AirportHandler):
           },
           'miles': calculate_distance(from_, to).miles,
         }
+        print "FINAL"
+        pprint(data)
         self.write_json(data)
 
     def post(self):

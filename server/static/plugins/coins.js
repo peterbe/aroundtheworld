@@ -153,7 +153,6 @@ Plugins.start('coins', function(table) {
 });
 
 Plugins.stop('coins', function() {
-  L('coins stop');
   if (window.removeEventListener) {
     try {
       window.removeEventListener('keydown');
