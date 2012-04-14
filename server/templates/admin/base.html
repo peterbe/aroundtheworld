@@ -131,46 +131,11 @@
 </div>
 
 
-  <script src="{{ static_url('lib/jquery-1.7.1.min.js') }}"></script>
+  <script src="{{ static_url('lib/jquery-1.7.2.min.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-dropdown.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-modal.js') }}"></script>
   <script src="{{ static_url('lib/bootstrap-tooltip.js') }}"></script>
-  <script>
-  function L() {
-    if (window.console && window.console.log)
-      console.log.apply(console, arguments);
-  }
-  $(function() {
-    $('.dropdown-toggle').dropdown();
-
-    $('a.close').click(function() {
-      $(this).parents('.alert').fadeOut(400);
-      return false;
-    });
-
-    $('a.thumbnail-preview').click(function() {
-      $('h3', '#picture-modal').text($(this).data('title'));
-      $('img', '#picture-modal').attr('src', $(this).attr('href'));
-      $('#picture-modal').modal('show');
-      return false;
-    });
-    $('.modal a.close, .modal a.btn').click(function() {
-      $('#picture-modal').modal('hide');
-      return false;
-    });
-
-    $('a[rel="tooltip"]').tooltip();
-
-    $('button[type="reset"]').click(function() {
-      window.location = '..';
-    });
-
-    $('.error input', 'form').change(function() {
-      $(this).parents('.error').removeClass('error');
-    });
-
-  });
-  </script>
+  <script src="{{ static_url('admin-base.js') }}"></script>
   {% block extrajs %}{% end %}
   </body>
 </html>
