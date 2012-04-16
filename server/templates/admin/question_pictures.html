@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th select[name="locations"] { width:70px; }
+tfoot th select[name="authors"] { width:100px; }
+#play {
+    float: right;
+}
+</style>
+{% end %}
+
+{% block extrajs %}
+<script>
+function play() {
+  var container = $('#play');
+  var pictures = $('td a.thumbnail-preview');
+  var iters = 0;
+  pictures.each(function() {
+    $('img', this).addClass('iter-' + iters);
+    iters++;
+  });
+
+  $(':hidden', container).show();
+  $('.seconds', container).text(iters - 1);
+  var count_down = iters - 1;
+
+  function recurse() {
+    $('.seconds', container).text(count_down);
+    $('img', container).remove();
+    $('img.iter-' + count_down).clone().appendTo(container).addClass('thumbnail');
+    if (count_down) {
+      setTimeout(recurse, 1000);
+    }
+    count_down--;
+  }
+  recurse();
+
+}
+
+$(function() {
+  $('input[name="all"]').click(function() {
+    var self = this;
+    $('input[type="checkbox"]').each(function() {
+      if ($(this).attr('name') == 'ids') {
+        if ($(this).data('index') != '0') {
+          this.checked = self.checked;
+        }
+      }
+    });
+  });
+
+  $('#play a').click(function() {
+    play();
+    return false;
+  });
+});
+</script>
+{% end %}
+
+
+{% block content %}
+  <h2>{{ count }} pictures {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  {% if count > 1 %}
+  <div id="play">
+    <p><a href="#play">Play!</a></p>
+    <p style="display:none">Time left: <strong class="seconds"></strong></p>
+  </div>
+  {% end %}
+
+  <form action="." method="post">
+      <table class="condensed-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" name="all"></th>
+            <th>Picture</th>
+            <th>Index</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th><input type="checkbox" name="all"></th>
+            <th><input type="submit" name="delete" value="Delete">
+            &nbsp; &nbsp;
+            Iterations: <input name="iterations" value="{{ iterations }}" style="width:35px">
+                Effect: <input name="effect" value="{{ effect }}" style="width:35px">
+                Sample: <input type="checkbox" name="sample">
+                <input type="submit" value="Generate">
+            </td>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for picture in pictures %}
+          <tr>
+            <td><input type="checkbox" name="ids" value="{{ picture['_id'] }}"
+              data-index="{{ picture['index'] }}"></td>
+            <td>
+            <a title="{{ picture['index'] }}" class="thumbnail-preview"
+               data-toggle="modal"
+               data-index="{{ picture['index'] }}"
+               data-title="{{ picture['index'] }}"
+               href="{% module GetPictureThumbnailSrc(picture, (300,300)) %}"
+               >{% module ShowPictureThumbnail(picture, (300, 300)) %}</a>
+            </td>
+            <td>
+              {{ picture['index'] }}
+            </td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+
+    </form>
+
+
+{% end %}

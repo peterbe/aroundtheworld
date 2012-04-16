@@ -7,3 +7,4 @@ server/static/thumbnails/
 server/.static_name_conversion
 send_mail_config.py
 TODO
+blurring/blurred/
