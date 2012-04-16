@@ -25,6 +25,8 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
         dates = (datetime.datetime(2012, 1, 1),
                  datetime.datetime(2012, 2, 1),
                  datetime.datetime(2012, 3, 1),
+                 datetime.datetime(2012, 4, 1),
+                 datetime.datetime(2012, 5, 1),
                  )
         intervals = []
         _prev = None
