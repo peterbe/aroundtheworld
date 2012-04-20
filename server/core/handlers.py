@@ -964,6 +964,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             category = _categories[q['category']]
             categories[category['name']] += 1
             point_values[category['name']] += q['points_value']
+
         jobs = []
         for category in _categories.values():
             no_questions = categories[category['name']]
@@ -992,8 +993,41 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                   'description': description,
                 })
 
+        picture_detective_job = self._get_picture_detective_jobs(user, location)
+        if picture_detective_job:
+            jobs.append(picture_detective_job)
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
+
+    def _get_picture_detective_jobs(self, user, location):
+        # Picture detective job
+        category, = self.db.Category.find({'name': 'Picture Detective'})
+        questions = self.db.Question.find({'location': location['_id'],
+                                           'published': True,
+                                           'category': category['_id']})
+        left = questions.count()
+        sessions = (self.db.QuestionSession
+                    .find({'user': user['_id'],
+                           'category': category['_id'],
+                           'location': location['_id']},
+                           ('_id',)))
+
+        #for session in sessions:
+        session_ids = [x['_id'] for x in sessions]
+        answered_questions = (self.db.QuestionAnswer
+                   .find({'session': {'$in': session_ids}},
+                          ('question',)))
+#        print answered_questions
+        left = []
+        for question in questions:
+            if question['_id'] in answered_questions:
+                continue
+            left.append(question)
+        # XXX consider doing a count instead.
+        if left:
+            return {'type': 'picturedetective',
+                    'description': 'Picture Detective (%d left)' % len(left),
+                    }
 
     def post(self):
         # Currently used for posting messages.
@@ -1007,6 +1041,35 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         location_message.save()
         messages = self.get_messages(location, limit=1)
         self.write({'messages': messages})
+
+@route('/picturedetective.json$', name='picturedetective')
+class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+
+    CATEGORY_NAME = u'Picture Detective'
+
+    def get(self):
+        user = self.get_current_user()
+        category = self.db.Category.find_one({'name': self.CATEGORY_NAME})
+        question,=self.db.Question.find({'category': category['_id']})
+
+        pictures = []
+        for item in (self.db.QuestionPicture
+                     .find({'question': question['_id']})
+                     .sort('index')):
+            uri, (width, height) = self.make_thumbnail(item, (300, 300))
+            url = self.static_url(uri.replace('/static/', ''))
+            picture = {
+              'src': url,
+              'width': width,
+              'height': height,
+            }
+            pictures.append(picture)
+
+        self.write({
+            'question': question['text'],
+            'seconds': len(pictures),
+            'pictures': pictures,
+        })
 
 
 @route('/pinpoint.json$', name='pinpoint')

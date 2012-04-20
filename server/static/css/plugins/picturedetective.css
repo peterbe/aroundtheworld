@@ -1,0 +1,16 @@
+#picturedetective .intro-text {
+    margin: 30px;
+}
+#picturedetective .intro .begin {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+#picturedetective .loading {
+    text-align: center;
+    padding: 5px 50px;
+}
+#picturedetective .loading h3 {
+    margin: 20px;
+}
