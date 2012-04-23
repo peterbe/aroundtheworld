@@ -100,6 +100,9 @@ var State = (function() {
     },
     redirect_login: function() {
       Loader.load_hash('#login');
+    },
+    redirect_to_city: function() {
+      Loader.load_hash('#city');
     }
   }
 })();

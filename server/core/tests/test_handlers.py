@@ -884,6 +884,11 @@ class HandlersTestCase(BaseHTTPTestCase):
         user = self._login(location=self.newyork)
         url = self.reverse_url('picturedetective')
 
+        def get_coins_total():
+            return self.db.UserSettings.find_one({'user': user['_id']})['coins_total']
+
+        assert get_coins_total() == 0
+
         category = self.db.Category()
         category['name'] = PictureDetectiveHandler.CATEGORY_NAME
         category.save()
@@ -902,6 +907,15 @@ class HandlersTestCase(BaseHTTPTestCase):
         Y['name'] = u'Anything'
         Y.save()
 
+        # just to throw a curveball and make sure the sort order works
+        # throw in another old job
+        jXY = self.db.Job()
+        jXY['user'] = user['_id']
+        jXY['coins'] = 100
+        jXY['category'] = Y['_id']
+        jXY['location'] = X['_id']
+        jXY.save()
+
         # create 3 picture detective questions
         q1 = self._create_question(category, self.newyork)
         q2 = self._create_question(category, self.newyork)
@@ -914,6 +928,9 @@ class HandlersTestCase(BaseHTTPTestCase):
         NO_PICS = 5
         for q in (q1, q2, q3, qX):
             self._create_question_pictures(q, NO_PICS)
+
+        r = self.get_struct(self.reverse_url('city'), {'get': 'jobs'})
+        assert '3 left' in r['jobs'][0]['description']
 
         # start!
         result = self.get_struct(url)
@@ -938,6 +955,9 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertTrue(not answer['time'])
         self.assertTrue(not answer['answer'])
 
+        assert self.db.QuestionSession.find().count() == 1
+        assert self.db.QuestionSession.find({'finish_date': {'$ne': None}}).count() == 0
+
         # answer *incorrectly* once
         post_result = self.post_struct(url, {
           'answer': u'WRONG',
@@ -946,19 +966,45 @@ class HandlersTestCase(BaseHTTPTestCase):
         })
         self.assertTrue(post_result['incorrect'])
 
+        assert self.db.QuestionSession.find().count() == 1
+        assert self.db.QuestionSession.find({'finish_date': {'$ne': None}}).count() == 0
+
         # now, suppose we answer correctly!
         post_result = self.post_struct(url, {
           'answer': u'ONe',
           'timedout': 'false',
           'seconds_left': 2
         })
+
+        assert self.db.QuestionSession.find().count() == 1
+        assert self.db.QuestionSession.find({'finish_date': {'$ne': None}}).count() == 1
+
+        self.assertEqual(post_result['left'], 2)
         self.assertTrue(not post_result['timedout'])
         self.assertTrue(post_result['coins'])
         self.assertTrue(post_result['points'])
+        first_coins_awarded = post_result['coins']
+        self.assertEqual(get_coins_total(), first_coins_awarded)
+        assert self.db.SessionAnswer.find().count() == 1
+
+        # this should also have created a new Job instance
+        job, = self.db.Job.find({'category': category['_id']})
+        assert job['category'] == category['_id']
+        assert job['location'] == self.newyork['_id']
+        assert job['user'] == user['_id']
+        self.assertEqual(job['coins'], first_coins_awarded)
+
+        r = self.get_struct(self.reverse_url('city'), {'get': 'jobs'})
+        assert '2 left' in r['jobs'][0]['description']
 
         # start a second question
         previous_result = result
         result = self.get_struct(url)
+        assert self.db.SessionAnswer.find().count() == 2
+
+        assert self.db.QuestionSession.find().count() == 2
+        assert self.db.QuestionSession.find({'finish_date': {'$ne': None}}).count() == 1
+
         # expect a different question
         self.assertNotEqual(result['question'], previous_result['question'])
         self.assertTrue(result['question'] in question_texts.values())
@@ -970,3 +1016,45 @@ class HandlersTestCase(BaseHTTPTestCase):
           'timedout': 'true',
           'seconds_left': 0
         })
+
+        assert self.db.QuestionSession.find().count() == 2
+        assert self.db.QuestionSession.find({'finish_date': {'$ne': None}}).count() == 2
+
+        self.assertEqual(post_result['left'], 1)
+        self.assertTrue(not post_result['points'])
+        self.assertTrue(post_result['timedout'])
+
+        r = self.get_struct(self.reverse_url('city'), {'get': 'jobs'})
+        assert '1 left' in r['jobs'][0]['description']
+
+        # get it right one more time
+        previous_previous_result = previous_result
+        previous_result = result
+        result = self.get_struct(url)
+        assert self.db.SessionAnswer.find().count() == 3
+
+        self.assertNotEqual(result['question'], previous_result['question'])
+        self.assertNotEqual(result['question'], previous_previous_result['question'])
+
+        post_result = self.post_struct(url, {
+          'answer': u'ONe',
+          'timedout': 'false',
+          'seconds_left': 3
+        })
+
+        self.assertEqual(post_result['left'], 0)
+        second_coins_awarded = post_result['coins']
+        self.assertEqual(get_coins_total(), first_coins_awarded + second_coins_awarded)
+        r = self.get_struct(self.reverse_url('city'), {'get': 'jobs'})
+        assert not r['jobs']
+
+        # the new job should have been merged with the old one
+        job, = self.db.Job.find({'category': category['_id']})
+        assert job['category'] == category['_id']
+        assert job['location'] == self.newyork['_id']
+        assert job['user'] == user['_id']
+        self.assertEqual(job['coins'], first_coins_awarded + second_coins_awarded)
+
+        # last but not least, try to fetch it again
+        result = self.get_struct(url)
+        self.assertEqual(result['error'], 'NOQUESTIONS')
