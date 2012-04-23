@@ -279,9 +279,11 @@ class QuestionPicture(BaseDocument):
       'render_attributes': dict,
       'copyright': unicode,
       'copyright_url': unicode,
+      'index': int,
     }
     required_fields = ['question']
     gridfs = {'files': ['original']}
+    default_values = {'index': 0}
 
 
 @register
@@ -327,9 +329,6 @@ class Category(BaseDocument):
 
     def __str__(self):
         return str(unicode(self))
-
-
-
 
 
 @register

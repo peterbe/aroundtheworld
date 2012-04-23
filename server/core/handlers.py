@@ -291,7 +291,7 @@ class HomeHandler(BaseHandler):
     def get(self):
         options = {}
         ua = self.request.headers.get('User-Agent')
-        if MOBILE_USER_AGENTS.search(ua) and not self.get_cookie('no-mobile'):
+        if ua and MOBILE_USER_AGENTS.search(ua) and not self.get_cookie('no-mobile'):
             self.redirect('/mobile/')
             return
         self.render('home.html', **options)
@@ -964,6 +964,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             category = _categories[q['category']]
             categories[category['name']] += 1
             point_values[category['name']] += q['points_value']
+
         jobs = []
         for category in _categories.values():
             no_questions = categories[category['name']]
@@ -992,8 +993,41 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                   'description': description,
                 })
 
+        picture_detective_job = self._get_picture_detective_jobs(user, location)
+        if picture_detective_job:
+            jobs.append(picture_detective_job)
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
+
+    def _get_picture_detective_jobs(self, user, location):
+        # Picture detective job
+        category, = self.db.Category.find({'name': 'Picture Detective'})
+        questions = self.db.Question.find({'location': location['_id'],
+                                           'published': True,
+                                           'category': category['_id']})
+        left = questions.count()
+        sessions = (self.db.QuestionSession
+                    .find({'user': user['_id'],
+                           'category': category['_id'],
+                           'location': location['_id']},
+                           ('_id',)))
+
+        #for session in sessions:
+        session_ids = [x['_id'] for x in sessions]
+        answered_questions = (self.db.QuestionAnswer
+                   .find({'session': {'$in': session_ids}},
+                          ('question',)))
+#        print answered_questions
+        left = []
+        for question in questions:
+            if question['_id'] in answered_questions:
+                continue
+            left.append(question)
+        # XXX consider doing a count instead.
+        if left:
+            return {'type': 'picturedetective',
+                    'description': 'Picture Detective (%d left)' % len(left),
+                    }
 
     def post(self):
         # Currently used for posting messages.
@@ -1007,6 +1041,164 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         location_message.save()
         messages = self.get_messages(location, limit=1)
         self.write({'messages': messages})
+
+@route('/picturedetective.json$', name='picturedetective')
+class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+
+    CATEGORY_NAME = u'Picture Detective'
+
+    # number between 0 and (inclusive) 1.0 that decides how many coins to
+    # give for a percentage.
+    PERCENTAGE_COINS_RATIO = 1.0
+
+    def get(self):
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        category = self.db.Category.find_one({'name': self.CATEGORY_NAME})
+
+        # temporary solution
+        if 0:
+            for x in self.db.QuestionSession.find({'category': category['_id'],
+                                                   'user': user['_id'],
+                                                   'location': current_location['_id'],
+                                                   'finish_date': None}):
+                for y in self.db.SessionAnswer.find({'session': x['_id']}):
+                    y.delete()
+                x.delete()
+
+        session = self.db.QuestionSession()
+        session['user'] = user['_id']
+        session['category'] = category['_id']
+        session['location'] = current_location['_id']
+        session.save()
+
+        question = self._get_next_question(user, session, category, current_location)
+
+        answer_obj = self.db.SessionAnswer()
+        answer_obj['session'] = session['_id']
+        answer_obj['question'] = question['_id']
+        answer_obj.save()
+
+        # XXX: this needs to be smarter!!
+        #question,=self.db.Question.find({'category': category['_id']})
+
+        pictures = []
+        for item in (self.db.QuestionPicture
+                     .find({'question': question['_id']})
+                     .sort('index')):
+            uri, (width, height) = self.make_thumbnail(item, (300, 300))
+            url = self.static_url(uri.replace('/static/', ''))
+            picture = {
+              'src': url,
+              'width': width,
+              'height': height,
+            }
+            pictures.append(picture)
+
+        self.write({
+            'question': question['text'],
+            'seconds': len(pictures),
+            'pictures': pictures,
+        })
+
+    def _get_next_question(self, user, session, category, location):
+        question_filter = {
+          'location': location['_id'],
+          'category': category['_id'],
+        }
+
+        past_question_ids = set()
+        session_filter = {
+          'user': user['_id'],
+          'location': location['_id'],
+          'category': category['_id'],
+          'finish_date': {'$ne': None},
+        }
+
+
+        print self.db.QuestionSession.find().count()
+        print self.db.SessionAnswer.find().count()
+        for other_session in self.db.QuestionSession.find(session_filter):
+            print "\tother_session", repr(other_session)
+            for answer in self.db.QuestionAnswer.find({'session': other_session['_id']}):
+                past_question_ids.add(answer['question'])
+
+        for answer in self.db.SessionAnswer.find({'session': session['_id']}):
+            print "\tanswer", repr(answer)
+            past_question_ids.add(answer['question'])
+
+
+        print "PAST_QUESTION_IDS", past_question_ids
+
+
+        question_filter['_id'] = {'$nin': list(past_question_ids)}
+
+        questions = self.db.Question.find(question_filter)
+        count = questions.count()
+        if not count:
+            raise NoQuestionsError("No more questions")
+
+        nth = random.randint(0, count - 1)
+        for question in questions.limit(1).skip(nth):
+            return question
+
+
+    def post(self):
+        user = self.get_current_user()
+        category = self.db.Category.find_one({'name': self.CATEGORY_NAME})
+        session, = (self.db.QuestionSession
+                     .find({'user': user['_id'], 'category': category['_id']})
+                     .sort('start_date', 1)
+                     .limit(1))
+        answer_obj, = (self.db.SessionAnswer
+                       .find({'session': session['_id']}))
+        question = self.db.Question.find_one({'_id': answer_obj['question']})
+
+        answer = self.get_argument('answer', None)
+        timedout = self.get_argument('timedout', False)
+        if timedout == 'false':
+            timedout = False
+        seconds_left = int(self.get_argument('seconds_left', 0))
+        seconds_total = (self.db.QuestionPicture
+                         .find({'question': question['_id']})
+                         .count())
+
+        data = {}
+        data['points'] = 0
+        answer_obj['points'] = 0.0
+        answer_obj['time'] = float(seconds_total - seconds_left)
+
+        if answer and not timedout:
+            points_value = question['points_value']
+            data['timedout'] = False
+            answer_obj['answer'] = answer
+            answer_obj['timedout'] = False
+            if question.check_answer(answer):
+                answer_obj['correct'] = True
+                points = float(points_value * seconds_left)
+                answer_obj['points'] = points
+                coins = self.points_to_coins(points, seconds_total, points_value)
+                data['points'] = points
+                data['coins'] = coins
+            else:
+                self.write({'incorrect': True})
+                return
+        else:
+            answer_obj['timedout'] = True
+            data['timedout'] = True
+
+        answer_obj.save()
+
+
+        if question['didyouknow']:
+            data['didyouknow'] = self.render_didyouknow(question['didyouknow'])
+
+        self.write(data)
+
+    def points_to_coins(self, points, seconds_total, points_value):
+        max_ = seconds_total * points_value
+        percentage = 100 * points / max_
+        return int(percentage * self.PERCENTAGE_COINS_RATIO)
 
 
 @route('/pinpoint.json$', name='pinpoint')

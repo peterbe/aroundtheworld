@@ -2,6 +2,7 @@ import mimetypes
 import datetime
 import re
 import urllib
+from cStringIO import StringIO
 from pprint import pprint
 from collections import defaultdict
 from pymongo.objectid import ObjectId
@@ -12,7 +13,7 @@ from .forms import QuestionForm, CategoryForm
 from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
 from .base import djangolike_request_dict
 from core.handlers import QuizzingHandler
-
+from .picture_factory import blurrer
 
 @route('/admin/questions/numbers/', name='admin_questions_numbers')
 class QuestionsNumbersHandler(AuthenticatedBaseHandler):
@@ -51,7 +52,6 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
                 if location not in _these_locations:
                     series[location].append(_previous.get(location, 0))
 
-        #print series
         _names = dict((x['_id'], x['city'])
                       for x in self.db.Location.find())
         series = [{'name': _names[x], 'data': y}
@@ -394,6 +394,87 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
             self.redirect(self.reverse_url('admin_questions'))
         else:
             self.get(_id, form=form)
+
+
+@route('/admin/questions/(\w{24})/pictures/', name='admin_question_pictures')
+class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
+
+    def get(self, _id, form=None):
+        data = {}
+        data['question'] = self.db.Question.find_one({'_id': ObjectId(_id)})
+        if not data['question']:
+            raise HTTPError(404)
+
+        # temporary legacy cleanup
+        for x in self.db.QuestionPicture.find({'index': {'$exists': False}}):
+            if getattr(x, 'copyright', 0) == 0:
+                x['copyright'] = None
+            if getattr(x, 'copyright_url', 0) == 0:
+                x['copyright_url'] = None
+            x['index'] = 0
+            x.save()
+
+        data['pictures'] = (self.db.QuestionPicture
+                    .find({'question': data['question']['_id']})
+                    .sort('index', 1))
+
+
+        data['count'] = data['pictures'].count()
+        data['filtering'] = False
+        #data['form'] = form
+        data['iterations'] = int(self.get_argument('iterations', 10))
+        data['effect'] = int(self.get_argument('effect', 12))
+
+        #data['can_delete'] = self.can_delete(data['question'])
+        self.render('admin/question_pictures.html', **data)
+
+#    @tornado.web.asynchronous
+    def post(self, _id):
+        data = {}
+        question = self.db.Question.find_one({'_id': ObjectId(_id)})
+        if not question:
+            raise HTTPError(404)
+
+        url = self.reverse_url('admin_question_pictures', str(question['_id']))
+
+        def delete_old():
+            for p in (self.db.QuestionPicture
+                      .find({'question': question['_id'],
+                             'index': {'$gt': 0}})):
+                p.delete()
+
+        if self.get_argument('delete', False):
+            delete_old()
+            self.redirect(url)
+            return
+
+        iterations = int(self.get_argument('iterations'))
+        effect = int(self.get_argument('effect'))
+        sample = bool(self.get_argument('sample', False))
+
+        delete_old()
+
+        original, = self.db.QuestionPicture.find({'question': question['_id'], 'index': 0})
+        original_picture = original.fs.get_last_version('original')
+        type_ = original_picture.content_type
+        c = 1
+
+        for (payload, format) in blurrer(original_picture, (300, 300),
+                               iterations, effect, sample=sample):
+            qp = self.db.QuestionPicture()
+            qp['question'] = question['_id']
+            qp['index'] = c
+            qp.save()
+            with qp.fs.new_file('original') as f:
+                f.content_type = type_
+                payload.save(f, format)
+
+            c += 1
+
+        url = self.reverse_url('admin_question_pictures', str(question['_id']))
+        url += '?iterations=%s&effect=%s' % (iterations, effect)
+        self.redirect(url)
+        #self.get(_id)
 
 
 class BaseQuestionAdminHandler(AuthenticatedBaseHandler):

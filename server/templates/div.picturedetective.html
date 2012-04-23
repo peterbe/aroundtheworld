@@ -1,0 +1,86 @@
+<div id="picturedetective" class="overlay">
+  <h2>Picture Detective</h2>
+
+  <div class="finish finish-success" style="display:none">
+    <h3>Well done! You finished the job!</h3>
+
+    <p class="short-summary">
+      You collected
+      <strong class="total-points"></strong> which earned you
+      <strong class="coins"></strong>!
+    </p>
+
+    <div class="didyouknow">
+      <h3>Did you know...?</h3>
+    </div>
+
+    <p>
+    <a href="#city,jobs" class="overlay-changer">Check out other jobs in the city</a>
+    </p>
+
+  </div>
+
+  <div class="finish finish-timedout" style="display:none">
+    <h3 class="too-slow">Sorry. Too slow</h3>
+    <h3 class="incorrect">Sorry. Wrong answer</h3>
+
+    <p>The correct answer was: <strong class="correct-answer"></strong></p>
+
+    <div class="didyouknow">
+      <h3>Did you know...?</h3>
+    </div>
+
+    <p>
+    <a href="#city,jobs" class="overlay-changer">Check out other jobs in the city</a>
+    </p>
+
+  </div>
+
+  <div class="intro">
+    <div class="intro-text">
+    <p>Your job is to <strong>answer the question by looking at the picture</strong> which will
+    be more and more clear with time. If you can <strong>spot it quickly, you get more points</strong>.
+    If you have to wait till the very end you get no points. </p>
+
+    <p>You can stop the timer and guess at any time. If you get it wrong, the timer
+    will continue an you can try again later. </p>
+
+    <p>UPPER or lower <strong>case does <em>not</em> matter</strong> when you type in the answer
+    and some spelling mistakes are allowed.</p>
+    </div>
+    <p class="begin"><a href="#picturedetective">Ok! Let's begin! &rarr;</a></p>
+  </div>
+
+  <div class="loading" style="display:none">
+    <h3>Loading pictures</h3>
+              <div class="progress active progress-danger progress-striped">
+                <div class="bar" style="width: 0%;"></div>
+              </div>
+  </div>
+
+  <div class="question" style="display:none">
+
+    <h3>Question: <span class="questiontext"></span></h3>
+    <form>
+      <!--<input type="button" name="pause" value="Pause!">-->
+      <input name="answer" placeholder="Type your answer here">
+      <input type="submit" name="submit" value="Submit" style="display:none">
+      <input type="button" name="continue" value="Carry on" style="display:none">
+    </form>
+    <p>Seconds left: <strong class="timeleft"></strong>
+    <span class="inpause" style="display:none">PAUSED</span>
+    <span class="incorrect" style="display:none">WRONG Try again in 3 seconds</span>
+    </p>
+    <div class="pictures">
+       <img class="thumbnail playbutton" src="{{ static_url('images/playbutton.png') }}" alt="Start!">
+    </div>
+
+  </div>
+
+  <p class="exit">
+  <span class="pre-finish" style="display:none">I give up!</span>
+  <span class="post-finish">Ok.</span>
+  <a href="#city" class="overlay-changer">Go back to the city</a>
+  </p>
+
+</div>

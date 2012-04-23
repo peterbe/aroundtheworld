@@ -1,7 +1,10 @@
+import shutil
 import random
 import datetime
 import os
 import json
+import mimetypes
+import tempfile
 from pprint import pprint
 from urllib import urlencode
 import tornado.escape
@@ -9,8 +12,10 @@ from pymongo.objectid import ObjectId
 from .base import BaseHTTPTestCase
 import settings
 import tornado_utils.send_mail as mail
-from core.handlers import (PinpointHandler, GoogleAuthHandler, QuizzingHandler,
-                           CityHandler)
+from core.handlers import (
+  PinpointHandler, GoogleAuthHandler, QuizzingHandler, CityHandler,
+  PictureDetectiveHandler
+)
 
 
 class HandlersTestCase(BaseHTTPTestCase):
@@ -26,6 +31,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         newyork['city'] = u'New York City'
         newyork['country'] = u'United States'
         newyork['locality'] = u'New York'
+        newyork['available'] = True
         newyork['lat'] = 1.0
         newyork['lng'] = -1.0
         newyork.save()
@@ -35,6 +41,15 @@ class HandlersTestCase(BaseHTTPTestCase):
         tour_guide['name'] = u'Tour guide'
         tour_guide.save()
         self.tour_guide = tour_guide
+
+        self._old_thumbnail_directory = settings.THUMBNAIL_DIRECTORY
+        self.tempdir = tempfile.mkdtemp()
+        settings.THUMBNAIL_DIRECTORY = self.tempdir
+
+    def tearDown(self):
+        super(HandlersTestCase, self).tearDown()
+        if os.path.isdir(self.tempdir):
+            shutil.rmtree(self.tempdir)
 
     def _login(self, username=u'peterbe', email=u'mail@peterbe.com',
                client=None, location=None,
@@ -109,6 +124,21 @@ class HandlersTestCase(BaseHTTPTestCase):
         q['seconds'] = 10
         q.save()
         return q
+
+    def _create_question_pictures(self, question, pictures=1):
+        here = os.path.dirname(__file__)
+        image_data = open(os.path.join(here, 'image.png'), 'rb').read()
+        type_, __ = mimetypes.guess_type('image.png')
+        for i in range(pictures):
+            qp = self.db.QuestionPicture()
+            qp['question'] = question['_id']
+            qp['index'] = i
+            qp['copyright'] = u''
+            qp['copyright_url'] = u''
+            qp.save()
+            with qp.fs.new_file('original') as f:
+                f.content_type = type_
+                f.write(image_data)
 
     def get_struct(self, url, *args, **kwargs):
         r = self.client.get(url, *args, **kwargs)
@@ -699,7 +729,9 @@ class HandlersTestCase(BaseHTTPTestCase):
         # now pretend we've done some flights
         loc1 = self.db.Location()
         loc1['city'] = u'Kansas City'
+        loc1['available'] = True
         loc1['country'] = u'United States'
+        loc1['locality'] = u'Kansas'
         loc1['code'] = u'MCI'
         loc1['airport_name'] = u'Kansas City International Airport'
         loc1['lat'] = 30.0
@@ -847,3 +879,94 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(messages[0]['time_ago'], 'seconds')
         self.assertEqual(messages[0]['message'], data['message'])
+
+    def test_picturedetective(self):
+        user = self._login(location=self.newyork)
+        url = self.reverse_url('picturedetective')
+
+        category = self.db.Category()
+        category['name'] = PictureDetectiveHandler.CATEGORY_NAME
+        category.save()
+
+        # a location that is different from the one we're in
+        X = self.db.Location()
+        X['city'] = u'Anything'
+        X['locality'] = u'Anything'
+        X['country'] = u'Anything'
+        X['available'] = True
+        X['lat'] = X['lng'] = 99.
+        X.save()
+
+        # a question with the wrong category
+        Y = self.db.Category()
+        Y['name'] = u'Anything'
+        Y.save()
+
+        # create 3 picture detective questions
+        q1 = self._create_question(category, self.newyork)
+        q2 = self._create_question(category, self.newyork)
+        q3 = self._create_question(category, self.newyork)
+        qX = self._create_question(category, X)
+        qY = self._create_question(Y, self.newyork)
+
+        question_texts = dict((x['_id'], x['text']) for x in (q1, q2, q3))
+
+        NO_PICS = 5
+        for q in (q1, q2, q3, qX):
+            self._create_question_pictures(q, NO_PICS)
+
+        # start!
+        result = self.get_struct(url)
+        # expect an actual question
+        self.assertTrue(result['question'] in question_texts.values())
+        self.assertEqual(result['seconds'], NO_PICS)
+        self.assertEqual(len(result['pictures']), NO_PICS)
+
+        session, = self.db.QuestionSession.find()
+        self.assertEqual(session['category'], category['_id'])
+        self.assertEqual(session['finish_date'], None)
+        self.assertEqual(session['user'], user['_id'])
+        self.assertEqual(session['location'], self.newyork['_id'])
+        self.assertTrue(session['start_date'])
+
+        answer, = self.db.SessionAnswer.find()
+        assert answer['_id']
+        self.assertTrue(answer['question'] in question_texts.keys())
+
+        self.assertTrue(not answer['timedout'])
+        self.assertTrue(not answer['points'])
+        self.assertTrue(not answer['time'])
+        self.assertTrue(not answer['answer'])
+
+        # answer *incorrectly* once
+        post_result = self.post_struct(url, {
+          'answer': u'WRONG',
+          'timedout': 'false',
+          'seconds_left': 3
+        })
+        self.assertTrue(post_result['incorrect'])
+
+        # now, suppose we answer correctly!
+        post_result = self.post_struct(url, {
+          'answer': u'ONe',
+          'timedout': 'false',
+          'seconds_left': 2
+        })
+        self.assertTrue(not post_result['timedout'])
+        self.assertTrue(post_result['coins'])
+        self.assertTrue(post_result['points'])
+
+        # start a second question
+        previous_result = result
+        result = self.get_struct(url)
+        # expect a different question
+        self.assertNotEqual(result['question'], previous_result['question'])
+        self.assertTrue(result['question'] in question_texts.values())
+        self.assertEqual(result['seconds'], NO_PICS)
+        self.assertEqual(len(result['pictures']), NO_PICS)
+
+        post_result = self.post_struct(url, {
+          'answer': u'',
+          'timedout': 'true',
+          'seconds_left': 0
+        })
