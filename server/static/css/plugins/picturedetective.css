@@ -14,3 +14,7 @@
 #picturedetective .loading h3 {
     margin: 20px;
 }
+
+#picturedetective a.start-over {
+    font-weight: bold;
+}

@@ -746,7 +746,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
                                      'location': location['_id'],
                                      'category': category['_id']}).count():
 
-                self.write_json({'ERROR': 'Cheated here already'})
+                self.write_json({'error': 'Cheated here already'})
                 return
             else:
                 COINS = 1000
@@ -762,7 +762,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
                 user_settings.save()
                 self.write_json({'coins': COINS})
                 return
-        self.write_json({'ERROR': 'Wrong code'})
+        self.write_json({'error': 'Wrong code'})
 
 
 def _commafy(s):
@@ -1004,7 +1004,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         category, = self.db.Category.find({'name': 'Picture Detective'})
         questions = self.db.Question.find({'location': location['_id'],
                                            'published': True,
-                                           'category': category['_id']})
+                                           'category': category['_id']},
+                                           ('_id',))
         left = questions.count()
         sessions = (self.db.QuestionSession
                     .find({'user': user['_id'],
@@ -1014,19 +1015,19 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         #for session in sessions:
         session_ids = [x['_id'] for x in sessions]
-        answered_questions = (self.db.QuestionAnswer
+        answered_questions = (self.db.SessionAnswer
                    .find({'session': {'$in': session_ids}},
                           ('question',)))
-#        print answered_questions
-        left = []
+        answered_questions = [x['question'] for x in answered_questions]
+        left = 0
         for question in questions:
             if question['_id'] in answered_questions:
                 continue
-            left.append(question)
+            left += 1
         # XXX consider doing a count instead.
         if left:
             return {'type': 'picturedetective',
-                    'description': 'Picture Detective (%d left)' % len(left),
+                    'description': 'Picture Detective (%d left)' % left,
                     }
 
     def post(self):
@@ -1058,10 +1059,12 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         # temporary solution
         if 0:
+            print "TEMPORARY HACK IN PLACE"
             for x in self.db.QuestionSession.find({'category': category['_id'],
                                                    'user': user['_id'],
                                                    'location': current_location['_id'],
-                                                   'finish_date': None}):
+                                                   #'finish_date': None
+                                                   }):
                 for y in self.db.SessionAnswer.find({'session': x['_id']}):
                     y.delete()
                 x.delete()
@@ -1072,15 +1075,16 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         session['location'] = current_location['_id']
         session.save()
 
-        question = self._get_next_question(user, session, category, current_location)
+        try:
+            question = self._get_next_question(user, session, category, current_location)
+        except NoQuestionsError:
+            self.write({'error': 'NOQUESTIONS'})
+            return
 
         answer_obj = self.db.SessionAnswer()
         answer_obj['session'] = session['_id']
         answer_obj['question'] = question['_id']
         answer_obj.save()
-
-        # XXX: this needs to be smarter!!
-        #question,=self.db.Question.find({'category': category['_id']})
 
         pictures = []
         for item in (self.db.QuestionPicture
@@ -1115,23 +1119,12 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
           'finish_date': {'$ne': None},
         }
 
-
-        print self.db.QuestionSession.find().count()
-        print self.db.SessionAnswer.find().count()
         for other_session in self.db.QuestionSession.find(session_filter):
-            print "\tother_session", repr(other_session)
-            for answer in self.db.QuestionAnswer.find({'session': other_session['_id']}):
+            for answer in self.db.SessionAnswer.find({'session': other_session['_id']}):
                 past_question_ids.add(answer['question'])
 
-        for answer in self.db.SessionAnswer.find({'session': session['_id']}):
-            print "\tanswer", repr(answer)
-            past_question_ids.add(answer['question'])
-
-
-        print "PAST_QUESTION_IDS", past_question_ids
-
-
-        question_filter['_id'] = {'$nin': list(past_question_ids)}
+        if past_question_ids:
+            question_filter['_id'] = {'$nin': list(past_question_ids)}
 
         questions = self.db.Question.find(question_filter)
         count = questions.count()
@@ -1142,12 +1135,15 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         for question in questions.limit(1).skip(nth):
             return question
 
-
     def post(self):
         user = self.get_current_user()
+        current_location = self.get_current_location(user)
         category = self.db.Category.find_one({'name': self.CATEGORY_NAME})
         session, = (self.db.QuestionSession
-                     .find({'user': user['_id'], 'category': category['_id']})
+                     .find({'user': user['_id'],
+                            'category': category['_id'],
+                            'location': current_location['_id'],
+                            'finish_date': None})
                      .sort('start_date', 1)
                      .limit(1))
         answer_obj, = (self.db.SessionAnswer
@@ -1165,6 +1161,7 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         data = {}
         data['points'] = 0
+        data['coins'] = 0
         answer_obj['points'] = 0.0
         answer_obj['time'] = float(seconds_total - seconds_left)
 
@@ -1180,20 +1177,72 @@ class PictureDetectiveHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 coins = self.points_to_coins(points, seconds_total, points_value)
                 data['points'] = points
                 data['coins'] = coins
+
+                # increment UserSettings
+                user_settings = self.get_current_user_settings()
+                user_settings['coins_total'] += coins
+                user_settings.save()
+
             else:
                 self.write({'incorrect': True})
                 return
         else:
             answer_obj['timedout'] = True
             data['timedout'] = True
+            data['correct_answer'] = question['correct']
 
         answer_obj.save()
 
+        session['finish_date'] = datetime.datetime.utcnow()
+        session.save()
+
+        # if the last job was of the same category and location
+        # then increment the number of coins
+        for job in (self.db.Job.find({'user': user['_id'],
+                                     'category': session['category'],
+                                     'location': session['location']})
+                               .sort('add_date', 1)
+                               .limit(1)):
+            job['coins'] += data['coins']
+            job.save()
+            break
+        else:
+            job = self.db.Job()
+            job['user'] = user['_id']
+            job['coins'] = data['coins']
+            job['category'] = session['category']
+            job['location'] = session['location']
+            job.save()
 
         if question['didyouknow']:
             data['didyouknow'] = self.render_didyouknow(question['didyouknow'])
 
+        data['left'] = self._count_questions_left(category, user, current_location)
+
         self.write(data)
+
+    def _count_questions_left(self, category, user, location):
+        question_filter = {
+          'location': location['_id'],
+          'category': category['_id'],
+        }
+        past_question_ids = set()
+        session_filter = {
+          'user': user['_id'],
+          'location': location['_id'],
+          'category': category['_id'],
+          'finish_date': {'$ne': None},
+        }
+
+        for other_session in self.db.QuestionSession.find(session_filter):
+            for answer in self.db.SessionAnswer.find({'session': other_session['_id']}):
+                past_question_ids.add(answer['question'])
+
+        if past_question_ids:
+            question_filter['_id'] = {'$nin': list(past_question_ids)}
+
+        questions = self.db.Question.find(question_filter)
+        return questions.count()
 
     def points_to_coins(self, points, seconds_total, points_value):
         max_ = seconds_total * points_value

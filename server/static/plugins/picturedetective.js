@@ -8,6 +8,7 @@ var PictureDetective = (function() {
   var _on_index;
   var _timer;
   var _pause_timer;
+  var _submitted = false;
 
   return {
      begin_load: function() {
@@ -17,6 +18,11 @@ var PictureDetective = (function() {
 
        _indexes = [];
        $.getJSON(URL, function(response) {
+         if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+         if (response.error == 'NOQUESTIONS') {
+           alert("Error. No more picture detective questions");
+           return State.redirect_to_city();
+         }
          _left_to_load = response.pictures.length;
          _total_to_load = response.pictures.length;
          $('.question .questiontext', container).text(response.question);
@@ -67,7 +73,9 @@ var PictureDetective = (function() {
         }
       });
 
-      $('form', container).submit(function() {
+      $('form', container).off('submit').on('submit', function() {
+        clearTimeout(_timer);
+        clearTimeout(_pause_timer);  // paranoia
         var answer = $.trim($('input[name="answer"]', container).val());
         if (answer.length) {
           PictureDetective.submit(false, answer);
@@ -117,6 +125,7 @@ var PictureDetective = (function() {
       PictureDetective.tick();
     },
     tick: function() {
+      if (_submitted) return;
       $('input[name="answer"]', container).off('keyup').on('keyup', function() {
         if ($(this).val().length) {
           PictureDetective.pause();
@@ -138,8 +147,10 @@ var PictureDetective = (function() {
       }, 1000);
     },
     submit: function(timedout, answer) {
-      L('timedout', timedout);
-      L('answer', answer);
+      if (_submitted) return;
+      _submitted = true;
+      clearTimeout(_timer);
+      clearTimeout(_pause_timer);
       var data = {
          answer: answer,
         timedout: timedout,
@@ -148,6 +159,7 @@ var PictureDetective = (function() {
       $.post(URL, data, function(response) {
         if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
         if (response.incorrect) {
+          _submitted = false;
           $('.inpause', container).hide();
           $('.incorrect', container).show();
           setTimeout(function() {
@@ -158,33 +170,39 @@ var PictureDetective = (function() {
         }
       });
     },
-    finish: function(results) {
+    finish: function(result) {
       $('.question', container).hide();
       var c;
-      if (results.points) {
+      if (result.points) {
         c = $('.finish-success', container);
         $('.total-points', c).text(Utils.formatPoints(result.points, true));
-        $('.coins', c).text(Utils.formatCoins(result.coins, true));
+        $('.coins', c).text(Utils.formatCost(result.coins, true));
+        State.show_coin_change(result.coins, true);
+
       } else {
         c = $('.finish-timedout', container);
-        if (results.timedout) {
-          $('.too-slow', c).show();
-          $('.incorrect', c).hide();
-        } else {
-          $('.too-slow', c).hide();
-          $('.incorrect', c).show();
-        }
+        $('.correct-answer', c).text(result.correct_answer);
       }
-      c.fadeIn(300);
-      if (results.didyouknow) {
-        $('.didyouknow', c).html(results.didyouknow);
+      if (result.left) {
+        $('a.start-over .left', c).text(result.left);
+        $('a.start-over', c).show();
+      } else {
+        $('a.start-over', c).hide();
+      }
+      //c.show();
+      c.fadeIn(700);
+      if (result.didyouknow) {
+        $('.didyouknow', c).html(result.didyouknow);
         $('.didyouknow', c).show();
       } else {
         $('.didyouknow', c).hide();
       }
     },
     setup: function() {
-       //_can_begin = false;
+      _submitted = false;
+      _submitted = false;
+      _indexes = [];
+      _can_begin = false;
       $('img.alternative', container).remove();
       $('.begin a', container).off('click');
       $('input[name="continue"]', container).off('click');
@@ -197,6 +215,9 @@ var PictureDetective = (function() {
         return false;
       });
       Utils.update_title();
+    },
+    teardown: function() {
+      // nothing at the moment
     }
   }
 })();
