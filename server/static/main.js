@@ -14,7 +14,17 @@ var Loader = (function() {
        hash = hash.split(',')[0];
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
-         $(hash + '.overlay').show();
+         var overlay = $(hash + '.overlay').show();
+
+         // alignment CSS hack
+         /* commented out because I'm not impressed it works
+         overlay.css({
+           'bottom': 'auto',
+           'top': '50%',
+           'marginTop': -((overlay.height() / 2)) + 'px'
+         });
+          */
+
          Plugins.load(hash.substr(1, hash.length - 1), arg, function() {
            Loader.update_title();
          });
