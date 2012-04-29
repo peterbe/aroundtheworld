@@ -38,7 +38,7 @@ $(function() {
            data-toggle="modal" data-title="{{ question['text'] }}"
            href="{% module GetPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
            >{% module ShowPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
-        &larr; existing picture
+        &larr; existing picture <a href="{{ reverse_url('admin_question_pictures', question['_id']) }}">+</a>
     </p>
   {% end %}
 

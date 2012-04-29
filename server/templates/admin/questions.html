@@ -95,6 +95,9 @@ tfoot th select[name="authors"] { width:100px; }
                data-toggle="modal" data-title="{{ question['text'] }}"
                href="{% module GetPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
                >{% module ShowPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
+               {% if question.has_many_pictures() %}
+               <a href="{{ reverse_url('admin_question_pictures', question['_id']) }}" title="Has many pictures">+</a>
+               {% end %}
             {% else %}
              -
             {% end %}

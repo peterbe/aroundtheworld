@@ -13,7 +13,7 @@ from .forms import QuestionForm, CategoryForm
 from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
 from .base import djangolike_request_dict
 from core.handlers import QuizzingHandler
-from .picture_factory import blurrer
+from . import picture_factory
 
 @route('/admin/questions/numbers/', name='admin_questions_numbers')
 class QuestionsNumbersHandler(AuthenticatedBaseHandler):
@@ -418,12 +418,12 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
                     .find({'question': data['question']['_id']})
                     .sort('index', 1))
 
-
         data['count'] = data['pictures'].count()
         data['filtering'] = False
         #data['form'] = form
         data['iterations'] = int(self.get_argument('iterations', 10))
         data['effect'] = int(self.get_argument('effect', 12))
+        data['function'] = self.get_argument('function', '')
 
         #data['can_delete'] = self.can_delete(data['question'])
         self.render('admin/question_pictures.html', **data)
@@ -449,8 +449,7 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
             return
 
         iterations = int(self.get_argument('iterations'))
-        effect = int(self.get_argument('effect'))
-        sample = bool(self.get_argument('sample', False))
+        effect = int(self.get_argument('effect', 0))
 
         delete_old()
 
@@ -459,8 +458,17 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
         type_ = original_picture.content_type
         c = 1
 
-        for (payload, format) in blurrer(original_picture, (300, 300),
-                               iterations, effect, sample=sample):
+        function = self.get_argument('function')
+
+        if function == 'blurrer':
+            func = lambda x, y, z: picture_factory.blurrer(x, y, z, effect=effect)
+        elif function == 'tileshift':
+            func = picture_factory.tileshift
+        else:
+            raise NotImplementedError(function)
+
+        for (payload, format) in func(original_picture, (700, 700),
+                                      iterations):
             qp = self.db.QuestionPicture()
             qp['question'] = question['_id']
             qp['index'] = c
@@ -473,6 +481,7 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
 
         url = self.reverse_url('admin_question_pictures', str(question['_id']))
         url += '?iterations=%s&effect=%s' % (iterations, effect)
+        url += '&function=%s' % function
         self.redirect(url)
         #self.get(_id)
 

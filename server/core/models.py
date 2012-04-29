@@ -3,6 +3,7 @@ from pymongo.objectid import ObjectId
 import datetime
 from mongokit import Document
 from mongokit import Connection
+from tornado_utils.edit_distance import EditDistance
 import markdown
 
 
@@ -259,13 +260,30 @@ class Question(BaseDocument):
 
     HIGHEST_POINTS_VALUE = 5
 
-    def check_answer(self, value):
-        return value.lower() == self['correct'].lower()
+    def check_answer(self, value, alternatives_are_correct=False):
+        correct = [self['correct'].lower()]
+        if alternatives_are_correct:
+            correct.extend([x.lower() for x in self['alternatives']])
+        if value.lower() in correct:
+            return True
+
+        if len(correct[0]) >= 4 and len(value) >= 3:
+            ed = EditDistance(correct)
+            if ed.match(value):
+                return True
+        return False
 
     def has_picture(self):
-        return bool(self.db.QuestionPicture
-                    .find({'question': self['_id']})
-                    .count())
+        return self._count_pictures() > 0
+
+    def has_many_pictures(self):
+        return self._count_pictures() > 1
+
+    def _count_pictures(self):
+        return (self.db.QuestionPicture
+                .find({'question': self['_id']})
+                .count())
+
 
     def get_picture(self):
         return self.db.QuestionPicture.find_one({'question': self['_id']})

@@ -1001,7 +1001,9 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
     def _get_picture_detective_jobs(self, user, location):
         # Picture detective job
-        category, = self.db.Category.find({'name': 'Picture Detective'})
+
+        category, = (self.db.Category
+                     .find({'name': PictureDetectiveHandler.CATEGORY_NAME}))
         questions = self.db.Question.find({'location': location['_id'],
                                            'published': True,
                                            'category': category['_id']},

@@ -14,7 +14,7 @@ tfoot th select[name="authors"] { width:100px; }
 <script>
 function play() {
   var container = $('#play');
-  var pictures = $('td a.thumbnail-preview');
+  var pictures = $('a.thumbnail-preview');
   var iters = 0;
   pictures.each(function() {
     $('img', this).addClass('iter-' + iters);
@@ -64,6 +64,7 @@ $(function() {
   {% if filtering %}
   <p><a href=".">Reset filtering</a></p>
   {% end %}
+  <p><a href="..">Back to question</a></p>
 
   {% if count > 1 %}
   <div id="play">
@@ -72,49 +73,39 @@ $(function() {
   </div>
   {% end %}
 
-  <form action="." method="post">
-      <table class="condensed-table">
-        <thead>
-          <tr>
-            <th><input type="checkbox" name="all"></th>
-            <th>Picture</th>
-            <th>Index</th>
-          </tr>
-        </thead>
-        <tfoot>
-          <tr>
-            <th><input type="checkbox" name="all"></th>
-            <th><input type="submit" name="delete" value="Delete">
-            &nbsp; &nbsp;
-            Iterations: <input name="iterations" value="{{ iterations }}" style="width:35px">
-                Effect: <input name="effect" value="{{ effect }}" style="width:35px">
-                Sample: <input type="checkbox" name="sample">
-                <input type="submit" value="Generate">
-            </td>
-          </tr>
-        </tfoot>
-        <tbody>
-          {% for picture in pictures %}
-          <tr>
-            <td><input type="checkbox" name="ids" value="{{ picture['_id'] }}"
-              data-index="{{ picture['index'] }}"></td>
-            <td>
+  <form action="." method="post" class="form-inline">
+      <button type="submit" name="delete" class="btn">Delete all but the first</button>
+  </form>
+
+  <form action="." method="post" class="">
+
+      <label>Iterations:</label>
+      <input name="iterations" value="{{ iterations }}" style="width:35px">
+      <br>
+      <label>Distortion</label>
+      <select name="function">
+        <option value="blurrer" {% if function == 'blurrer' %}selected{% end %}>Blurrer</option>
+        <option value="tileshift" {% if function == 'tileshift' %}selected{% end %}>Tile shift</option>
+      </select>
+      <br>
+      <label>Effect (if applicable):</label> <input name="effect" value="{{ effect }}" style="width:35px">
+      <br>
+      <button type="submit" class="btn">{% if count == 1 %}Generate{% else %}Regenerate{% end %}</button>
+  </form>
+
+    <div class="pictures">
+      {% for picture in pictures %}
+        <p><strong>{{ picture['index'] }}</strong><br>
             <a title="{{ picture['index'] }}" class="thumbnail-preview"
                data-toggle="modal"
                data-index="{{ picture['index'] }}"
                data-title="{{ picture['index'] }}"
                href="{% module GetPictureThumbnailSrc(picture, (300,300)) %}"
                >{% module ShowPictureThumbnail(picture, (300, 300)) %}</a>
-            </td>
-            <td>
-              {{ picture['index'] }}
-            </td>
-          </tr>
-          {% end %}
-        </tbody>
-      </table>
+        </p>
+      {% end %}
+    </div>
 
-    </form>
 
 
 {% end %}
