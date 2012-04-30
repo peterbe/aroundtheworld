@@ -658,8 +658,7 @@ class MilesHandler(AuthenticatedBaseHandler):
         flights = []
         filter_ = {'user': user['_id']}
         _locations = {}
-        for location in (self.db.Location
-                         .find({'available': True})):
+        for location in self.db.Location.find():
             _locations[location['_id']] = location.dictify()
 
         for each in (self.db.Flight

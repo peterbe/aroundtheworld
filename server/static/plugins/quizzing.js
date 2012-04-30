@@ -135,6 +135,9 @@ var Quiz = (function() {
            Quiz.rush_next_question();
            return false;
          });
+       jwerty.key('n', function() {
+         $('a.next-question:visible', container).click();
+       });
        Utils.update_title();
        $('a.restart', container).attr('href', '#quizzing,' + category.replace(' ', '+'));
      },
@@ -282,7 +285,7 @@ var Quiz = (function() {
            }).appendTo($('<li>')
                        .appendTo($('.alternatives', container)));
          jwerty.key('' + (i + 1), function() {
-           $('.alt' + i, container).click();
+           $('.alt' + i + ':visible', container).click();
          });
        });
        if (question.picture) {
