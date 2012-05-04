@@ -109,6 +109,7 @@ var PictureDetective = (function() {
 
       clearTimeout(_timer);
       $('img.playbutton', container).show();
+      $('img.alternative', container).hide();
       $('.inpause', container).show();
       $('input[name="submit"]', container).show();
       $('input[name="continue"]', container).show();
@@ -217,7 +218,7 @@ var PictureDetective = (function() {
       Utils.update_title();
     },
     teardown: function() {
-      // nothing at the moment
+      $('.finish:visible', container).hide();
     }
   }
 })();
