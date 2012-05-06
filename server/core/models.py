@@ -259,6 +259,8 @@ class Question(BaseDocument):
       'alternatives_sorted': False,
       'points_value': 1,
       'published': True,
+      'notes': u'',
+      'didyouknow': u'',
     }
 
     HIGHEST_POINTS_VALUE = 5

@@ -1,0 +1,107 @@
+<form class="form-horizontal">
+
+    <div class="alert alert-success" style="display:none">
+      <strong>Thank you!</strong> Your question has been saved for review
+      <a href="#city" class="overlay-changer">Go back to the city</a>
+    </div>
+
+
+<div class="pictureupload" style="float:right">
+
+  <input type="hidden" name="file_url">
+
+  <p class="preview" style="display:none">
+    <strong>Preview:</strong><br>
+    <span class="loading">Uploading in action...</span>
+  </p>
+
+  <p>
+    <a href="#" class="upload upload-big"><img style="opacity:.3" src="{{ static_url('images/pictureupload.png') }}" alt="Upload a picture"></a>
+    <a href="#" class="upload upload-big">Upload a picture</a>
+    <a href="#" class="upload upload-small" style="display:none">Upload a different picture</a>
+  </p>
+
+  <p class="file-url-check" style="display:none">
+    Checking picture...
+  </p>
+  <p class="file-url-error" style="display:none;color:red;font-weight:bold">
+
+  </p>
+  <p class="buttons" style="display:none">
+    <button type="button" name="confirm" class="btn btn-primary">Confirm</button>
+    <button type="button" name="cancel" class="btn">Cancel</button>
+  </p>
+
+
+</div>
+
+ <fieldset>
+
+<div class="control-group ">
+<label for="id_text" class="control-label">Question:</label>
+<div class="controls">
+<input class="span5" id="id_text" maxlength="200" name="text" size="200" title="Make sure the question ends with a ?" type="text">
+
+</div>
+</div>
+
+<div class="control-group ">
+<label for="id_correct" class="control-label">Correct answer:</label>
+<div class="controls">
+<input id="id_correct" maxlength="100" name="correct" title="Make it reasonably short and easy to type" type="text" value="" />
+
+</div>
+</div>
+
+<div class="control-group ">
+<label for="alternatives" class="control-label">Incorrect alternatives:</label>
+<div class="controls">
+<input id="alternatives_0" name="alternatives" title="" value="" />
+<br/>
+<input id="alternatives_1" name="alternatives" value="" />
+<br/>
+<input id="alternatives_2" name="alternatives" value="" />
+<br/>
+
+</div>
+</div>
+
+<div class="control-group ">
+<label for="points_value" class="control-label">Difficulty:</label>
+<div class="controls">
+<select id="points_value" name="points_value" title="">
+<option value="1">1 (easy)</option>
+<option value="2">2</option>
+<option value="3">3 (average)</option>
+<option value="4">4</option>
+<option value="5">5 (hard)</option>
+</select>
+
+</div>
+</div>
+
+<div class="control-group ">
+<label for="category" class="control-label">Category:</label>
+<div class="controls">
+<select id="id_category" name="category">
+</select>
+</div>
+</div>
+
+
+<div class="control-group ">
+<label for="didyouknow" class="control-label">Did you know...</label>
+<div class="controls">
+<textarea class="span5" id="didyouknow" name="didyouknow" title="Some cute little extra fact that might brighten your day"></textarea>
+
+</div>
+</div>
+
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Send in question</button>
+        <button type="reset" class="btn">Cancel</button>
+      </div>
+
+</fieldset>
+</form>

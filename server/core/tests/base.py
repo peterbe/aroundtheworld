@@ -62,6 +62,7 @@ class BaseHTTPTestCase(BaseAsyncTestCase, HTTPClientMixin):
         self.redis.flushall()
 
     def get_app(self):
+        # XXX should this be memoized???
         return app.Application(database_name='test',
                                optimize_static_content=False)
 

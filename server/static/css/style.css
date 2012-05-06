@@ -54,8 +54,8 @@ html, body {
   right:0;
   background-color:#fff;
   z-index:2;
-  border-left:1px solid #ccc;
-  border-bottom:1px solid #ccc;
+  border-left:1px solid #999;
+  border-bottom:1px solid #999;
   -webkit-border-bottom-left-radius: 6px;
      -moz-border-bottom-left-radius: 6px;
           border-bottom-left-radius: 6px;
@@ -106,8 +106,6 @@ html, body {
 .overlay {
   display:none;
   opacity: 0.95;
-  /*font-family: 'Gochi Hand', cursive;*/
-  /*font-family: Schoolbell, cursive;*/
   position: absolute;
   right:10%;
   left:10%;

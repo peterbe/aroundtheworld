@@ -1225,3 +1225,23 @@ class HandlersTestCase(BaseHTTPTestCase):
         # lastly, there should just be one user left
         self.assertEqual(self.db.User.find().count(), 1)
         self.assertEqual(self.db.UserSettings.find().count(), 1)
+
+    def xxxx_test_question_file_url_checker(self):
+        self._login()
+        here = os.path.dirname(__file__)
+        image_file_path = os.path.join(here, 'image.png')
+        app = self.get_app()
+        tmp_destination = os.path.join(app.settings['static_path'],
+                                       'images',
+                                       'upload-image.png')
+        with open(image_file_path, 'rb') as x:
+            with open(tmp_destination, 'wb') as y:
+                y.write(x.read())
+
+        try:
+            url = self.reverse_url('questionwriter_check')
+            file_url = self.get_url('/static/images/upload-image.png')
+            response = self.client.post(url, {'check_file_url': file_url})
+            assert response.code == 200
+        finally:
+            os.remove(tmp_destination)

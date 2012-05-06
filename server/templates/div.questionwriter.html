@@ -1,0 +1,24 @@
+<div id="questionwriter" class="overlay">
+  <h2>Question Writer</h2>
+
+
+<ul class="nav nav-tabs">
+  <li class="active"><a href="#tab-form" data-toggle="tab">New question</a></li>
+  <li><a href="#tab-questions" data-toggle="tab">Submitted questions (<span class="count">0</span>)</a></li>
+</ul>
+
+<div class="tab-content">
+  <div class="tab-pane active form" id="tab-form">
+  {% include "div._questionwriter.form.html" %}
+  </div>
+  <div class="tab-pane questions" id="tab-questions">
+  {% include "div._questionwriter.questions.html" %}
+  {% include "div._questionwriter.question.html" %}
+  </div>
+</div>
+
+<p class="exit">
+<a href="#city" class="overlay-changer">Go back to the city</a>
+</p>
+
+</div>

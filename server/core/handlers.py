@@ -5,12 +5,15 @@ import random
 import os
 import logging
 import traceback
+import mimetypes
 from collections import defaultdict
 from cStringIO import StringIO
 from pprint import pprint
+from PIL import Image
 import tornado.auth
 import tornado.web
 import tornado.gen
+import tornado.httpclient
 import markdown
 from tornado.web import HTTPError
 from tornado_utils.routes import route
@@ -1914,6 +1917,7 @@ class AnonymousAuthHandler(BaseAuthHandler):
 
 @route('/auth/google/', name='auth_google')
 class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
+
     @tornado.web.asynchronous
     def get(self):
         if self.get_argument("openid.mode", None):
@@ -2052,6 +2056,259 @@ class FeedbackHandler(AuthenticatedBaseHandler):
         feedback.save()
 
         self.write_json({'ok': True})
+
+@route('/questionwriter.json', name='questionwriter')
+class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+
+    # how many coins do you earn per play
+    COINS_EARNING_VALUE = 1
+
+    def get(self):
+        data = {}
+        categories = []
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+
+        if self.get_argument('question_id', None):
+            question = self._get_question(self.get_argument('question_id'),
+                                          user, current_location)
+            data['text'] = question['text']
+            data['correct'] = question['correct']
+            data['alternatives'] = question['alternatives']
+            if data['correct'] in data['alternatives']:
+                data['alternatives'].remove(data['correct'])
+            if question['published']:
+                data['earned'] = self._get_earned(question)
+            else:
+                data['earned'] = None
+            data['points_value'] = question['points_value']
+            if data['points_value'] == 1:
+                data['points_value'] = '%s (easy)' % data['points_value'];
+            elif data['points_value'] == 3:
+                data['points_value'] = '%s (medium)' % data['points_value'];
+            elif data['points_value'] == 5:
+                data['points_value'] = '%s (hard)' % data['points_value'];
+            category, = self.db.Category.find({'_id': question['category']})
+            data['category'] = category['name']
+            data['didyouknow'] = question['didyouknow']
+
+            if question.has_picture():
+                picture = question.get_picture()
+                uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+
+                url = self.static_url(uri.replace('/static/', ''))
+                data['picture'] = {
+                  'url': url,
+                  'width': width,
+                  'height': height,
+                }
+
+            self.write(data)
+            return
+
+        for each in (self.db.Question
+                     .find({'location': current_location['_id']})
+                     .distinct('category')):
+            category, = self.db.Category.find({'_id': each})
+            categories.append({
+              'value': str(category['_id']),
+              'label': category['name']
+            })
+        data['categories'] = categories
+        data['filepicker_key'] = 'KqEkAS7kSbWDbB_lUozq'
+        data['questions'] = self._get_questions(user, current_location)
+        self.write(data)
+
+    def _get_question(self, question_id, user, current_location):
+        filter_ = {'_id': ObjectId(question_id),
+                   'author': user['_id'],
+                   'location': current_location['_id']}
+        question, = self.db.Question.find(filter_)
+        return question
+
+    def _get_questions(self, user, location):
+        filter_ = {'author': user['_id'],
+                   'location': location['_id']}
+        questions = []
+        _categories = {}
+        for each in self.db.Question.find(filter_).sort('add_date', -1):
+            if each['category'] not in _categories:
+                category, = self.db.Category.find({'_id': each['category']})
+                _categories[each['category']] = category['name']
+            question = {
+              'id': str(each['_id']),
+              'text': each['text'],
+              'published': each['published'],
+              'earned': 0,
+              'category': _categories[each['category']],
+            }
+            if each['published']:
+                question['earned'] = self._get_earned(each)
+            questions.append(question)
+        return questions
+
+    def _get_earned(self, question):
+        played = (self.db.SessionAnswer
+                  .find({'question': question['_id']})
+                  .count())
+        return self.COINS_EARNING_VALUE * played
+
+    def post(self):
+        current_user = self.get_current_user()
+        current_location = self.get_current_location(current_user)
+
+        errors = {}
+        text = self.get_argument('text', '').strip()
+        if not text:
+            errors['text'] = "Empty"
+        elif not text[-1] == '?':
+            errors['text'] = "Must be a question"
+        correct = self.get_argument('correct', '').strip()
+        if not correct:
+            errors['correct'] = "Empty"
+        alternatives = [x.strip() for x in
+                        self.get_argument('alternatives', '').splitlines()
+                        if x.strip()]
+        if not alternatives:
+            errors['alternatives'] = 'Empty'
+
+        if errors:
+            self.write(dict(errors=errors))
+            return
+
+        didyouknow = self.get_argument('didyouknow', '').strip()
+        category_id = self.get_argument('category')
+        category, = self.db.Category.find({'_id': ObjectId(category_id)})
+        points_value = int(self.get_argument('points_value'))
+        assert points_value >= 1
+        assert points_value <= Question.HIGHEST_POINTS_VALUE
+
+        if self.get_argument('file_url', None):
+            file_url = self.get_argument('file_url')
+            assert os.path.isfile(file_url)
+        else:
+            file_url = None
+
+        question = self.db.Question()
+        question['text'] = text
+        question['correct'] = correct
+        question['alternatives'] = [correct] + alternatives
+        question['author'] = current_user['_id']
+        question['seconds'] = 10
+        question['location'] = current_location['_id']
+        question['category'] = category['_id']
+        question['published'] = False
+        question['points_value'] = points_value
+        question['didyouknow'] = didyouknow
+        question.save()
+
+        if file_url:
+            picture = self.db.QuestionPicture()
+            picture['question'] = question['_id']
+            picture.save()
+            type_, __ = mimetypes.guess_type(os.path.basename(file_url))
+            with open(file_url, 'rb') as source:
+                with picture.fs.new_file('original') as f:
+                    f.content_type = type_
+                    f.write(source.read())
+
+        try:
+            self._notify_about_new_question(question, current_user, current_location)
+        except Exception:
+            logging.error("Failed to notify about new question",
+                          exc_info=True)
+
+        self.write(dict(question_id=str(question['_id'])))
+
+    def _notify_about_new_question(self, question, user, location):
+        out = StringIO()
+        subject = "New question by %s in %s" % (user['username'], location)
+        url = self.reverse_url('admin_question', question['_id'])
+
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        url = base_url + url
+        out.write('Question:\n')
+        out.write('%s\n\n' % question['text'])
+        out.write('URL:\n')
+        out.write('%s\n\n' % url)
+
+        try:
+            body = out.getvalue()
+            send_email(self.application.settings['email_backend'],
+                   subject,
+                   body,
+                   self.application.settings['admin_emails'][0],
+                   self.application.settings['admin_emails'],
+                   )
+        except:
+            logging.error("Failed to send email",
+                          exc_info=True)
+
+
+@route('/questionwriter-check.json', name='questionwriter_check')
+class QuestionFileURLCheckHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+
+
+    @tornado.web.asynchronous
+    @tornado.gen.engine
+    def post(self):
+        file_url = self.get_argument('check_file_url')
+        http_client = tornado.httpclient.AsyncHTTPClient()
+        response = yield tornado.gen.Task(http_client.fetch, file_url)
+        if response.code == 200:
+            effective_url = response.effective_url
+            ext = effective_url.split('.')[-1]
+            file_path = os.path.join(self.get_save_path(), str(uuid.uuid4()))
+            with open(file_path, 'wb') as f:
+                f.write(response.body)
+
+            try:
+                image = Image.open(file_path)
+
+                if image.format == 'PNG':
+                    new_file_path = file_path + '.png'
+                    os.rename(file_path, new_file_path)
+                elif image.format == 'JPEG':
+                    new_file_path = file_path + '.jpg'
+                    os.rename(file_path, new_file_path)
+                else:
+                    new_file_path = None
+
+                if new_file_path:
+                    #uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+                    static_path = self.static_url(new_file_path
+                      .replace(self.application.settings['static_path'] + '/', ''))
+                    print "FINALLY", static_path
+                    self.write({'url': new_file_path, 'static_url': static_path})
+                else:
+                    self.write({'error': 'Picture has to be a .png or .jpg'})
+
+            except IOError:
+                self.write({'error': 'File upload was not a picture'})
+
+        else:
+            self.write({'error': 'Could not make a thumbnail out of it'})
+
+        self.finish()
+
+    def get_save_path(self):
+        static_path = self.application.settings['static_path']
+        f = os.path.join(static_path, 'tmp_uploads')
+        if not os.path.isdir(f):
+            os.mkdir(f)
+        today = datetime.datetime.utcnow()
+        f = os.path.join(f, today.strftime('%Y'))
+        if not os.path.isdir(f):
+            os.mkdir(f)
+        f = os.path.join(f, today.strftime('%m'))
+        if not os.path.isdir(f):
+            os.mkdir(f)
+        f = os.path.join(f, today.strftime('%d'))
+        if not os.path.isdir(f):
+            os.mkdir(f)
+
+        return f
+
 
 
 @route('/errors/$', name='errors')
