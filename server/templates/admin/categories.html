@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <p style="float:right">
+    {% if airports == 'all' %}
+    <a href="?airports=available">Available airports</a>
+    {% else %}
+    <a href="?airports=all">All airports</a>
+    {% end %}
+  </p>
   <h2>All categories</h2>
   <table class="table">
     <thead>
@@ -22,7 +29,7 @@
     <tbody>
       {% for category in categories %}
       <tr>
-        <td>{{ category['name'] }}</td>
+        <td><a href="{{ reverse_url('admin_category', category['_id']) }}">{{ category['name'] }}</a></td>
         {% for location in locations %}
         <td>
         <a href="{{ reverse_url('admin_questions') }}?locations={{ location['code'] }}&amp;categories={{ category['name'].replace(' ', '+') }}">{{ counts[category['name']].get(location['code'], 0) }}</a>

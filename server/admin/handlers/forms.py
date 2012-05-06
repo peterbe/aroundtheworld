@@ -92,15 +92,20 @@ class CategoryForm(BaseForm):
                       'size': 100,
                       'class': 'xlarge',
                     }))
+    manmade = BooleanField("Man made", description="Manually created")
 
     def __init__(self, *args, **kwargs):
         super(CategoryForm, self).__init__(*args, **kwargs)
         self.categories = kwargs['categories']
+        self.category = kwargs.get('category', None)
 
     def validate(self, *args, **kwargs):
         success = super(CategoryForm, self).validate(*args, **kwargs)
         if success:
             names = [x['name'].lower() for x in self.categories]
+            if self.category:
+                if self.category['name'].lower() in names:
+                    names.remove(self.category['name'].lower())
             if self.data['name'].lower() in names:
                 self._fields['name'].errors.append(
                   "Category already exists"

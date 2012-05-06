@@ -544,9 +544,14 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
         categories = []
         locations = []
         location_counts = {}
-        for location in (self.db.Location
-                         .find({'available': True})
-                         .sort('code')):
+        airports = self.get_argument('airports', 'available')
+        data['airports'] = airports
+        if airports == 'all':
+            _locations = self.db.Location.find({'airport_name': {'$ne': None}})
+        else:
+            _locations = self.db.Location.find({'available': True})
+
+        for location in _locations.sort('code'):
             locations.append(location)
             location_counts[location['code']] = 0
 
@@ -568,3 +573,53 @@ class CategoriesAdminHandler(BaseQuestionAdminHandler):
         data['location_counts'] = location_counts
         data['min_no_questions'] = QuizzingHandler.NO_QUESTIONS
         self.render('admin/categories.html', **data)
+
+
+@route('/admin/questions/categories/(\w{24})/', name='admin_category')
+class CategoryAdminHandler(BaseQuestionAdminHandler):
+
+    def can_delete(self, category):
+        c = self.db.Question.find({'category': category['_id']}).count()
+        return not c
+
+    def get(self, _id, form=None):
+        data = {}
+        data['category'] = self.db.Category.find_one({'_id': ObjectId(_id)})
+        if not data['category']:
+            raise HTTPError(404)
+        if form is None:
+            initial = dict(data['category'])
+            form = CategoryForm(categories=self.categories, **initial)
+        data['form'] = form
+        data['can_delete'] = self.can_delete(data['category'])
+        self.render('admin/category.html', **data)
+
+    def post(self, _id):
+        data = {}
+        category = self.db.Category.find_one({'_id': ObjectId(_id)})
+        data['category'] = category
+        if not data['category']:
+            raise HTTPError(404)
+        post_data = djangolike_request_dict(self.request.arguments)
+        form = CategoryForm(post_data,
+                            categories=self.categories,
+                            category=data['category'])
+        if form.validate():
+            category['name'] = form.name.data
+            category['manmade'] = form.manmade.data
+            category.save()
+            self.redirect(self.reverse_url('admin_categories'))
+        else:
+            self.get(_id, form=form)
+
+
+@route('/admin/questions/categories/(\w{24})/delete', name='admin_delete_category')
+class DeleteCategoryAdminHandler(CategoryAdminHandler):
+
+    def post(self, _id):
+        category = self.db.Category.find_one({'_id': ObjectId(_id)})
+        assert category
+        assert self.can_delete(category)
+        category.delete()
+
+        self.redirect(self.reverse_url('admin_categories'))
