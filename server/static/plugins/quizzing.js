@@ -9,6 +9,7 @@ var Quiz = (function() {
   //var _next_is_last = false;
   var _next_is_first = true;
   var t0, t1;
+  var _once = false;
 
   function _show_no_questions(total, number) {
     $('.no-questions', container).text(number + ' of ' + total);
@@ -66,6 +67,7 @@ var Quiz = (function() {
       $('.pre-finish:visible', container).hide();
       $('.post-finish:hidden', container).show();
       State.show_coin_change(response.results.coins, true);
+      State.update();
 
       var _total_points = 0;
       var tbody = $('.results tbody', container);
@@ -128,26 +130,38 @@ var Quiz = (function() {
 
   }
 
+  function setup_once() {
+    $('a.next-question', container).click(function() {
+      Quiz.rush_next_question();
+      return false;
+    });
+
+    // set up the necessary keyboard shortcuts
+    jwerty.key('n', function() {
+      $('a.next-question:visible', container).click();
+    });
+
+  }
+
   return {
      setup: function(category) {
-       $('a.next-question', container)
-         .click(function() {
-           Quiz.rush_next_question();
-           return false;
-         });
-       jwerty.key('n', function() {
-         $('a.next-question:visible', container).click();
-       });
+       if (!_once) {
+         setup_once();
+         _once = true;
+       }
        Utils.update_title();
        $('a.restart', container).attr('href', '#quizzing,' + category.replace(' ', '+'));
      },
      reset: function() {
        $('a.next-question', container)
-         .off('click')
          .text('Next question');
        if (timer) {
          clearTimeout(timer);
        }
+
+       // reset the points-total
+       $('.play .points-total', container).text('0');
+
      },
      answer: function (value) {
        t1 = new Date();

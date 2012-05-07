@@ -607,6 +607,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['time_bonus'] = 1 + time_bonus_p
             data['points_value'] = question.get('points_value', 1)
             data['points'] = data['time_bonus'] * data['points_value'] * data['correct']
+            #data['points'] = float('%.1f' % data['points'])
+            data['points'] = round(data['points'], 1)
             assert isinstance(data['points_value'], int)
 
             answer_obj['time'] = time_
@@ -890,6 +892,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['ambassadors'] = self.get_ambassadors_html(location)
         elif get == 'jobs':
             data['jobs'] = self.get_available_jobs(user, location)
+            data['day_number'] = self.get_day_number(user, location)
         elif get == 'intro':
             data['intro'] = self.get_intro_html(location)
         elif get == 'pictures':
@@ -909,6 +912,18 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['count_messages'] = self.get_messages_count(location)
 
         self.write(data)
+
+    def get_day_number(self, user, location):
+        day = 1
+        for job in (self.db.Job
+                    .find({'user': user['_id']},
+                          ('location', 'add_date', '_id'))
+                    .sort('add_date', -1)):
+            if job['location'] != location['_id']:
+                break
+            day += 1
+        return day
+
 
     def get_pictures_count(self, location):
         search = {'location': location['_id'], 'published': True}

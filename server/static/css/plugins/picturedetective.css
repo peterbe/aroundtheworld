@@ -19,6 +19,25 @@
     font-weight: bold;
 }
 
+#picturedetective .finish {
+    width: 50%;
+    box-shadow: 0 0 10px #ccc;
+    border-radius:4px;
+    margin:20px;
+    padding:20px;
+    padding-left: 75px;
+}
+
+#picturedetective .finish-success {
+    background: white url(../../images/correct.png) 10px 10px no-repeat;
+    border: 1px solid green;
+}
+
+#picturedetective .finish-timedout {
+    background: white url(../../images/wrong.png) 10px 10px no-repeat;
+    border:1px solid red;
+}
+
 
 @media (max-width: 480px) {
     #picturedetective .intro-text {

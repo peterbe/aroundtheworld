@@ -9,7 +9,6 @@ var Flying = (function() {
        }
        //sounds.preload('jet-taking-off');
        $.getJSON('/fly.json', {route: route}, function(response) {
-         L('RESPONSE', response);
          var from = {lat: response.from.lat, lng: response.from.lng};
          from = new google.maps.LatLng(from.lat, from.lng);
          var to = {lat: response.to.lat, lng: response.to.lng};
@@ -21,9 +20,7 @@ var Flying = (function() {
            map.setCenter(from);
          }
          FlightZoom.fit(map, to, function(bounds) {
-           L('FITTED');
            latlngcontrol.animate(from, to, miles, function() {
-             L('ANIMATED');
              State.show_miles_change(miles, true);
              if (map.getZoom() < 15) {
                map.setCenter(to);

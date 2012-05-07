@@ -5,7 +5,8 @@ var City = (function() {
 
   function _load_jobs(callback) {
     $.getJSON(URL, {get: 'jobs'}, function(response) {
-    $('ul.jobs li', container).remove();
+      $('.day-number', container).text(response.day_number);
+      $('ul.jobs li', container).remove();
       var c = $('ul.jobs', container);
       $.each(response.jobs, function(i, each) {
         var hash = '#' + each.type;
@@ -13,7 +14,7 @@ var City = (function() {
           hash += ',' + each.category.replace(' ','+');
         }
         $('<a>')
-        .attr('href', hash)
+          .attr('href', hash)
             .text(each.description)
               .click(function() {
                 Loader.load_hash($(this).attr('href'));

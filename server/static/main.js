@@ -52,10 +52,25 @@ var State = (function() {
     var e = $('#usernav ' + selector + ' a');
     var b = parseInt(e.text().replace(/[^\d]/g, ''));
     if (animated) {
+      var c = 0, incr = 1;
+      var deltainterval = setInterval(function() {
+        if (c >= delta) {
+          clearInterval(deltainterval);
+          // make sure it really is right
+          e.text(Utils.formatCost(b + delta) + ' ' + suffix);
+        } else {
+          e.text(Utils.formatCost(b + c) + ' ' + suffix);
+        }
+        c += incr;
+        incr++;
+
+      }, 50);
+      /*
       e.fadeTo(400, 0.1, function() {
         e.text(Utils.formatCost(b + delta) + ' ' + suffix)
-          .fadeTo(700, 1.0);
+          .fadeTo(800, 1.0);
       });
+       */
     } else {
       e.text(Utils.formatCost(b + delta) + ' ' + suffix);
     }

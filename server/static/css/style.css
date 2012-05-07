@@ -84,7 +84,7 @@ html, body {
 
 .overlay {
   display:none;
-  opacity: 0.9;
+  opacity: 0.95;
   /*font-family: 'Gochi Hand', cursive;*/
   /*font-family: Schoolbell, cursive;*/
   position:absolute;
@@ -96,6 +96,7 @@ html, body {
   min-height: 300px;
   border-radius: 9px;
   box-shadow: 0 0 50px #ccc;
+  border: 1px solid #666;
   }
   .overlay .exit {
     margin-top: 30px;

@@ -9,6 +9,36 @@ var PictureDetective = (function() {
   var _timer;
   var _pause_timer;
   var _submitted = false;
+  var _once = false;
+
+  function setup_once() {
+    // set up the form submission
+    $('form', container).on('submit', function() {
+      clearTimeout(_timer);
+      clearTimeout(_pause_timer);  // paranoia
+      var answer = $.trim($('input[name="answer"]', container).val());
+      if (answer.length) {
+        PictureDetective.submit(false, answer);
+      } else {
+        if (_on_index) {
+          PictureDetective.carryon();
+        } else {
+          PictureDetective.submit(true);
+        }
+      }
+      return false;
+    });
+
+    $('.begin a', container).click(function() {
+      PictureDetective.begin_load();
+      return false;
+    });
+
+    $('input[name="continue"]', container).on('click', function() {
+      PictureDetective.carryon();
+    });
+
+  }
 
   return {
      begin_load: function() {
@@ -28,9 +58,14 @@ var PictureDetective = (function() {
          $('.question .questiontext', container).text(response.question);
          var _was_first = true;
          var _index;
+
+         // reset bar
+         $('.bar', container).css('width', '0%');
+
          $.each(response.pictures, function(i) {
            _index = 'picture-index-' + i;
            _indexes.push(_index);
+
            var image = $('<img>')
              .addClass('thumbnail').addClass('alternative')
                .attr('id', _index)
@@ -55,6 +90,8 @@ var PictureDetective = (function() {
        });
      },
     begin: function() {
+      $('.inpause', container).hide();
+      $('.incorrect', container).hide();
       $('.loading', container).hide();
       $('.question', container).fadeIn(700);
       $('.timeleft', container).text(_indexes.length - 1);
@@ -73,22 +110,6 @@ var PictureDetective = (function() {
         }
       });
 
-      $('form', container).off('submit').on('submit', function() {
-        clearTimeout(_timer);
-        clearTimeout(_pause_timer);  // paranoia
-        var answer = $.trim($('input[name="answer"]', container).val());
-        if (answer.length) {
-          PictureDetective.submit(false, answer);
-        } else {
-          if (_on_index) {
-            PictureDetective.carryon();
-          } else {
-            PictureDetective.submit(true);
-          }
-        }
-        return false;
-      });
-
       // perhaps this can wait
       $('img.alternative')
         .on('click', function() {
@@ -104,7 +125,7 @@ var PictureDetective = (function() {
         clearTimeout(_pause_timer);
         _pause_timer = setTimeout(function() {
           PictureDetective.carryon();
-        }, 5 * 1000);
+        }, 15 * 1000);
       });
 
       clearTimeout(_timer);
@@ -114,9 +135,6 @@ var PictureDetective = (function() {
       $('input[name="submit"]', container).show();
       $('input[name="continue"]', container).show();
 
-      $('input[name="continue"]', container).off('click').on('click', function() {
-        PictureDetective.carryon();
-      });
     },
     carryon: function() {
       _on_index--;
@@ -179,6 +197,7 @@ var PictureDetective = (function() {
         $('.total-points', c).text(Utils.formatPoints(result.points, true));
         $('.coins', c).text(Utils.formatCost(result.coins, true));
         State.show_coin_change(result.coins, true);
+        State.update();
 
       } else {
         c = $('.finish-timedout', container);
@@ -198,27 +217,28 @@ var PictureDetective = (function() {
       } else {
         $('.didyouknow', c).hide();
       }
+
     },
     setup: function() {
+      if (!_once) {
+        setup_once();
+        _once = true;
+      }
       _submitted = false;
       _submitted = false;
       _indexes = [];
       _can_begin = false;
       $('img.alternative', container).remove();
-      $('.begin a', container).off('click');
-      $('input[name="continue"]', container).off('click');
       $('img.playbutton').off('click');
       $('.question', container).hide();
       $('.intro', container).show();
       $('.pre-finish', container).hide();
-      $('.begin a', container).click(function() {
-        PictureDetective.begin_load();
-        return false;
-      });
       Utils.update_title();
     },
     teardown: function() {
       $('.finish:visible', container).hide();
+      clearTimeout(_timer);
+      clearTimeout(_pause_timer);
     }
   }
 })();
