@@ -346,3 +346,95 @@ class GitLogHandler(AuthenticatedBaseHandler):
 
         self.ioloop.remove_handler(fd)
         self.finish()
+
+
+@route('/admin/jobs/', name='admin_jobs')
+class JobsAdminHandler(AuthenticatedBaseHandler):
+
+    LIMIT = 20
+
+    def get(self):
+        data = {}
+        filter_ = {}
+        data['all_locations'] = list(
+          self.db.Location
+          .find({'airport_name': {'$ne': None}})
+          .sort('code')
+        )
+        data['all_categories'] = list(
+          self.db.Category
+          .find()
+          .sort('name')
+        )
+        data['locations'] = self.get_arguments('locations', [])
+        if data['locations']:
+            filter_['location'] = {
+              '$in': [x['_id'] for x in
+                       self.db.Location
+                        .find({'code': {'$in': data['locations']}})]
+            }
+
+        data['categories'] = self.get_arguments('categories', [])
+        if data['categories']:
+            filter_['category'] = {
+              '$in': [x['_id'] for x in
+                       self.db.Category
+                        .find({'name': {'$in': data['categories']}})]
+            }
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+
+        jobs = []
+        _locations = dict([(x['_id'], x) for x in data['all_locations']])
+        _categories = dict([(x['_id'], x) for x in data['all_categories']])
+        _users = {}
+        data['count'] = self.db.Job.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        data['filtering'] = bool(filter_)
+
+        coins_all = []
+        coins_categories = defaultdict(list)
+        coins_locations = defaultdict(list)
+
+        for each in (self.db.Job
+                     .find(filter_)
+                     .sort('add_date', -1)  # newest first
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['user'] and each['user'] not in _users:
+                _users[each['user']] = \
+                  self.db.User.find_one({'_id': each['user']})
+            jobs.append((
+              each,
+              _users[each['user']],
+              _categories[each['category']],
+              _locations[each['location']],
+            ))
+
+            category = _categories[each['category']]['name']
+            coins_all.append(each['coins'])
+            coins_categories[category].append(each['coins'])
+            location = _locations[each['location']]['code']
+            coins_locations[location].append(each['coins'])
+
+        def median(seq):
+            seq.sort()
+            return seq[len(seq) / 2]
+
+        data['coins_median'] = median(coins_all)
+        data['coins_total'] = sum(coins_all)
+
+        data['coins_categories'] = [(k, median(v), sum(v))
+                                    for (k, v) in coins_categories.items()]
+        data['coins_locations'] = [(k, median(v), sum(v))
+                                    for (k, v) in coins_locations.items()]
+
+        data['jobs'] = jobs
+        data['filtering'] = bool(filter_)
+        self.render('admin/jobs.html', **data)
