@@ -5,6 +5,7 @@ var Login = (function() {
     init: function() {
       if (STATE.user && STATE.user.anonymous) {
         $('.right:visible', container).hide();
+        $('.hint:hidden', container).show();
       } else {
         $('.right:hidden', container).show();
       }

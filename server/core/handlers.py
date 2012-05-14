@@ -1737,7 +1737,7 @@ class BaseAuthHandler(BaseHandler):
             logging.error("Unable to notify about new user", exc_info=True)
 
     def _notify_about_new_user(self, user, extra_message=None):
-        subject = "New user!"
+        subject = "[Around the world] New user!"
         email_body = "%s %s\n" % (user.first_name, user.last_name)
         email_body += "%s\n" % user.email
         if extra_message:
@@ -1755,16 +1755,17 @@ class BaseAuthHandler(BaseHandler):
             return s.lower().replace(' ', '').replace('-', '')
         return '%s%s' % (simple(first_name), simple(last_name))
 
-    def post_login_successful(self, user):
+    def post_login_successful(self, user, previous_user=None):
         """executed by the Google, Twitter and Facebook
         authentication handlers"""
         try:
-            self._post_login_successful(user)
+            self._post_login_successful(user, previous_user=previous_user)
         except:  # pragma: no cover
+            raise
             logging.error("Failed to post login successful user",
                           exc_info=True)
 
-    def _post_login_successful(self, user):
+    def _post_login_successful(self, user, previous_user=None):
         if user['email']:
             regex = re.compile(re.escape(user['email']), re.I)
             invitation = (self.db.Invitation
@@ -1794,6 +1795,52 @@ class BaseAuthHandler(BaseHandler):
                 job.save()
 
                 self.email_inviter(inviter, invitation, user)
+
+            if previous_user and previous_user['anonymous'] and not user['anonymous']:
+                self._transferUser(previous_user, user)
+
+    def _transferUser(self, old, new):
+        models = (
+          self.db.Flight,
+          self.db.Transaction,
+          self.db.Job,
+          (self.db.Question, 'author'),
+          self.db.QuestionSession,
+          self.db.PinpointSession,
+          self.db.Feedback,
+          self.db.Invitation,
+          self.db.LocationMessage,
+        )
+
+        for each in models:
+            if isinstance(each, tuple):
+                model, key = each
+            else:
+                model, key = each, 'user'
+
+            for each in model.find({key: old['_id']}):
+                each[key] = new['_id']
+                each.save()
+
+        # transfer or merge UserSettings
+        new_usersettings, = self.db.UserSettings.find({'user': new['_id']})
+        old_usersettings, = self.db.UserSettings.find({'user': old['_id']})
+        fmt = '%Y%m%d%H%M%S'
+        if (new_usersettings['add_date'].strftime(fmt) ==
+            new_usersettings['add_date'].strftime(fmt) and
+            new_usersettings['coins_total'] == 0):
+            # it's new, then transfer
+            new_usersettings.delete()
+            old_usersettings['user'] = new['_id']
+            old_usersettings['was_anonymous'] = True
+            old_usersettings.save()
+        else:
+            new_usersettings['coins_total'] += old_usersettings['coins_total']
+            new_usersettings['miles_total'] += old_usersettings['miles_total']
+            old_usersettings.delete()
+
+        old.delete()
+
 
     def email_inviter(self, inviter, invitation, user):
         if not inviter['email']:
@@ -1850,7 +1897,8 @@ class AnonymousAuthHandler(BaseAuthHandler):
             user_settings = self.create_user_settings(user)
         user_settings.save()
 
-        self.post_login_successful(user)
+        old_user = self.get_current_user()
+        self.post_login_successful(user, previous_user=old_user)
         self.set_secure_cookie("user", str(user._id), expires_days=1)
         self.redirect(self.get_next_url())
 
@@ -1926,7 +1974,8 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             user_settings.email_verified = user.email
         user_settings.save()
 
-        self.post_login_successful(user)
+        old_user = self.get_current_user()
+        self.post_login_successful(user, previous_user=old_user)
         self.set_secure_cookie("user", str(user._id), expires_days=100)
         self.redirect(self.get_next_url())
 

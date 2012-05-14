@@ -83,31 +83,9 @@ class HandlersTestCase(BaseHTTPTestCase):
 
             user['current_location'] = location
             user.save()
-        user_settings = self.db.UserSettings.find_one({'user': user['_id']})
-
+        assert self.db.UserSettings.find_one({'user': user['_id']})
         return user
 
-        #if client is None:
-        #    client = self.client
-        if not user:
-            data = dict(username=username,
-                        email=email,
-                        first_name="Peter",
-                        last_name="Bengtsson")
-            user = self.db.User()
-            user['username'] = unicode(username)
-            user['email'] = unicode(email)
-            user['first_name'] = u"Peter"
-            user['last_name'] = u"Bengtsson"
-            if location:
-                if not isinstance(location, ObjectId):
-                    location = location['_id']
-                user['current_location'] = location
-            user.save()
-
-        client.cookies['user'] = \
-          self.create_signed_value('user', str(user._id))
-        return user
 
     def _create_question(self, category, location):
         q = self.db.Question()
@@ -1058,3 +1036,192 @@ class HandlersTestCase(BaseHTTPTestCase):
         # last but not least, try to fetch it again
         result = self.get_struct(url)
         self.assertEqual(result['error'], 'NOQUESTIONS')
+
+    def _set_user_in_models(self, user):
+
+        loc = self.db.Location()
+        loc['code'] = u'NWK'
+        loc['airport_name'] = u'Newark'
+        loc['city'] = u'Jersy'
+        loc['country'] = u'United States'
+        loc['locality'] = u'New Jersy'
+        loc['available'] = True
+        loc['lat'] = 2.0
+        loc['lng'] = -3.0
+        loc.save()
+
+        flight = self.db.Flight()
+        flight['user'] = user['_id']
+        flight['from'] = self.newyork['_id']
+        flight['to'] = loc['_id']
+        flight['miles'] = 100.0
+        flight.save()
+
+        trans = self.db.Transaction()
+        trans['user'] = user['_id']
+        trans['cost'] = 100
+        trans['flight'] = flight['_id']
+        trans.save()
+
+        category, = self.db.Category.find().limit(1)
+
+        job = self.db.Job()
+        job['user'] = user['_id']
+        job['coins'] = 80
+        job['category'] = category['_id']
+        job['location'] = loc['_id']
+        job.save()
+
+        q = self._create_question(category, loc)
+        q['author'] = user['_id']
+        q.save()
+
+        qs = self.db.QuestionSession()
+        qs['user'] = user['_id']
+        qs['location'] = loc['_id']
+        qs['category'] = category['_id']
+        qs['finish_date'] = datetime.datetime.utcnow()
+        qs.save()
+
+        sa = self.db.SessionAnswer()
+        sa['session'] = qs['_id']
+        sa['question'] = q['_id']
+        sa['answer'] = u'yes'
+        sa['correct'] = True
+        sa['time'] = 1.0
+        sa['points'] = 10.0
+        sa['timedout'] = False
+        sa.save()
+
+        ps = self.db.PinpointSession()
+        ps['center'] = loc['_id']
+        ps['user'] = user['_id']
+        ps['finish_date'] = datetime.datetime.utcnow()
+        ps.save()
+
+        pa = self.db.PinpointAnswer()
+        pa['session'] = ps['_id']
+        pa['location'] = loc['_id']
+        pa['answer'] = [5.0]
+        pa['time'] = 2.0
+        pa['points'] = 20.0
+        pa['miles'] = 10.0
+        pa['timedout'] = False
+        pa.save()
+
+        feedback = self.db.Feedback()
+        feedback['what'] = u'Bla'
+        feedback['comment'] = u'bla'
+        feedback['user'] = user['_id']
+        feedback['location'] = loc['_id']
+        feedback.save()
+
+        invitation = self.db.Invitation()
+        invitation['user'] = user['_id']
+        invitation['email'] = u'test@example.com'
+        invitation['message'] = u'Bla'
+        invitation.save()
+
+        locmessage = self.db.LocationMessage()
+        locmessage['user'] = user['_id']
+        locmessage['location'] = loc['_id']
+        locmessage['message'] = u'Bla'
+        locmessage['censored'] = False
+        locmessage.save()
+
+    def test_anonymous_to_real_user(self):
+        url = self.reverse_url('auth_anonymous')
+        response = self.client.get(url)
+        assert response.code == 302
+        user, = self.db.User.find()
+        assert user['anonymous']
+
+        # create a bunch of things where in the name of this user
+        user_settings, = self.db.UserSettings.find()
+        self._set_user_in_models(user)
+
+        old_id = user['_id']
+        user = self._login()
+        new_id = user['_id']
+        assert old_id != new_id
+
+        models = (
+          self.db.Flight,
+          self.db.Transaction,
+          self.db.Job,
+          (self.db.Question, 'author'),
+          self.db.QuestionSession,
+          self.db.PinpointSession,
+          self.db.Feedback,
+          self.db.Invitation,
+          self.db.LocationMessage,
+        )
+
+        for each in models:
+            if isinstance(each, tuple):
+                model, key = each
+            else:
+                model, key = each, 'user'
+            self.assertTrue(not model.find({key: old_id}).count(), model)
+            self.assertTrue(model.find({key: new_id}).count(), model)
+
+        user_settings, = self.db.UserSettings.find()
+        self.assertTrue(user_settings['was_anonymous'])
+
+        # lastly, there should just be one user left
+        self.assertEqual(self.db.User.find().count(), 1)
+        self.assertEqual(self.db.UserSettings.find().count(), 1)
+
+    def test_anonymous_to_real_user_with_past(self):
+        url = self.reverse_url('auth_anonymous')
+        response = self.client.get(url)
+        assert response.code == 302
+        user, = self.db.User.find()
+        assert user['anonymous']
+
+        # create a bunch of things where in the name of this user
+        user_settings, = self.db.UserSettings.find()
+        user_settings['coins_total'] = 50
+        user_settings['miles_total'] = 500.0
+        user_settings['kilometers'] = False
+        self._set_user_in_models(user)
+
+        peter = self.db.User()
+        peter['username'] = u'peterbe'
+        peter['email'] = u'peter@exmapl.ecom'
+        peter.save()
+        peter_settings = self.db.UserSettings()
+        peter_settings['user'] = peter['_id']
+        peter_settings['kilometers'] = True
+        peter_settings['coins_total'] = 100
+        peter_settings['miles_total'] = 1000.0
+        peter_settings.save()
+
+        self._set_user_in_models(peter)
+
+        old_id = user['_id']
+        # we can't use the regular self._login() because it won't go through
+        # the regular google login
+
+        user = self._login(username=peter['username'])
+        new_id = user['_id']
+        assert old_id != new_id
+
+        models = (
+          self.db.Flight,
+          self.db.Transaction,
+          self.db.Job,
+          (self.db.Question, 'author'),
+          self.db.QuestionSession,
+          self.db.PinpointSession,
+          self.db.Feedback,
+          self.db.Invitation,
+          self.db.LocationMessage,
+        )
+
+        peter_user_settings, = self.db.UserSettings.find({'user': peter['_id']})
+        #self.assertTrue(peter_user_settings['was_anonymous'])
+
+        # lastly, there should just be one user left
+        self.assertEqual(self.db.User.find().count(), 1)
+        self.assertEqual(self.db.UserSettings.find().count(), 1)
