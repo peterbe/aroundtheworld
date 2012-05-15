@@ -26,6 +26,27 @@ html, body {
   }
 }
 
+#onerror {
+  position: absolute;
+  opacity:1.0;
+  top: 0;
+  left: 40%;
+  width: 300px;
+  background-color:#fff;
+  z-index:3;
+  color: red;
+  text-align: center;
+  padding: 10px;
+  border-left:1px solid #333;
+  border-right:1px solid #333;
+  border-bottom:1px solid #333;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 0 30px #999;
+
+  }
+
+
 #usernav {
   position:fixed;
   opacity:0.9;
@@ -87,7 +108,7 @@ html, body {
   opacity: 0.95;
   /*font-family: 'Gochi Hand', cursive;*/
   /*font-family: Schoolbell, cursive;*/
-  position:absolute;
+  position: absolute;
   right:10%;
   left:10%;
   top:10%;

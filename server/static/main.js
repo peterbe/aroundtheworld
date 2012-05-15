@@ -211,6 +211,53 @@ var Utils = (function() {
   }
 })();
 
+var ErrorCatcher = (function() {
+  var _prev_onerror;
+
+  function show_onerror() {
+    $('#onerror').show();
+    $('a', '#onerror')
+      .attr('href', window.location.href)
+        .click(function() {
+          window.location.reload();
+          return false;
+        });
+  }
+
+  function post_error(data) {
+    $.post('/errors/', data);
+  }
+
+  return {
+     set_prev_onerror: function(func) {
+       _prev_onerror = func;
+     },
+     trigger: function(message, file, line) {
+       if (_prev_onerror) {
+         return _prev_onerror(message, file, line);
+       }
+       if (message == "TypeError: 'null' is not an object") {
+         // some strange Safari error I'm getting that always gets in the way
+         return;
+       }
+       show_onerror();
+       var data = {};
+       if (message) data.message = message;
+       if (file) data.file = file;
+       if (line) data.line = line;
+       data.url = window.location.href;
+       data.useragent = navigator.userAgent;
+       try {
+         var trace = printStackTrace();
+         data.trace = trace.join('\n');
+       } catch(e) {}
+       post_error(data);
+       return true;
+     }
+  };
+})();
+
+
 // some things can't wait for the map to load
 $(function() {
   // here 'STATE' is a inline defined variable.
@@ -219,7 +266,11 @@ $(function() {
   State.render(STATE);
 });
 
+
 mapInitialized(function(map) {
+
+  ErrorCatcher.set_prev_onerror(window.onerror);
+  window.onerror = ErrorCatcher.trigger;
 
   $('a.overlay-changer').click(function() {
     return Loader.load_hash($(this).attr('href'));

@@ -2054,6 +2054,37 @@ class FeedbackHandler(AuthenticatedBaseHandler):
         self.write_json({'ok': True})
 
 
+@route('/errors/$', name='errors')
+class ErrorsHandler(BaseHandler):
+
+    def post(self):
+        data = {}
+        for key in self.request.arguments:
+            data[key] = self.get_argument(key)
+
+        self.write('OK')
+
+        user = self.get_current_user()
+        for error_event in (self.db.ErrorEvent.find()
+                            .sort('add_date', -1)
+                            .limit(1)):
+            if (user and error_event['user'] == user['_id'] and
+                error_event['url'] == data.get('url') and
+                error_event['data'] == data):
+
+                error_event['count'] += 1
+                error_event.save()
+                return
+
+        error_event = self.db.ErrorEvent()
+        if user:
+            error_event['user'] = user['_id']
+        error_event['data'] = data
+        error_event['url'] = data.get('url')
+        error_event.save()
+        logging.warn("Saved ErrorEvent: %s", data)
+
+
 # this handler gets automatically appended last to all handlers inside app.py
 class PageNotFoundHandler(BaseHandler):
 

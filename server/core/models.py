@@ -510,3 +510,17 @@ class LocationMessage(BaseDocument):
     default_values = {
       'censored': False,
     }
+
+
+@register
+class ErrorEvent(BaseDocument):
+    __collection__ = 'error_events'
+    structure = {
+      'user': ObjectId,
+      'data': dict,
+      'url': unicode,
+      'count': int,
+    }
+    default_values = {
+      'count': 1
+    }
