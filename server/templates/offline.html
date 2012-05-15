@@ -13,14 +13,14 @@ body {
 }
 </style>
 <script src="{{ static_url('lib/jquery-1.7.2.min.js') }}"></script>
-<script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
-<script src="{{ static_url('lib/stacktrace-min-0.3.js') }}"></script>
+<script async src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
+<script async src="{{ static_url('lib/stacktrace-min-0.3.js') }}"></script>
 </head>
 <body>
 <div id="map_canvas"></div>
 {% include "_divs.html" %}
 
-<script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
+<script async type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
 {% include "_js_templates.html" %}
 <script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('offline_map.js') }}"></script>

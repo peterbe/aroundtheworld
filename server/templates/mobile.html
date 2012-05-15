@@ -27,10 +27,11 @@
   <link rel="stylesheet" href="{{ static_url('css/lib/mobile-style.css') }}">
   <link rel="stylesheet" href="{{ static_url('css/mobile.css') }}">
 
+  
   <script src="{{ static_url('lib/modernizr-2.0.6.min.js') }}"></script>
   <script src="{{ static_url('lib/jquery-1.7.2.min.js') }}"></script>
-  <script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
-  <script src="{{ static_url('lib/stacktrace-min-0.3.js') }}"></script>
+  <script async src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
+  <script async src="{{ static_url('lib/stacktrace-min-0.3.js') }}"></script>
   <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
 </head>
 
@@ -39,12 +40,8 @@
 {% include "_divs.html" %}
 
 
-  <!-- scripts concatenated and minified via ant build script -->
-  <script src="{{ static_url('lib/helper.js') }}"></script>
-  <!-- end concatenated and minified scripts-->
-
-  <!-- <script src="https://getfirebug.com/firebug-lite.js"></script> -->
-<script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
+<script src="{{ static_url('lib/helper.js') }}"></script>
+<script async type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
 {% include "_js_templates.html" %}
 <script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
 <script type="text/javascript" src="{{ static_url('latlngcontrol.js') }}"></script>
