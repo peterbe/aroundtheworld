@@ -438,3 +438,48 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
         data['jobs'] = jobs
         data['filtering'] = bool(filter_)
         self.render('admin/jobs.html', **data)
+
+
+@route('/admin/errors/', name='admin_errors')
+class JobsAdminHandler(SuperuserBaseHandler):
+
+    LIMIT = 20
+
+    def get(self):
+        data = {}
+        filter_ = {}
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+
+        errors = []
+        _users = {}
+        data['count'] = self.db.ErrorEvent.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        data['filtering'] = bool(filter_)
+
+        for each in (self.db.ErrorEvent
+                     .find(filter_)
+                     .sort('add_date', -1)  # newest first
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['user']:
+                if each['user'] not in _users:
+                    _users[each['user']] = \
+                      self.db.User.find_one({'_id': each['user']})
+                user = _users[each['user']]
+            else:
+                user = None
+
+            errors.append((
+              each,
+              user,
+            ))
+
+        data['errors'] = errors
+        data['filtering'] = bool(filter_)
+        self.render('admin/errors.html', **data)

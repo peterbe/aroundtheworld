@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+th { text-align: left; }
+tfoot th select[name="locations"] { width:70px; }
+tfoot th select[name="categories"] { width:130px; }
+td pre { font-size: 70%; padding: 3px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} errors {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="condensed-table table">
+        <thead>
+          <tr>
+            <th>URL</th>
+            <th>User</th>
+            <th>Data</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              <input name="q_url" value="">
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for error, user in errors %}
+          <tr>
+            <td><a href="{{ error['url'] }}">...{{ error['url'][-20:] }}</a><br>
+              count: {{ error['count'] }}
+            </td>
+            <td>
+              {% if user %}
+              {{ user['username'] }}
+              {% else %}
+              -
+              {% end %}
+            </td>
+            <td><pre>{% for key in error['data'] %}{{ key }}: {{ error['data'][key] }}
+            {% end %}</pre></td>
+            <td>{{ error['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+
+
+{% end %}

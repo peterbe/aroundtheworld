@@ -61,10 +61,21 @@
               ><a href="{{ reverse_url('admin_documents') }}">Documents</a></li>
             {% end %}
             {% if is_superuser %}
-            <li {% if '/users/' in current_url %}class="active"{% end %}
-              ><a href="{{ reverse_url('admin_users') }}">Users</a></li>
-            <li {% if '/feedback/' in current_url %}class="active"{% end %}
-              ><a href="{{ reverse_url('admin_feedbacks') }}">Feedback</a></li>
+	    <li class="dropdown">
+	      
+             <a class="dropdown-toggle" data-toggle="dropdown"
+	         href="#other-menu">Other <b class="caret"></b>
+	     </a>
+	     <ul class="dropdown-menu">
+                <li {% if '/users/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_users') }}">Users</a></li>
+                <li {% if '/feedback/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_feedbacks') }}">Feedback</a></li>
+                <li {% if '/jobs/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_jobs') }}">Jobs</a></li>
+                <li {% if '/errors/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_errors') }}">Errors</a></li>
+	     </ul>
             {% end %}
             <li><a href="/">Exit Admin</a></li>
           </ul>
