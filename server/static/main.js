@@ -252,7 +252,7 @@ var ErrorCatcher = (function() {
          data.trace = trace.join('\n');
        } catch(e) {}
        post_error(data);
-       return true;
+       return !STATE.debug;
      }
   };
 })();
