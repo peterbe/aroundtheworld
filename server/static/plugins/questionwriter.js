@@ -47,7 +47,6 @@ var QuestionWriter = (function() {
   function setup_once() {
 
     $('button[type="reset"]', container).click(function() {
-      //alert("not implemented yet");
       reset_form();
       $('a[href="#tab-questions"]', container).click();
       return false;
@@ -169,7 +168,21 @@ var QuestionWriter = (function() {
     });
 
     $('ul.nav a', container).click(function() {
-      //L('destination', $(this).attr('href'));
+      // xxx not 100% sure this is needed
+      var destination = $(this).attr('href');
+      if (destination === '#tab-questions') {
+        $('div.question:visible', container).hide();
+      }
+    });
+
+    // the info box
+    $('.alert-info button.close', container).click(function() {
+      $('.alert-info', container).fadeOut(500);
+      $('.info-toggle', container).fadeIn(300);
+    });
+    $('.info-toggle a', container).click(function() {
+      $('.info-toggle', container).hide();
+      $('.alert-info', container).fadeIn(300);
     });
   }
 
@@ -223,10 +236,13 @@ var QuestionWriter = (function() {
         $('.category', c).text(response.category);
         $('.points-value', c).text(response.points_value);
         $('.status span', c).hide();
+
         if (response.published) {
-          $('span.published', c).show();
+          $('.status .published', c).show();
+          $('.earned', c).text(response.earned);
         } else {
-          $('span.pending', c).show();
+          $('.status .pending', c).show();
+          $('.earned', c).text('--');
         }
 
         if (response.picture) {
@@ -281,7 +297,7 @@ var QuestionWriter = (function() {
     },
     reset: function() {
       $('form', container).show();
-      $('.alert', container).hide();
+      $('.alert-success', container).hide();
 
       $('.preview', container).hide();
       $('.preview img', container).remove();

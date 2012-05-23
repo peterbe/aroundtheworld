@@ -2081,6 +2081,7 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 data['earned'] = self._get_earned(question)
             else:
                 data['earned'] = None
+            data['published'] = question['published']
             data['points_value'] = question['points_value']
             if data['points_value'] == 1:
                 data['points_value'] = '%s (easy)' % data['points_value'];
