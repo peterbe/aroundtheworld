@@ -168,10 +168,10 @@ var QuestionWriter = (function() {
     });
 
     $('ul.nav a', container).click(function() {
-      // xxx not 100% sure this is needed
       var destination = $(this).attr('href');
       if (destination === '#tab-questions') {
         $('div.question:visible', container).hide();
+        $('div.questions table', container).show();
       }
     });
 
@@ -220,7 +220,6 @@ var QuestionWriter = (function() {
         $('a[href="#tab-questions"]', container).click();
       }
       $.getJSON(URL, {question_id: question_id}, function(response) {
-        //L(response);
         var c = $('div.question', container);
         $('img.thumbnail', c).remove();
         $('table', container).hide();

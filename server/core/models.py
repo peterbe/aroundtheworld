@@ -390,6 +390,17 @@ class SessionAnswer(BaseDocument):
 
 
 @register
+class QuestionAnswerEarning(BaseDocument):
+    __collection__ = 'questionearnings'
+    structure = {
+      'user': ObjectId,
+      'question': ObjectId,
+      'answer': ObjectId,
+      'coins': int,
+    }
+
+
+@register
 class PinpointCenter(BaseDocument):
     __collection__ = 'pinpointcenters'
     structure = {

@@ -621,6 +621,13 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             answer_obj['timedout'] = False
             answer_obj.save()
 
+            if question['author']:
+                earning = self.db.QuestionAnswerEarning()
+                earning['question'] = question['_id']
+                earning['answer'] = answer_obj['_id']
+                earning['coins'] = QuestionWriterHandler.COINS_EARNING_VALUE
+                earning.save()
+
         self.write_json(data)
 
 
@@ -2149,10 +2156,14 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         return questions
 
     def _get_earned(self, question):
-        played = (self.db.SessionAnswer
-                  .find({'question': question['_id']})
-                  .count())
-        return self.COINS_EARNING_VALUE * played
+        # XXX this could be replaced with a sum function once
+        # mongo fully supports it (v 2.1)
+        c = 0
+        for each in (self.db.QuestionAnswerEarning
+                     .find({'question': question['_id']},
+                           ('coins',))):
+            c += each['coins']
+        return c
 
     def post(self):
         current_user = self.get_current_user()
