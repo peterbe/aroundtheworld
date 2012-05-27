@@ -228,6 +228,7 @@ var PictureDetective = (function() {
       _submitted = false;
       _indexes = [];
       _can_begin = false;
+      $('img.playbutton', container).show();
       $('img.alternative', container).remove();
       $('img.playbutton').off('click');
       $('.question', container).hide();
