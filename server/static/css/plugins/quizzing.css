@@ -1,11 +1,11 @@
 #quizzing .question-attention {
     position:relative;
     top:-80px;
-    left:15px;
+    left:10px;
     z-index:3;
     margin:20px;
     padding:20px;
-    width:50%;
+    width: 450px;
     text-align:center;
     background-color:#fff;
     -webkit-border-radius:4px;

@@ -1,0 +1,15 @@
+#questionwriter .ratings table {
+    width: 400px;
+}
+
+#questionwriter td.row-label {
+    font-weight: bold;
+}
+
+#questionwriter td.all-average {
+    font-weight: bold;
+}
+
+#questionwriter .thumbnail-wrapper {
+    float: right;
+}

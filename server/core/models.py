@@ -295,6 +295,17 @@ class Question(BaseDocument):
 
 
 @register
+class QuestionRating(BaseDocument):
+    __collection__ = 'question_ratings'
+    structure = {
+      'question': ObjectId,
+      'user': ObjectId,
+      'score': int,
+      'correct': bool,
+    }
+
+
+@register
 class QuestionPicture(BaseDocument):
     __collection__ = 'question_pictures'
     structure = {

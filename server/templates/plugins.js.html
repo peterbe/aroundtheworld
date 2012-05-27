@@ -4,6 +4,7 @@ var PLUGINS = {
             '{{ static_url('plugins/login.js') }}'],
   'quizzing': ['{{ static_url('css/plugins/quizzing.css') }}',
                '{{ static_url('lib/jwerty.js') }}',
+	       '{{ static_url('lib/raty/jquery.raty.min.js') }}',
                '{{ static_url('plugins/quizzing.js') }}'],
   'picturedetective': ['{{ static_url('css/plugins/picturedetective.css') }}',
                        '{{ static_url('plugins/picturedetective.js') }}'],
@@ -27,6 +28,7 @@ var PLUGINS = {
                '{{ static_url('plugins/pinpoint.js') }}'],
   'feedback': ['{{ static_url('plugins/feedback.js') }}'],
   'questionwriter': ['//api.filepicker.io/v0/filepicker.js',
+                     '{{ static_url('css/plugins/questionwriter.css') }}',
                      '{{ static_url('lib/bootstrap-tab.js') }}',
                      '{{ static_url('plugins/questionwriter.js') }}']
 };

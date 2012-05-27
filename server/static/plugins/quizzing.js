@@ -1,5 +1,6 @@
 var Quiz = (function() {
   var URL = '/quizzing.json';
+  var RATE_URL = '/questionrating.json';
   var container = $('#quizzing');
   var countdown;
   var timer;
@@ -10,6 +11,12 @@ var Quiz = (function() {
   var _next_is_first = true;
   var t0, t1;
   var _once = false;
+  var _has_mousedover_raty = false;
+
+  function _dirname(src) {
+    L('SRC', src);
+    return src.split('/').slice(0, src.split('/').length - 1).join('/') + '/';
+  }
 
   function _show_no_questions(total, number) {
     $('.no-questions', container).text(number + ' of ' + total);
@@ -141,6 +148,31 @@ var Quiz = (function() {
       $('a.next-question:visible', container).click();
     });
 
+
+    var c = $('.rating-images', c);
+    $('.rate', container).raty({
+       path: _dirname($('.face-a', c).attr('src')),
+       iconRange: [
+        { range: 2, on: 'face-a.png', off: 'face-a-off.png' },
+        { range: 3, on: 'face-b.png', off: 'face-b-off.png' },
+        { range: 4, on: 'face-c.png', off: 'face-c-off.png' },
+        { range: 5, on: 'face-d.png', off: 'face-d-off.png' }
+        ],
+      mouseover : function(score, evt) {
+        if (!_has_mousedover_raty) {
+          Quiz.wait_longer(10);
+          _has_mousedover_raty = true;
+        }
+      },
+      click : function(score, evt) {
+        $.post(RATE_URL, {score: score});
+        $('a.next-question:visible', container).click();
+        $('.rate:visible', container).raty('reload');
+      }
+    });
+
+    $('.rating-images', container).hide();
+
   }
 
   return {
@@ -218,6 +250,9 @@ var Quiz = (function() {
       Quiz.start_timer(seconds);
       in_pause = true;
     },
+    wait_longer: function(seconds) {
+      countdown += seconds;
+    },
     start_timer: function(seconds) {
       t0 = new Date();
       countdown = seconds;
@@ -245,6 +280,7 @@ var Quiz = (function() {
 
      },
      stop_timer: function(timedout) {
+       _has_mousedover_raty = false;  // reset
        clearTimeout(timer);
        $('ul.question', container).css('opacity', 0.5);
        $('.alternatives', container).css('opacity', 0.5);

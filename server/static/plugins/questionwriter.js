@@ -222,7 +222,7 @@ var QuestionWriter = (function() {
       $.getJSON(URL, {question_id: question_id}, function(response) {
         var c = $('div.question', container);
         $('img.thumbnail', c).remove();
-        $('table', container).hide();
+        $('table.all-questions', container).hide();
         c.show();
         $('h3', c).text(response.text);
         $('.correct', c).text(response.correct);
@@ -242,6 +242,25 @@ var QuestionWriter = (function() {
         } else {
           $('.status .pending', c).show();
           $('.earned', c).text('--');
+        }
+        if (response.ratings) {
+          $('.ratings', c).show();
+          var tbody = $('.ratings tbody');
+          $('tr', tbody).remove();
+          $('<tr>')
+            .append($('<td>').text('Average:').addClass('row-label'))
+              .append($('<td>').text(response.ratings.average).addClass('all-average'))
+                .append($('<td>').text(response.ratings.correct || '-'))
+                  .append($('<td>').text(response.ratings.wrong || '-'))
+                    .appendTo(tbody);
+          $('<tr>')
+            .append($('<td>').text('Votes:').addClass('row-label'))
+              .append($('<td>').text(response.ratings.count.all))
+                .append($('<td>').text(response.ratings.count.correct || 0))
+                  .append($('<td>').text(response.ratings.count.wrong || 0))
+                    .appendTo(tbody);
+        } else {
+          $('.ratings', c).hide();
         }
 
         if (response.picture) {

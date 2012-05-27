@@ -1245,3 +1245,43 @@ class HandlersTestCase(BaseHTTPTestCase):
             assert response.code == 200
         finally:
             os.remove(tmp_destination)
+
+    def test_question_rating(self):
+        for i in range(20):
+            self._create_question(self.tour_guide, self.newyork)
+        url = self.reverse_url('quizzing')
+        rate_url = self.reverse_url('question_rating')
+
+        r = self.post_struct(rate_url, {'score': 2})
+        self.assertEqual(r, {'error': 'NOTLOGGEDIN'})
+
+        def _get():
+            return self.get_struct(url, {'category': self.tour_guide['name']})
+
+        def _post(data):
+            return self.post_struct(url, data)
+
+        user = self._login(location=self.newyork)
+        r = self.post_struct(rate_url, {'score': 2})
+        self.assertEqual(r, {'error': 'CANTRATEQUESTION'})
+
+        r = _get()
+        assert r['no_questions'] > 0
+        question_obj, = self.db.Question.find({'text': r['question']['text']})
+
+        r = self.post_struct(rate_url, {'score': 2})
+        self.assertEqual(r, {'error': 'CANTRATEQUESTION'})
+
+        r = _post({'answer': 'One', 'time': 2.0})
+        assert r['correct']
+
+        self.post_struct(rate_url, {'score': 2})
+
+        rating, = self.db.QuestionRating.find()
+        self.assertEqual(rating['question'], question_obj['_id'])
+        self.assertEqual(rating['correct'], True)
+        self.assertEqual(rating['score'], 2)
+        self.assertEqual(rating['user'], user['_id'])
+
+        r = self.post_struct(rate_url, {'score': 2})
+        self.assertEqual(r, {'error': 'CANTRATEQUESTION'})

@@ -630,6 +630,46 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         self.write_json(data)
 
+@route('/questionrating.json$', name='question_rating')
+class QuestionRatingHandler(AuthenticatedBaseHandler):
+
+    def post(self):
+        score = int(self.get_argument('score'))
+        #print "SCORE", repr(score)
+        assert score >= 1 and score <= 5, score
+        user = self.get_current_user()
+        location = self.get_current_location(user)
+        for session in (self.db.QuestionSession
+                        .find({'user': user['_id'],
+                               'location': location['_id']},
+                              ('_id',))
+                        .sort('add_date', -1)
+                        .limit(1)):
+            for each in (self.db.SessionAnswer
+                         .find({'session': session['_id'],
+                                'correct': {'$ne': None}},
+                               ('question', 'correct', 'add_date'))
+                         .sort('add_date', -1)
+                         .limit(1)):
+                # before we add, check that it wasn't already recorded
+                time_ago = each['add_date'] - datetime.timedelta(seconds=10)
+                filter_ = {'question': each['question'],
+                           'user': user['_id'],
+                           'add_date': {'$gte': time_ago}}
+                if self.db.QuestionRating.find(filter_).count():
+                    continue
+                rating = self.db.QuestionRating()
+                rating['question'] = each['question']
+                rating['user'] = user['_id']
+                rating['score'] = score
+                rating['correct'] = each['correct']
+                rating.save()
+
+                self.write({'ok': 'Thanks'})
+                return
+
+        self.write({'error': 'CANTRATEQUESTION'})
+
 
 @route('/settings.json$', name='settings')
 class SettingsHandler(AuthenticatedBaseHandler):
@@ -1820,6 +1860,7 @@ class BaseAuthHandler(BaseHandler):
           self.db.Feedback,
           self.db.Invitation,
           self.db.LocationMessage,
+          self.db.QuestionRating,
         )
 
         for each in models:
@@ -2099,6 +2140,7 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             category, = self.db.Category.find({'_id': question['category']})
             data['category'] = category['name']
             data['didyouknow'] = question['didyouknow']
+            data['ratings'] = self._get_ratings(question)
 
             if question.has_picture():
                 picture = question.get_picture()
@@ -2154,6 +2196,31 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 question['earned'] = self._get_earned(each)
             questions.append(question)
         return questions
+
+    def _get_ratings(self, question):
+        data = {}
+        all = []
+        correct = []
+        wrong = []
+        for each in (self.db.QuestionRating
+                     .find({'question': question['_id']},
+                           ('score', 'correct'))):
+            score = float(each['score'])
+            all.append(score)
+            if each['correct']:
+                correct.append(score)
+            else:
+                wrong.append(score)
+        if all:
+            data['average'] = '%.1f' % (sum(all) / len(all))
+            data['count'] = {'all': len(all)}
+            if correct:
+                data['correct'] = '%.1f' % round(sum(correct) / len(correct))
+                data['count']['correct'] = len(correct)
+            if wrong:
+                data['wrong'] = '%.1f' % (sum(wrong) / len(wrong))
+                data['count']['wrong'] = len(wrong)
+            return data
 
     def _get_earned(self, question):
         # XXX this could be replaced with a sum function once
