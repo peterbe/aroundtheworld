@@ -325,6 +325,8 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
                                 **initial)
         data['form'] = form
         data['can_delete'] = self.can_delete(data['question'])
+        data['rating_total'] = (self.db.QuestionRatingTotal
+                              .find_one({'question': data['question']['_id']}))
         self.render('admin/question.html', **data)
 
     def post(self, _id):
@@ -623,3 +625,127 @@ class DeleteCategoryAdminHandler(CategoryAdminHandler):
         category.delete()
 
         self.redirect(self.reverse_url('admin_categories'))
+
+
+@route('/admin/questions/ratings/', name='admin_question_ratings')
+class QuestionRatingsAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        data = {}
+        filter_ = {}
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+        ratings = []
+        _users = {}
+        _questions = {}
+        _rating_totals = {}
+        data['count'] = self.db.QuestionRating.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        data['filtering'] = bool(filter_)
+        for each in (self.db.QuestionRating
+                     .find(filter_)
+                     .sort('add_date', -1)  # newest first
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['user'] not in _users:
+                _users[each['user']] = \
+                  self.db.User.find_one({'_id': each['user']})
+            if each['question'] not in _questions:
+                _questions[each['question']] = \
+                  self.db.Question.find_one({'_id': each['question']})
+            if each['question'] not in _rating_totals:
+                _rating_totals[each['question']] = \
+                  self._get_question_rating_total(_questions[each['question']])
+            ratings.append((
+              each,
+              _questions[each['question']],
+              _users[each['user']],
+              _rating_totals[each['question']],
+            ))
+        data['ratings'] = ratings
+        self.render('admin/question_ratings.html', **data)
+
+    def _get_question_rating_total(self, question):
+        rating_total = (self.db.QuestionRatingTotal
+                        .find_one({'question': question['_id']}))
+        if not rating_total:
+            data = question.calculate_ratings()
+            rating_total = self.db.QuestionRatingTotal()
+            rating_total['question'] = question['_id']
+            rating_total['average']['all'] = data['average']['all']
+            rating_total['average']['right'] = data['average']['right']
+            rating_total['average']['wrong'] = data['average']['wrong']
+            rating_total['count']['all'] = data['count']['all']
+            rating_total['count']['right'] = data['count']['right']
+            rating_total['count']['wrong'] = data['count']['wrong']
+            rating_total.save()
+
+        return rating_total
+
+
+@route('/admin/questions/ratings/highscore/',
+       name='admin_question_ratings_highscore')
+class QuestionRatingsHighscoreAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        data = {}
+        filter_ = {}
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+        totals = []
+        _questions = {}
+        data['count'] = self.db.QuestionRatingTotal.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        data['filtering'] = bool(filter_)
+        sort_key = self.get_argument('sort_key', 'average.all')
+        sort_order = int(self.get_argument('sort_order', -1))
+        data['sort_key'] = sort_key
+        data['sort_order'] = sort_order
+        for each in (self.db.QuestionRatingTotal
+                     .find(filter_)
+                     .sort(sort_key, sort_order)
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['question'] not in _questions:
+                _questions[each['question']] = \
+                  self.db.Question.find_one({'_id': each['question']})
+            totals.append((
+              each,
+              _questions[each['question']],
+            ))
+        data['totals'] = totals
+        self.render('admin/question_ratings_highscore.html', **data)
+
+
+@route('/admin/questions/ratings/bias/',
+       name='admin_question_ratings_bias')
+class QuestionRatingsBiasAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        data = {}
+        all = []
+        rights = []
+        wrongs = []
+        for each in self.db.QuestionRatingTotal.find():
+            all.append(each['average']['all'])
+            if each['average']['right']:
+                rights.append(each['average']['right'])
+            if each['average']['wrong']:
+                wrongs.append(each['average']['wrong'])
+
+        data['all'] = sum(all) / len(all)
+        data['right'] = sum(rights) / len(rights)
+        data['wrong'] = sum(wrongs) / len(wrongs)
+        self.render('admin/question_ratings_bias.html', **data)

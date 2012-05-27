@@ -32,6 +32,33 @@ $(function() {
   </form>
   {% end %}
 
+  {% if rating_total %}
+  <table class="table table-condensed">
+    <thead>
+      <tr>
+        <th>Ratings</th>
+        <th>All</th>
+        <th>Right</th>
+        <th>Wrong</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Average:</td>
+        <td>{{ '%.1f' % rating_total['average']['all'] }}</td>
+        <td>{{ '%.1f' % rating_total['average']['right'] }}</td>
+        <td>{{ '%.1f' % rating_total['average']['wrong'] }}</td>
+      </tr>
+      <tr>
+        <td>Count:</td>
+        <td>{{ rating_total['count']['all'] }}</td>
+        <td>{{ rating_total['count']['right'] }}</td>
+        <td>{{ rating_total['count']['wrong'] }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% end %}
+
   {% if question.has_picture() %}
     <p class="thumbnail-preview-wrapper">
         <a title="Question has an picture" class="thumbnail-preview"

@@ -19,6 +19,8 @@ class djangolike_request_dict(dict):
 
 class BaseHandler(CoreBaseHandler):
 
+    LIMIT = 20
+
     def render(self, template, **options):
         options['current_url'] = self.request.path
         user = self.get_current_user()

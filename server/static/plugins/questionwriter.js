@@ -247,11 +247,12 @@ var QuestionWriter = (function() {
           $('.ratings', c).show();
           var tbody = $('.ratings tbody');
           $('tr', tbody).remove();
+          L(response.ratings);
           $('<tr>')
             .append($('<td>').text('Average:').addClass('row-label'))
-              .append($('<td>').text(response.ratings.average).addClass('all-average'))
-                .append($('<td>').text(response.ratings.correct || '-'))
-                  .append($('<td>').text(response.ratings.wrong || '-'))
+              .append($('<td>').text(response.ratings.average.all).addClass('all-average'))
+                .append($('<td>').text(response.ratings.average.correct || '-'))
+                  .append($('<td>').text(response.ratings.average.wrong || '-'))
                     .appendTo(tbody);
           $('<tr>')
             .append($('<td>').text('Votes:').addClass('row-label'))

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+
+{% block extrajs %}
+<script src="{{ static_url('lib/highcharts.min.js') }}"></script>
+<script>
+var chart;
+var ALL = {{ all }};
+var RIGHT = {{ right }};
+var WRONG = {{ wrong }};
+
+$(function() {
+   chart = new Highcharts.Chart({
+       chart: {
+         renderTo: 'container',
+         type: 'column'
+      },
+      title: {
+         text: 'Biased?',
+         x: -20 //center
+      },
+      subtitle: {
+         text: 'Shows the average ratings depending on if they get',
+         x: -20
+      },
+      yAxis: {
+         title: {
+            text: 'Average rating'
+         },
+         min: 0,
+      },
+      legend: {
+        layout: 'vertical',
+        backgroundColor: '#FFFFFF',
+        align: 'left',
+        verticalAlign: 'top',
+        x: 100,
+        y: 70,
+        floating: true,
+        shadow: true
+      },
+      plotOptions: {
+        column: {
+          pointPadding: 0.1,
+          borderWidth: 0
+        }
+      },
+      series: [{
+        name: 'Right',
+        data: [RIGHT]
+        },
+        {
+        name: 'All',
+        data: [ALL]
+        },
+        {
+        name: 'Wrong',
+        data: [WRONG]
+        },
+      ]
+   });
+});
+</script>
+{% end %}
+
+
+{% block content %}
+<dl class="dl-horizontal">
+  <dt>All:</dt>
+  <dd>{{ all }}</dd>
+  <dt>Right:</dt>
+  <dd>{{ right }}</dd>
+  <dt>Wrong:</dt>
+  <dd>{{ wrong }}</dd>
+
+</dl>
+
+<div id="container"></div>
+
+{% end %}

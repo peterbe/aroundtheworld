@@ -293,6 +293,38 @@ class Question(BaseDocument):
     def get_picture(self):
         return self.db.QuestionPicture.find_one({'question': self['_id']})
 
+    def calculate_ratings(self):
+        data = {}
+        data['average'] = {}
+        data['count'] = {}
+        all = []
+        right = []
+        wrong = []
+        for each in (self.db.QuestionRating
+                     .find({'question': self['_id']},
+                           ('score', 'correct'))):
+            score = float(each['score'])
+            all.append(score)
+            if each['correct']:
+                right.append(score)
+            else:
+                wrong.append(score)
+        data['count']['all'] = len(all)
+        data['count']['right'] = len(right)
+        data['count']['wrong'] = len(wrong)
+
+        data['average']['all'] = None
+        data['average']['right'] = None
+        data['average']['wrong'] = None
+
+        if all:
+            data['average']['all'] = 1.0 * sum(all) / len(all)
+            if right:
+                data['average']['right'] = 1.0 * sum(right) / len(right)
+            if wrong:
+                data['average']['wrong'] = 1.0 * sum(wrong) / len(wrong)
+        return data
+
 
 @register
 class QuestionRating(BaseDocument):
@@ -302,6 +334,23 @@ class QuestionRating(BaseDocument):
       'user': ObjectId,
       'score': int,
       'correct': bool,
+    }
+
+@register
+class QuestionRatingTotal(BaseDocument):
+    __collection__ = 'question_rating_total'
+    structure = {
+      'question': ObjectId,
+      'average': {
+        'all': float,
+        'right': float,
+        'wrong': float,
+      },
+      'count': {
+        'all': int,
+        'right': int,
+        'wrong': int,
+      },
     }
 
 

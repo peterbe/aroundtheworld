@@ -665,6 +665,10 @@ class QuestionRatingHandler(AuthenticatedBaseHandler):
                 rating['correct'] = each['correct']
                 rating.save()
 
+                for each in (self.db.QuestionRatingTotal
+                             .find({'question': each['question']})):
+                    each.delete()
+
                 self.write({'ok': 'Thanks'})
                 return
 
@@ -2140,7 +2144,10 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             category, = self.db.Category.find({'_id': question['category']})
             data['category'] = category['name']
             data['didyouknow'] = question['didyouknow']
-            data['ratings'] = self._get_ratings(question)
+            _ratings = self._get_rating_total(question)
+            if _ratings['count']['all']:  # any?
+                data['ratings'] = {'average': _ratings['average'],
+                                   'count': _ratings['count']}
 
             if question.has_picture():
                 picture = question.get_picture()
@@ -2197,30 +2204,21 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             questions.append(question)
         return questions
 
-    def _get_ratings(self, question):
-        data = {}
-        all = []
-        correct = []
-        wrong = []
-        for each in (self.db.QuestionRating
-                     .find({'question': question['_id']},
-                           ('score', 'correct'))):
-            score = float(each['score'])
-            all.append(score)
-            if each['correct']:
-                correct.append(score)
-            else:
-                wrong.append(score)
-        if all:
-            data['average'] = '%.1f' % (sum(all) / len(all))
-            data['count'] = {'all': len(all)}
-            if correct:
-                data['correct'] = '%.1f' % round(sum(correct) / len(correct))
-                data['count']['correct'] = len(correct)
-            if wrong:
-                data['wrong'] = '%.1f' % (sum(wrong) / len(wrong))
-                data['count']['wrong'] = len(wrong)
-            return data
+    def _get_rating_total(self, question):
+        rating_total = (self.db.QuestionRatingTotal
+                        .find_one({'question': question['_id']}))
+        if not rating_total:
+            data = question.calculate_ratings()
+            rating_total = self.db.QuestionRatingTotal()
+            rating_total['question'] = question['_id']
+            rating_total['average']['all'] = data['average']['all']
+            rating_total['average']['right'] = data['average']['right']
+            rating_total['average']['wrong'] = data['average']['wrong']
+            rating_total['count']['all'] = data['count']['all']
+            rating_total['count']['right'] = data['count']['right']
+            rating_total['count']['wrong'] = data['count']['wrong']
+            rating_total.save()
+        return rating_total
 
     def _get_earned(self, question):
         # XXX this could be replaced with a sum function once

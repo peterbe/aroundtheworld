@@ -35,10 +35,14 @@
 	     <ul class="dropdown-menu">
                 <li><a href="{{ reverse_url('admin_questions') }}">All questions</a></li>
                 <li><a href="{{ reverse_url('admin_add_question') }}">Add a new question</a></li>
-                <li><a href="{{ reverse_url('admin_questions_numbers') }}">Numbers (who's winning?)</a></li>
+                <li><a href="{{ reverse_url('admin_questions_numbers') }}">Number of questions</a></li>
                 <li class="divider"></li>
                 <li><a href="{{ reverse_url('admin_categories') }}">All categories</a></li>
                 <li><a href="{{ reverse_url('admin_add_category') }}">Add a new category</a></li>
+                <li class="divider"></li>
+                <li><a href="{{ reverse_url('admin_question_ratings') }}">Question ratings</a></li>
+                <li><a href="{{ reverse_url('admin_question_ratings_highscore') }}">Ratings highscore</a></li>
+                <li><a href="{{ reverse_url('admin_question_ratings_bias') }}">Ratings bias</a></li>
               </ul>
 	    </li>
 
@@ -62,7 +66,7 @@
             {% end %}
             {% if is_superuser %}
 	    <li class="dropdown">
-	      
+
              <a class="dropdown-toggle" data-toggle="dropdown"
 	         href="#other-menu">Other <b class="caret"></b>
 	     </a>

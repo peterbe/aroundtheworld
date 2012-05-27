@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th select[name="authors"] { width:100px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} totals {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+
+  <form action=".">
+      <table class="table table-condensed">
+        <thead>
+          <tr>
+            <th>Question</th>
+            <th>Average
+              {% if sort_key == 'average.all' %}
+                {% if sort_order == -1 %}
+                <a href="?sort_key=average.all&amp;sort_order=1">&darr;</a>
+                {% else %}
+                <a href="?sort_key=average.all&amp;sort_order=-1">&uarr;</a>
+                {% end %}
+              {% else %}
+                <a href="?sort_key=average.all&amp;sort_order=-1">&larr;</a>
+              {% end %}
+            </th>
+            <th>Count
+              {% if sort_key == 'count.all' %}
+                {% if sort_order == -1 %}
+                <a href="?sort_key=count.all&amp;sort_order=1">&darr;</a>
+                {% else %}
+                <a href="?sort_key=count.all&amp;sort_order=-1">&uarr;</a>
+                {% end %}
+              {% else %}
+                <a href="?sort_key=count.all&amp;sort_order=-1">&larr;</a>
+              {% end %}
+              </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for total, question in totals %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_question', question['_id']) }}">{% module Truncate(question['text'], 60) %}</a>
+            </td>
+            <td>
+              {{ '%.1f' % total['average']['all'] }}
+            </td>
+            <td>
+              {{ total['count']['all'] }}
+            </td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          {% for p in all_pages %}
+          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
+          {% end %}
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+    </form>
+
+
+{% end %}
