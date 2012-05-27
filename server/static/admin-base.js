@@ -46,4 +46,17 @@ $(function() {
     document.title = "Admin: " + title;
   }
 
+  if ($('.next a').size()) {
+    jwerty.key('→', function () {
+      // xxx why doesn't $('.next a').click() work?!
+      window.location.href = $('.next a').attr('href');
+    });
+  }
+
+  if ($('.prev a').size()) {
+    jwerty.key('←', function () {
+      window.location.href = $('.prev a').attr('href');
+    });
+  }
+
 });
