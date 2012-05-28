@@ -5,8 +5,27 @@
     <p class="short-summary">
       You collected
       <strong class="total-points"></strong> which earned you
-      <strong class="coins"></strong>!
+      <strong class="coins"></strong><span class="total-coins-outer" style="display:none">
+      (your total is now <strong class="total-coins"></strong>)</span>!
     </p>
+
+    <div class="tutorial continue-tutorial-cantafford alert alert-info" style="display:none">
+      <p><strong>Great progress! You're learning!</strong><br>
+      However you don't have enough coins yet to go to the airport.<br>
+      To earn more coins,
+      <a href="#quizzing" class="overlay-changer restart"
+         style="font-weight:bold">Start the job again</a>
+      </p>
+    </div>
+
+    <div class="tutorial continue-tutorial-afford alert alert-success" style="display:none">
+      <p>
+      <strong>Excellent!</strong><br>
+      You have now earned enough money to fly somewhere.<br>
+      <a href="#city" class="overlay-changer"
+         style="font-weight:bold">Go back to the city</a>
+      </p>
+    </div>
 
     <h3>Summary of your questions:</h3>
     <table class="table">
@@ -41,14 +60,19 @@
   </div>
 
   <div class="intro" style="display:none">
-    <h2>About job as <span class="quiz-name"></span></h2>
+    <h2>About the job: <span class="quiz-name"></span></h2>
     <div class="intro-text">
     </div>
     <p class="begin"><a href="#">Ok! Let's begin! &rarr;</a></p>
   </div>
 
   <div class="play" style="display:none">
-    <div class="timer" style="display:none"></div>
+
+    <div class="timer-outer" style="display:none">
+      <p>Time left:</p>
+      <p class="timer"></p>
+    </div>
+
     <h2>Quiz job as: <span class="quiz-name"></span></h2>
 
     <div class="points-total-outer">

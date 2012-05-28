@@ -35,6 +35,18 @@ MOBILE_USER_AGENTS = re.compile(
   re.I
 )
 
+TUTORIAL_INTRO = u"""
+**This is the tutorial job.**
+
+It's going to be very *easy questions* with extra thinking time added
+but later the questions will get a lot harder and you're going to have
+to be faster.
+
+Once you complete the questions, you get **paid in coins**.
+
+**Good luck!**
+"""
+
 
 def calculate_distance(from_location, to_location):
     from_ = (from_location['lat'], from_location['lng'])
@@ -51,6 +63,14 @@ class NoLocationsError(RuntimeError):
 
 
 class BaseHandler(tornado.web.RequestHandler):
+
+    NOMANSLAND = {
+      'city': u'Nomansland',
+      'country': u'Tutorialia',
+      'code': u'000',
+      'lat': 29.0,
+      'lng': -42.0,
+    }
 
     def write_json(self, struct, javascript=False):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -163,6 +183,8 @@ class BaseHandler(tornado.web.RequestHandler):
                   'lat': location['lat'],
                   'lng': location['lng'],
                 }
+                if location['city'] == 'Nomansland':
+                    state['location']['nomansland'] = True
             else:
                 state['location'] = None
         else:
@@ -363,8 +385,10 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
     #SECONDS = 10
     NO_QUESTIONS = settings.QUIZ_MIN_NO_QUESTIONS
 
-    def points_to_coins(self, points):
-        max_ = self.NO_QUESTIONS * Question.HIGHEST_POINTS_VALUE
+    def points_to_coins(self, points, no_questions=None):
+        if not no_questions:
+            no_questions = self.NO_QUESTIONS
+        max_ = no_questions * Question.HIGHEST_POINTS_VALUE
         percentage = 100 * points / max_
         return int(percentage * self.PERCENTAGE_COINS_RATIO)
 
@@ -388,6 +412,18 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
           'category': category['_id'],
           'location': location['_id']
         })
+
+        if not document and location['city'] == self.NOMANSLAND['city']:
+            tutorial = self.db.Category.find_one({'name': u'Tutorial'})
+            document = self.db.HTMLDocument()
+            document['source'] = TUTORIAL_INTRO
+            document['source_format'] = u'markdown'
+            document['type'] = u'intro'
+            document['location'] = location['_id']
+            document['category'] = tutorial['_id']
+            document['notes'] = u'this is automatically generated'
+            document.save()
+
         if not document:
             document = self.db.HTMLDocument.find_one({
               'category': category['_id'],
@@ -463,10 +499,15 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         _no_answers = (self.db.SessionAnswer
                        .find({'session': session['_id']})
                        .count())
+        no_questions = self.NO_QUESTIONS
+        if category['name'] == u'Tutorial':
+            no_questions = (self.db.Question
+                            .find({'category': category['_id']})
+                            .count())
         data['no_questions'] = {
-          'total': self.NO_QUESTIONS,
+          'total': no_questions,
           'number': _no_answers,
-          'last': _no_answers == self.NO_QUESTIONS,
+          'last': _no_answers == no_questions,
         }
 
         data['question'] = {
@@ -575,7 +616,15 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                   'timedout': answer['timedout'],
                 })
             data['summary'] = summary
-            coins = self.points_to_coins(total_points)
+            tutorial = self.db.Category.find_one({'name': u'Tutorial'})
+            if tutorial['_id'] == session['category']:
+                no_questions = (self.db.Question
+                                .find({'category': session['category']})
+                                .count())
+                coins = self.points_to_coins(total_points,
+                  no_questions=no_questions)
+            else:
+                coins = self.points_to_coins(total_points)
             user_settings = self.get_current_user_settings()
             user_settings['coins_total'] += coins
             user_settings.save()
@@ -613,6 +662,11 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             #data['points'] = float('%.1f' % data['points'])
             data['points'] = round(data['points'], 1)
             assert isinstance(data['points_value'], int)
+
+            data['enable_rating'] = True
+            tutorial = self.db.Category.find_one({'name': 'Tutorial'})
+            if tutorial['_id'] == question['category']:
+                data['enable_rating'] = False
 
             answer_obj['time'] = time_
             answer_obj['answer'] = answer
@@ -935,7 +989,6 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         return self.static_url(os.path.join('images/flags',
                                             self.FLAGS[country]))
 
-
     def get(self):
         data = {}
         user = self.get_current_user()
@@ -964,6 +1017,9 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['lng'] = location['lng']
             data['count_pictures']=0#data['count_pictures'] = self.get_pictures_count(location)
             data['count_messages'] = self.get_messages_count(location)
+
+            data['has_introduction'] = bool(self.get_intro_html(location))
+            data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
 
         self.write(data)
 
@@ -1049,6 +1105,13 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         point_values = defaultdict(int)
         _categories = dict((x['_id'], x)
                            for x in self.db.Category.find())
+
+        nomansland = self.db.Location.find_one({'city': self.NOMANSLAND['city']})
+        if nomansland:
+            if not self.db.Question.find({'location': nomansland['_id']}).count():
+                # we need to create the tutorial questions
+                self.create_tutorial_questions(nomansland)
+
         for q in (self.db.Question
                   .find({'location': location['_id'],
                          'published': True})):
@@ -1059,8 +1122,13 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         jobs = []
         for category in _categories.values():
             no_questions = categories[category['name']]
-            if no_questions < QuizzingHandler.NO_QUESTIONS:
+            if location == nomansland:
+                # you're in Nomansland
+                if category['name'] != 'Tutorial':
+                    continue
+            elif no_questions < QuizzingHandler.NO_QUESTIONS:
                 continue
+
             job = {
               'type': 'quizzing',
               'category': category['name'],
@@ -1089,6 +1157,46 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             jobs.append(picture_detective_job)
         jobs.sort(lambda x, y: cmp(x['description'], y['description']))
         return jobs
+
+    def create_tutorial_questions(self, location):
+        tutorial = self.db.Category.find_one({'name': u'Tutorial'})
+        if not tutorial:
+            tutorial = self.db.Category()
+            tutorial['name'] = u'Tutorial'
+            tutorial.save()
+
+        q = self.db.Question()
+        q['text'] = u'Which continent is China in?'
+        q['correct'] = u'Asia'
+        q['alternatives'] = [u'Asia', u'Europe', u'Africa', u'South America']
+        q['points_value'] = 5
+        q['seconds'] = 20
+        q['location'] = location['_id']
+        q['category'] = tutorial['_id']
+        q['published'] = True
+        q.save()
+
+        q = self.db.Question()
+        q['text'] = u'Which of these can travel the FASTEST?'
+        q['correct'] = u'Airplane'
+        q['alternatives'] = [u'Airplane', u'Train', u'Car', u'Boat']
+        q['points_value'] = 5
+        q['seconds'] = 20
+        q['location'] = location['_id']
+        q['category'] = tutorial['_id']
+        q['published'] = True
+        q.save()
+
+        q = self.db.Question()
+        q['text'] = u'What are cigars made of?'
+        q['correct'] = u'Tobacco'
+        q['alternatives'] = [u'Tobacco', u'Paper', u'Bark', u'Dirt']
+        q['points_value'] = 5
+        q['seconds'] = 20
+        q['location'] = location['_id']
+        q['category'] = tutorial['_id']
+        q['published'] = True
+        q.save()
 
     def _get_picture_detective_jobs(self, user, location):
         # Picture detective job
@@ -1634,6 +1742,8 @@ class AirportHandler(AuthenticatedBaseHandler):
         data = {
           'airport_name': current_location['airport_name'],
         }
+        only_affordable = self.get_argument('only_affordable', False)
+
         destinations = []
         for location in (self.db.Location
                           .find({'_id': {'$ne': current_location['_id']},
@@ -1642,6 +1752,11 @@ class AirportHandler(AuthenticatedBaseHandler):
                 continue
             distance = calculate_distance(current_location, location)
             cost = self.calculate_cost(distance.miles, user)
+            if only_affordable:
+                user_settings = self.get_current_user_settings(user)
+                if cost > user_settings['coins_total']:
+                    continue
+
             destination = {
               'id': str(location['_id']),
               'code': location['code'],
@@ -1654,16 +1769,17 @@ class AirportHandler(AuthenticatedBaseHandler):
             }
             destinations.append(destination)
 
-        destinations.append({
-          'id': 'moon',
-          'code': '',
-          'city': '',
-          'country': '',
-          'locality': 'space',
-          'name': 'Moon',
-          'cost': 1000000,
-          'miles': 238857,
-        })
+        if not only_affordable:
+            destinations.append({
+              'id': 'moon',
+              'code': '',
+              'city': '',
+              'country': '',
+              'locality': 'space',
+              'name': 'Moon',
+              'cost': 1000000,
+              'miles': 238857,
+            })
         data['destinations'] = destinations
         self.write_json(data)
 
@@ -1677,7 +1793,8 @@ class FlyHandler(AirportHandler):
     def get(self):
         user = self.get_current_user()
         route = self.get_argument('route')
-        from_, to = re.findall('[A-Z]{3}', route)
+        # use [0-9] only for the Nomansland thing
+        from_, to = re.findall('[0-9A-Z]{3}', route)
         from_ = self.db.Location.find_one({'code': from_})
         if not from_:
             self.write_json({'error': 'INVALIDAIRPORT'})
@@ -1812,6 +1929,19 @@ class BaseAuthHandler(BaseHandler):
     def post_login_successful(self, user, previous_user=None):
         """executed by the Google, Twitter and Facebook
         authentication handlers"""
+        if not user['current_location']:
+            nomansland = self.db.Location.find_one({'city': 'Nomansland'})
+            if not nomansland:
+                nomansland = self.db.Location()
+                nomansland['city'] = self.NOMANSLAND['city']
+                nomansland['country'] = self.NOMANSLAND['country']
+                nomansland['code'] = self.NOMANSLAND['code']
+                nomansland['available'] = False
+                nomansland['lat'] = self.NOMANSLAND['lng']
+                nomansland['lat'] = self.NOMANSLAND['lat']
+                nomansland.save()
+            user['current_location'] = nomansland['_id']
+            user.save()
         try:
             self._post_login_successful(user, previous_user=previous_user)
         except:  # pragma: no cover

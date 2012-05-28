@@ -47,17 +47,16 @@
     margin:20px 5px;
 }
 
-#quizzing .points-total-outer {
+#quizzing .points-total-outer,
+#quizzing .timer-outer {
     float:right;
 }
-#quizzing .points-total-outer p {
+#quizzing .points-total-outer p,
+#quizzing .timer-outer p {
     display: inline;
 }
-#quizzing .points-total {
-    font-size:2em;
-    font-weight:bold;
-}
-#quizzing .points-total {
+#quizzing p.points-total,
+#quizzing p.timer {
     font-size:2em;
     font-weight:bold;
 }
@@ -109,6 +108,10 @@ span.question {
 
 #quizzing a.restart {
     font-weight: bold;
+}
+
+#quizzing .tutorial p {
+    font-size: 120%;
 }
 
 @media (max-width: 480px) {

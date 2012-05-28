@@ -739,6 +739,9 @@ class QuestionRatingsBiasAdminHandler(AuthenticatedBaseHandler):
         rights = []
         wrongs = []
         for each in self.db.QuestionRatingTotal.find():
+            if not each['average']['all']:
+                #print "Broken", repr(each)
+                continue
             all.append(each['average']['all'])
             if each['average']['right']:
                 rights.append(each['average']['right'])

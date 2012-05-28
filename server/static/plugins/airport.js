@@ -18,7 +18,7 @@ var Airport = (function() {
        });
        if (cost > STATE.user.coins_total) {
          $('.cant-afford', c).show('fast');
-         $('.cant-afford strong', c).text(Utils.formatCost(cost - STATE.user.coins_total, true));
+         $('.cant-afford .more-coins', c).text(Utils.formatCost(cost - STATE.user.coins_total, true));
          $('button[type="submit"]', c).attr('disabled', 'disabled');
        }
        $('form', c).unbind('submit').submit(function() {
@@ -32,8 +32,10 @@ var Airport = (function() {
            } else {
              //State.update();
              State.show_coin_change(-1 * response.cost, true);
-             var hash = '#fly,' + response.from_code + '->' + response.to_code;
-             Loader.load_hash(hash);
+             State.update(function() {
+               var hash = '#fly,' + response.from_code + '->' + response.to_code;
+               Loader.load_hash(hash);
+             });
            }
          });
          return false;

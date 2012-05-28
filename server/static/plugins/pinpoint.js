@@ -299,6 +299,7 @@ var Pinpoint = (function() {
       count_questions = 0;
       _next_is_last = false;
       _cities_removed = false;
+      initial_center = null;
 
       if (skip_timer) clearTimeout(skip_timer);
       if (begin_timer) clearTimeout(begin_timer);

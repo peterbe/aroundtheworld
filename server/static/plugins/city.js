@@ -1,5 +1,6 @@
 var City = (function() {
   var URL = '/city.json';
+  var AIRPORT_URL = '/airport.json';
   var container = $('#city');
   var _message_form_setup = false;
 
@@ -135,6 +136,7 @@ var City = (function() {
 
   return {
      load: function(page) {
+       $('.section:visible', container).hide();
        $.getJSON(URL, function(response) {
          $('h2 strong', container).text(response.name);
          if (map && map.getZoom() < 15) {
@@ -144,7 +146,6 @@ var City = (function() {
            }
            map.setZoom(15);
          }
-         $('.section:visible', container).hide();
          if (response.name) {
            $('.location-name', container).text(response.name);
          }
@@ -181,10 +182,39 @@ var City = (function() {
              Utils.update_title();
            });
          } else {
-           $('.home', container).show();
+           if (STATE.location.nomansland) {
+             $('.tutorial', container).show();
+             $.getJSON(AIRPORT_URL, {only_affordable: true}, function(response) {
+               if (!response.destinations.length) return;
+
+               $('.tutorial .start-jobs', container).css('opacity', 0.3);
+               $('.tutorial .start-airport', container).fadeIn(500);
+               var c = $('.start-airport ul', container);
+               $('li', c).remove();
+               $.each(response.destinations, function(i, each) {
+                 $('<li>')
+                   .append($('<strong>').text(each.name))
+                     .append($('<span>').text(Utils.formatCost(each.cost, true)))
+                       .appendTo(c);
+               });
+             });
+           } else {
+             $('.home', container).show();
+             // introduction?
+             if (response.has_introduction) {
+               $('li.intro-link', container).show();
+             } else {
+               $('li.intro-link', container).hide();
+             }
+             // ambassadors?
+             if (response.has_ambassadors) {
+               $('li.ambassadors-link', container).show();
+             } else {
+               $('li.ambassadors-link', container).hide();
+             }
+           }
            Utils.update_title();
          }
-
          //_load_jobs(response.jobs);
        });
      },

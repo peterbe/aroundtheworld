@@ -77,10 +77,13 @@ var State = (function() {
   }
 
   return {
-     update: function() {
+     update: function(callback) {
        $.getJSON('/state.json', function(response) {
          STATE = response.state;
          State.render(STATE);
+         if (callback) {
+           callback(STATE);
+         }
        });
      },
     render: function(state) {

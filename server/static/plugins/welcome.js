@@ -19,6 +19,9 @@ var Welcome = (function() {
        $('.alternative', container).hide();
        if (!STATE.user) {
          $('.not-logged-in', container).show();
+       } else if (STATE.location && STATE.location.nomansland) {
+         $('.nomansland', container).show();
+
        } else if (!STATE.location) {
          $('.not-chosen-location', container).show();
          $.getJSON('/location.json', function(response) {

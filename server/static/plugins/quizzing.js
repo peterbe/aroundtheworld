@@ -1,6 +1,7 @@
 var Quiz = (function() {
   var URL = '/quizzing.json';
   var RATE_URL = '/questionrating.json';
+  var AIRPORT_URL = '/airport.json';
   var container = $('#quizzing');
   var countdown;
   var timer;
@@ -14,7 +15,6 @@ var Quiz = (function() {
   var _has_mousedover_raty = false;
 
   function _dirname(src) {
-    L('SRC', src);
     return src.split('/').slice(0, src.split('/').length - 1).join('/') + '/';
   }
 
@@ -74,7 +74,11 @@ var Quiz = (function() {
       $('.pre-finish:visible', container).hide();
       $('.post-finish:hidden', container).show();
       State.show_coin_change(response.results.coins, true);
-      State.update();
+      State.update(function() {
+        $('.short-summary .total-coins', container)
+          .text(Utils.formatCost(STATE.user.coins_total, true));
+        $('.short-summary .total-coins-outer', container).show();
+      });
 
       var _total_points = 0;
       var tbody = $('.results tbody', container);
@@ -133,6 +137,17 @@ var Quiz = (function() {
         .text(Utils.formatPoints(_total_points));
 
       Utils.update_title();
+
+      if (STATE.location.nomansland) {
+        $.getJSON(AIRPORT_URL, {only_affordable: true}, function(response) {
+          if (response.destinations.length) {
+            $('.continue-tutorial-afford', container).fadeIn(400);
+          } else {
+            $('.continue-tutorial-cantafford', container).fadeIn(400);
+          }
+        });
+      }
+
     });
 
   }
@@ -144,9 +159,11 @@ var Quiz = (function() {
     });
 
     // set up the necessary keyboard shortcuts
-    jwerty.key('n', function() {
-      $('a.next-question:visible', container).click();
-    });
+    if (typeof jwerty !== 'undefined') {
+      jwerty.key('n', function() {
+        $('a.next-question:visible', container).click();
+      });
+    }
 
 
     var c = $('.rating-images', c);
@@ -182,6 +199,9 @@ var Quiz = (function() {
          _once = true;
        }
        Utils.update_title();
+       $('.question-attention', container).hide();
+       $('.continue-tutorial-cantafford', container).hide();
+       $('.continue-tutorial-afford', container).hide();
        $('a.restart', container).attr('href', '#quizzing,' + category.replace(' ', '+'));
      },
      reset: function() {
@@ -232,6 +252,11 @@ var Quiz = (function() {
            } else {
              Quiz.restart_timer(3);
            }
+           if (response.enable_rating) {
+             $('.rate', container).show();
+           } else {
+             $('.rate', container).hide();
+           }
          },
          error: function(xhr, status, error_thrown) {
            var msg = status;
@@ -257,7 +282,7 @@ var Quiz = (function() {
       t0 = new Date();
       countdown = seconds;
       $('.timer', container).text(countdown);
-      $('.timer:hidden', container).show();
+      $('.timer-outer:hidden', container).show();
       timer = setTimeout(function() {
         Quiz.tick_timer();
       }, 1000);
@@ -334,9 +359,11 @@ var Quiz = (function() {
              return false;
            }).appendTo($('<li>')
                        .appendTo($('.alternatives', container)));
-         jwerty.key('' + (i + 1), function() {
-           $('.alt' + i + ':visible', container).click();
-         });
+         if (typeof jwerty !== 'undefined') {
+           jwerty.key('' + (i + 1), function() {
+             $('.alt' + i + ':visible', container).click();
+           });
+         }
        });
        if (question.picture) {
          $('<img>')

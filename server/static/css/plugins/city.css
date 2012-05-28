@@ -11,3 +11,17 @@
   font-size:0.9em;
   color:#efefef;
 }
+
+#city .tutorial p {
+    margin: 15px;
+}
+
+#city .tutorial p.next-step {
+    font-weight: bold;
+    text-align: center;
+    font-size: 120%;
+}
+
+#city .tutorial li strong {
+    padding-right: 10px;
+}

@@ -1,0 +1,14 @@
+#welcome .nomansland h3 {
+    margin: 20px;
+    text-align: center;
+}
+
+#welcome .nomansland li {
+    margin: 15px;
+}
+
+#welcome .nomansland .begin {
+    font-weight: bold;
+    font-size: 120%;
+    text-align: center;
+}
