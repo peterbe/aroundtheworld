@@ -336,6 +336,7 @@ class QuestionRating(BaseDocument):
       'correct': bool,
     }
 
+
 @register
 class QuestionRatingTotal(BaseDocument):
     __collection__ = 'question_rating_total'

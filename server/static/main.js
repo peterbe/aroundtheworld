@@ -50,20 +50,20 @@ var State = (function() {
 
   function _show_change(delta, animated, selector, suffix) {
     var e = $('#usernav ' + selector + ' a');
-    var b = parseInt(e.text().replace(/[^\d]/g, ''));
+    var b_float = parseFloat(e.text().replace(/[^\d]/g, ''));
+    var b = parseInt(b_float);
     if (animated) {
       var c = 0, incr = 1;
       var deltainterval = setInterval(function() {
         if (c >= delta) {
           clearInterval(deltainterval);
           // make sure it really is right
-          e.text(Utils.formatCost(b + delta) + ' ' + suffix);
+          e.text(Utils.formatCost(parseInt(b_float + delta)) + ' ' + suffix);
         } else {
           e.text(Utils.formatCost(b + c) + ' ' + suffix);
         }
         c += incr;
         incr++;
-
       }, 50);
       /*
       e.fadeTo(400, 0.1, function() {
@@ -239,8 +239,9 @@ var ErrorCatcher = (function() {
        if (_prev_onerror) {
          return _prev_onerror(message, file, line);
        }
-       if (message == "TypeError: 'null' is not an object" ||
-           message == "TypeError: 'undefined' is not an object") {
+       if (line == 0 && (
+           message == "TypeError: 'null' is not an object" ||
+           message == "TypeError: 'undefined' is not an object")) {
          // some strange Safari errors I'm getting that always gets in the way
          return;
        }
@@ -254,7 +255,12 @@ var ErrorCatcher = (function() {
        try {
          var trace = printStackTrace();
          data.trace = trace.join('\n');
-       } catch(e) {}
+       } catch(e) {
+         if (typeof printStackTrace !== 'undefined') {
+           console.log('Error message:');
+           console.log(message);
+         }
+       }
        post_error(data);
        return !STATE.debug;
      }

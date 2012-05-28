@@ -2,6 +2,8 @@ var Feedback = (function() {
   var container = $('#feedback');
   return {
     setup: function() {
+      if (!STATE.user) return State.redirect_login();
+
       $('button[type="reset"]', container).click(function() {
         Feedback.reset();
         return false;

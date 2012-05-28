@@ -12,6 +12,8 @@ var PictureDetective = (function() {
   var _once = false;
 
   function setup_once() {
+    if (!STATE.user) return State.redirect_login();
+
     // set up the form submission
     $('form', container).on('submit', function() {
       clearTimeout(_timer);

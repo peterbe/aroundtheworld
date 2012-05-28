@@ -136,8 +136,10 @@ var City = (function() {
 
   return {
      load: function(page) {
+
        $('.section:visible', container).hide();
        $.getJSON(URL, function(response) {
+         if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          $('h2 strong', container).text(response.name);
          if (map && map.getZoom() < 15) {
            var p = new google.maps.LatLng(response.lat, response.lng);
@@ -216,10 +218,11 @@ var City = (function() {
            Utils.update_title();
          }
          //_load_jobs(response.jobs);
+         State.update();
        });
      },
     setup_message_post: function() {
-      if (STATE.user.anonymous) {
+      if (STATE.user && STATE.user.anonymous) {
         $('form.message-teaser', container).hide();
       } else {
         $('form.message-teaser:hidden', container).show();

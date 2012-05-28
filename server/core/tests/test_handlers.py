@@ -1285,3 +1285,31 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         r = self.post_struct(rate_url, {'score': 2})
         self.assertEqual(r, {'error': 'CANTRATEQUESTION'})
+
+    def test_welcome_stats(self):
+        url = self.reverse_url('welcome')
+        user = self._login(location=self.newyork)
+
+        def _get():
+            return self.get_struct(url, {'get': 'stats'})
+
+        r = _get()
+        self.assertEqual(r['miles_total'], 0.0)
+        self.assertEqual(r['coins_total'], 0)
+        self.assertEqual(r['spent_total'], 0)
+        self.assertEqual(r['spent_flights'], 0)
+        self.assertEqual(r['earned_total'], 0)
+        self.assertEqual(r['earned_jobs'], 0)
+        self.assertEqual(r['earned_questions'], 0)
+        self.assertEqual(r['invitations'], 0)
+        self.assertEqual(r['location_messages'], 0)
+        self.assertEqual(r['authored_questions'], 0)
+        self.assertEqual(r['authored_questions_published'], 0)
+        self.assertEqual(r['visited_cities'], 0)
+        self.assertEqual(r['cities_max'], 1)
+        self.assertEqual(r['questions_max'], 0)
+        self.assertEqual(r['question_sessions'], 0)
+        self.assertEqual(r['question_answers'], 0)
+        self.assertEqual(r['question_answers_right'], 0)
+        self.assertEqual(r['question_answered_unique_questions'], 0)
+        #print r

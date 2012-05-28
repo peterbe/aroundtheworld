@@ -30,12 +30,10 @@ var Airport = (function() {
              alert("Sorry. Can't afford the ticket");
              Loader.load_hash('#airport');
            } else {
-             //State.update();
              State.show_coin_change(-1 * response.cost, true);
-             State.update(function() {
-               var hash = '#fly,' + response.from_code + '->' + response.to_code;
-               Loader.load_hash(hash);
-             });
+             var hash = '#fly,' + response.from_code + '->' + response.to_code;
+             Loader.load_hash(hash);
+             //State.update();
            }
          });
          return false;

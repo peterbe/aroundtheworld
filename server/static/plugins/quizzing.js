@@ -33,6 +33,8 @@ var Quiz = (function() {
       _next_is_first = false;
     }
     $.getJSON(URL, data, function(response) {
+      if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+
       if (response.quiz_name) {
         Quiz.show_name(response.quiz_name);
       }

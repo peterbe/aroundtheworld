@@ -1,4 +1,5 @@
 var Welcome = (function() {
+  var URL = '/welcome.json';
   var container = $('#welcome');
   return {
      update: function() {
@@ -54,6 +55,44 @@ var Welcome = (function() {
          $('.welcome-back', container).show();
          var c = $('.welcome-back', container);
          $('.current-location', c).html(STATE.location.name);
+         $.getJSON(URL, {get: 'stats'}, function(response) {
+           $('.stats', container).show();
+           L(response);
+           var c = $('.stats ul', container);
+           $('li', c).hide();
+           // totals
+           $('li.totals', c).show();
+           $('li.totals .total-coins', c).text(Utils.formatCost(response.coins_total, true));
+           $('li.totals .total-miles', c).text(Utils.formatMiles(response.miles_total, true));
+           // visited cities
+           $('li.visited-cities', c).show();
+           $('li.visited-cities .visited', c).text(response.visited_cities);
+           $('li.visited-cities .visited-total', c).text(response.cities_max);
+           // earned
+           $('li.earned', c).show();
+           $('li.earned .earned-total', c).text(Utils.formatCost(response.earned_total, true));
+           $('li.earned .earned-jobs', c).text(Utils.formatCost(response.earned_jobs, true));
+           $('li.earned .earned-questions', c)
+             .text(Utils.formatCost(response.earned_questions, true));
+           // answered
+           $('li.answered', c).show();
+           $('li.answered .answered-total', c).text(response.question_answers);
+           $('li.answered .answered-right', c).text(response.question_answers_right);
+           // authored questions
+           if (response.authored_questions) {
+             $('li.authored', c).show();
+             $('li.authored .authored-submitted', c).text(response.authored_questions);
+             $('li.authored .authored-published', c).text(response.authored_questions_published);
+           }
+           // invitations
+           if (response.invitations) {
+             $('li.invitations', c).show();
+             $('li.invitations .invitations-sent', c).text(response.invitations);
+             $('li.invitations .invitations-signedup', c).text(response.invitations_signedup);
+           }
+
+
+         });
        }
      }
   };

@@ -1937,9 +1937,16 @@ class BaseAuthHandler(BaseHandler):
                 nomansland['country'] = self.NOMANSLAND['country']
                 nomansland['code'] = self.NOMANSLAND['code']
                 nomansland['available'] = False
-                nomansland['lat'] = self.NOMANSLAND['lng']
+                nomansland['lng'] = self.NOMANSLAND['lng']
                 nomansland['lat'] = self.NOMANSLAND['lat']
                 nomansland.save()
+
+            tutorial = self.db.Category.find_one({'name': 'Tutorial'})
+            if not tutorial:
+                tutorial = self.db.Category()
+                tutorial['name'] = u'Tutorial'
+                tutorial.save()
+
             user['current_location'] = nomansland['_id']
             user.save()
         try:
@@ -2218,6 +2225,102 @@ class IPLookupHandler(BaseHandler):
 class TestHandler(BaseHandler):
     def get(self):
         self.render('test.html')
+
+
+@route('/welcome.json$', name='welcome')
+class WelcomeHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        if self.get_argument('get') == 'stats':
+            stats = self.get_stats(self.get_current_user())
+            self.write(stats)
+
+    def get_stats(self, user):
+        data = {}
+        user_search = {'user': user['_id']}
+        user_settings = self.get_current_user_settings(user)
+        data['coins_total'] = user_settings['coins_total']
+        data['miles_total'] = user_settings['miles_total']
+
+        spent_total = 0
+        spent_flights = 0
+        for transaction in self.db.Transaction.find(user_search):
+            spent_total += transaction['cost']
+            if transaction['flight']:
+                spent_flights += transaction['cost']
+        data['spent_total'] = spent_total
+        data['spent_flights'] = spent_flights
+
+        earned_jobs = 0
+        for job in self.db.Job.find(user_search, ('coins',)):
+            earned_jobs += job['coins']
+
+        earned_questions = 0
+        for earning in (self.db.QuestionAnswerEarning
+                        .find(user_search, ('coins',))):
+            earned_questions += earning['coins']
+
+        invitations = self.db.Invitation.find(user_search).count()
+        data['invitations'] = invitations
+        invitations = (self.db.Invitation
+                       .find(dict(user_search, signedup_user={'$ne': None}))
+                       .count())
+        data['invitations_signedup'] = invitations
+
+        location_messages = self.db.LocationMessage.find(user_search).count()
+        data['location_messages'] = location_messages
+
+        authored_questions = (self.db.Question
+                              .find({'author': user['_id']})
+                              .count())
+        data['authored_questions'] = authored_questions
+        authored_questions = (self.db.Question
+                              .find({'author': user['_id'],
+                                     'published': True})
+                              .count())
+        data['authored_questions_published'] = authored_questions
+
+        earned_total = earned_jobs + earned_questions
+        data['earned_questions'] = earned_questions
+        data['earned_jobs'] = earned_jobs
+        data['earned_total'] = earned_total
+
+        _tos = set()
+        for flight in self.db.Flight.find(user_search):
+            _tos.add(flight['to'])
+        data['visited_cities'] = len(_tos)
+        _available_cities = (self.db.Location
+                             .find({'available': True})
+                             .count())
+        data['cities_max'] = _available_cities
+
+        _available_questions = (self.db.Question
+                             .find({'published': True})
+                             .count())
+        data['questions_max'] = _available_questions
+
+        sessions = 0
+        answers = 0
+        answers_right = 0
+        _answered_questions = set()
+        for session in (self.db.QuestionSession
+                        .find(dict(user_search, finish_date={'$ne': None}),
+                              ('_id',))):
+            sessions += 1
+            for answer in (self.db.SessionAnswer
+                           .find({'session': session['_id']},
+                                 ('correct', 'question'))):
+                answers += 1
+                if answer['correct']:
+                    answers_right += 1
+                _answered_questions.add(answer['question'])
+
+        data['question_sessions'] = sessions
+        data['question_answers'] = answers
+        data['question_answers_right'] = answers_right
+        data['question_answered_unique_questions'] = len(_answered_questions)
+
+        return data
 
 
 @route('/feedback.json$', name='feedback')
