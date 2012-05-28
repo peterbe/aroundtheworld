@@ -463,6 +463,8 @@ class QuestionAnswerEarning(BaseDocument):
 
 @register
 class PinpointCenter(BaseDocument):
+    # See http://www.birdtheme.org/useful/googletool.html
+    # Or http://www.birdtheme.org/useful/v3tool.html
     __collection__ = 'pinpointcenters'
     structure = {
       'country': unicode,
