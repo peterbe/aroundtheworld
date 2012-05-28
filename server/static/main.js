@@ -239,8 +239,9 @@ var ErrorCatcher = (function() {
        if (_prev_onerror) {
          return _prev_onerror(message, file, line);
        }
-       if (message == "TypeError: 'null' is not an object") {
-         // some strange Safari error I'm getting that always gets in the way
+       if (message == "TypeError: 'null' is not an object" ||
+           message == "TypeError: 'undefined' is not an object") {
+         // some strange Safari errors I'm getting that always gets in the way
          return;
        }
        show_onerror();
