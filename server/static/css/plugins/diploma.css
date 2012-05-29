@@ -1,6 +1,15 @@
-#diploma .wrapper {
-    background-image: url(../../images/diploma.jpg);
+/*#diploma .wrapper-outer {
+    background-image: url(../../images/diploma-frame.jpg);
     background-repeat: no-repeat;
+    width: 860px;
+    max-width: 860px;
+    height: 648px;
+    padding: 0;
+}*/
+
+#diploma .wrapper {
+/*    background-image: url(../../images/diploma.jpg);
+    background-repeat: no-repeat;*/
     width: 760px;
     max-width: 760px;
     height: 548px;
@@ -26,7 +35,7 @@
 
 #diploma .wrapper p {
     font-family: 'Tangerine', cursive;
-    font-size: 28px;
+    font-size: 27px;
 /*    position: relative;
     top: 135px;*/
     margin-bottom: 10px;
@@ -35,5 +44,31 @@
 
 #diploma .wrapper p.category,
 #diploma .wrapper p.name {
+    font-family: 'Monsieur La Doulaise', cursive;
+
     font-size: 50px;
+}
+
+
+#diploma .wrapper .footer {
+    margin-left: 190px; 
+    margin-right: 140px;
+    margin-top: 50px;
+}
+
+#diploma .wrapper p.signature,
+#diploma .wrapper p.date {
+    font-family: 'Homemade Apple', cursive;
+    font-size: 14px;
+    color: #0000A0;  /* dark blue */
+    border-bottom: 1px solid rgb(220,220,220);
+    width: 140px;
+    /*
+    position: relative;
+    top: 40px;
+    left: 190px;*/
+}
+
+#diploma .wrapper p.date {
+    float: right;
 }
