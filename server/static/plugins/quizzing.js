@@ -167,15 +167,21 @@ var Quiz = (function() {
       });
     }
 
-
+    // no need to preload the images because they're already in the DOM
     var c = $('.rating-images', c);
+
+    function _bname(cls) {
+      var src = $('.' + cls, c).attr('src');
+      return src.split('/')[src.split('/').length - 1];
+    }
+
     $('.rate', container).raty({
        path: _dirname($('.face-a', c).attr('src')),
        iconRange: [
-        { range: 2, on: 'face-a.png', off: 'face-a-off.png' },
-        { range: 3, on: 'face-b.png', off: 'face-b-off.png' },
-        { range: 4, on: 'face-c.png', off: 'face-c-off.png' },
-        { range: 5, on: 'face-d.png', off: 'face-d-off.png' }
+        { range: 2, on: _bname('face-a'), off: _bname('face-a-off')},
+        { range: 3, on: _bname('face-b'), off: _bname('face-b-off')},
+        { range: 4, on: _bname('face-c'), off: _bname('face-c-off')},
+        { range: 5, on: _bname('face-d'), off: _bname('face-d-off')}
         ],
       mouseover : function(score, evt) {
         if (!_has_mousedover_raty) {

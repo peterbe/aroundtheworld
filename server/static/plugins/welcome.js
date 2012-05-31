@@ -57,7 +57,6 @@ var Welcome = (function() {
          $('.current-location', c).html(STATE.location.name);
          $.getJSON(URL, {get: 'stats'}, function(response) {
            $('.stats', container).show();
-           L(response);
            var c = $('.stats ul', container);
            $('li', c).hide();
            // totals
