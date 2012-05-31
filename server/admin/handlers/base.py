@@ -412,6 +412,10 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
             if each['user'] and each['user'] not in _users:
                 _users[each['user']] = \
                   self.db.User.find_one({'_id': each['user']})
+            if each['location'] not in _locations:
+                _locations[each['location']] = (self.db.Location
+                                          .find_one({'_id': each['location']}))
+
             jobs.append((
               each,
               _users[each['user']],
