@@ -26,7 +26,6 @@ var Loader = (function() {
            'marginTop': -((overlay.height() / 2)) + 'px'
          });
           */
-
          Plugins.load(hash.substr(1, hash.length - 1), arg, function() {
            Loader.update_title();
          });
@@ -64,7 +63,7 @@ var State = (function() {
         }
         c += incr;
         incr++;
-      }, 50);
+      }, 40);
       /*
       e.fadeTo(400, 0.1, function() {
         e.text(Utils.formatCost(b + delta) + ' ' + suffix)
@@ -242,6 +241,7 @@ var ErrorCatcher = (function() {
        if (line == 0 && (
            message == "TypeError: 'null' is not an object" ||
            message == "TypeError: 'undefined' is not an object")) {
+         L('Swallowing error', message);
          // some strange Safari errors I'm getting that always gets in the way
          return;
        }

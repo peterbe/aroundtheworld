@@ -13,6 +13,7 @@ var Quiz = (function() {
   var t0, t1;
   var _once = false;
   var _has_mousedover_raty = false;
+  var _seen_intros = [];
 
   function _dirname(src) {
     return src.split('/').slice(0, src.split('/').length - 1).join('/') + '/';
@@ -38,13 +39,12 @@ var Quiz = (function() {
       if (response.quiz_name) {
         Quiz.show_name(response.quiz_name);
       }
-      if (response.intro) {
-      }
       last_question = response.no_questions.last;
       _show_no_questions(response.no_questions['total'],
                          response.no_questions['number']);
       if (response.question) {
-        if (response.intro) {
+        if (response.intro && $.inArray(category, _seen_intros) == -1) {
+          _seen_intros.push(category);
           Quiz.show_intro(response.intro);
           $('div.intro', container).show();
           $('div.play', container).hide();

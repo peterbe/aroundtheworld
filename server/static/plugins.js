@@ -46,9 +46,9 @@ var Plugins = (function() {
      load: function(id, extra_arg) {
        _stop();
        if ($.inArray(id, loaded_plugins) == -1) {
-         _load_dom_elements(PLUGINS[id]);
          loaded_plugins.push(id);
          extra_args[id] = extra_arg;
+         _load_dom_elements(PLUGINS[id]);
        } else {
          var c = callbacks[id];
          c(extra_arg);
