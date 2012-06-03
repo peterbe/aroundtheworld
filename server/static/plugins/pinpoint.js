@@ -8,6 +8,7 @@ var Pinpoint = (function() {
   var click_listener, dblclick_listener;
   var _cities_removed = false;
   var count_questions = 0;
+  var _waiting_time;
   var initial_center;
   var infowindow, dropped_marker, correct_marker;
   var _next_is_last = false;
@@ -218,7 +219,7 @@ var Pinpoint = (function() {
 
        $.getJSON('/pinpoint.json', function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
-
+         _waiting_time = response.waiting_time;
          _show_no_questions(1, response.no_questions);
          var sw = new google.maps.LatLng(response.center.sw.lat,
                                          response.center.sw.lng);
@@ -250,7 +251,7 @@ var Pinpoint = (function() {
            $('#pinpoint-tucked').show();
            $('#pinpoint-tucked .skip:hidden').show();
            $('#pinpoint-tucked .current:visible').hide();
-           countdown = 10 + 1;
+           countdown = _waiting_time + 1;
            Pinpoint.tick();
            return false;
          });

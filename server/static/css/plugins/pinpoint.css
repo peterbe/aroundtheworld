@@ -1,3 +1,6 @@
+/* Override this from bootstrap so it doesn't screw up the shadows */
+img { max-width: none }
+
 #pinpoint-splash {
     background-color:white;
     opacity: 0.7;

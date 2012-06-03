@@ -1460,7 +1460,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
     MIN_DISTANCE = 50.0
     NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
-    SECONDS = 10
+    SECONDS = 100
 
     CATEGORY_NAME = u'Geographer'
 
@@ -1508,6 +1508,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
           }
         }
         data['no_questions'] = self.NO_QUESTIONS
+        data['waiting_time'] = self.SECONDS
 
         if self.get_argument('next', None):
             session = (self.db.PinpointSession
