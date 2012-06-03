@@ -354,6 +354,22 @@ class QuestionRatingTotal(BaseDocument):
       },
     }
 
+@register
+class QuestionStats(BaseDocument):
+    __collection__ = 'question_stats'
+    structure = {
+      'question': ObjectId,
+      'times': {
+        'right': float,
+        'wrong': float,
+      },
+      'unique_count': int,
+      'unique_count_timedout': int,
+      'rights': int,
+      'rights_percentage': float,
+      'wrongs': int,
+      'wrongs_percentage': float,
+    }
 
 @register
 class QuestionPicture(BaseDocument):

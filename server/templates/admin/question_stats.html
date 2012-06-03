@@ -7,7 +7,16 @@ tfoot th select[name="authors"] { width:100px; }
 {% end %}
 
 {% block content %}
-  <h2>{{ count }} totals {% if filtering %}found{% end %}</h2>
+  {% if not filtering %}
+  {% if no_questions > count %}
+  <form action="." method="post" style="float:right">
+    <p>{{ no_questions - count }} questions not accounted for.</p>
+    <button type="submit">Re-generate remaining stats</button>
+  </form>
+  {% end %}
+  {% end %}
+
+  <h2>{{ count }} gathered stats {% if filtering %}found{% end %}</h2>
   {% if filtering %}
   <p><a href=".">Reset filtering</a></p>
   {% end %}
@@ -19,16 +28,40 @@ tfoot th select[name="authors"] { width:100px; }
           <tr>
             <th>Question</th>
             <th>&nbsp;</th>
-            <th>Average
-              {% module SortArrow('average.all', sort_key, sort_order) %}
+            <th>Unique Answers
+              {% module SortArrow('unique_count', sort_key, sort_order) %}
             </th>
-            <th>Count
-              {% module SortArrow('count.all', sort_key, sort_order) %}
-              </th>
+            <th>Timed out
+              {% module SortArrow('unique_count_timedout', sort_key, sort_order) %}
+            </th>
+            <th>Rights
+              {% module SortArrow('rights', sort_key, sort_order) %}
+            </th>
+            <th>Wrongs
+              {% module SortArrow('wrongs', sort_key, sort_order) %}
+            </th>
           </tr>
         </thead>
+        <tfoot>
+          <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
         <tbody>
-          {% for total, question in totals %}
+          {% for stats, question in statss %}
           <tr>
             <td>
               <a href="{{ reverse_url('admin_question', question['_id']) }}">{% module Truncate(question['text'], 60) %}</a>
@@ -47,10 +80,22 @@ tfoot th select[name="authors"] { width:100px; }
             {% end %}
             </td>
             <td>
-              {{ '%.1f' % total['average']['all'] }}
+              {{ stats['unique_count'] }}
             </td>
             <td>
-              {{ total['count']['all'] }}
+              {{ stats['unique_count_timedout'] }}
+            </td>
+            <td>
+              {{ stats['rights'] }}
+              {% if stats['rights_percentage'] is not None %}
+              ({{ '%.1f' % stats['rights_percentage'] }}%)
+              {% end %}
+            </td>
+            <td>
+              {{ stats['wrongs'] }}
+              {% if stats['wrongs_percentage'] is not None %}
+              ({{ '%.1f' % stats['wrongs_percentage'] }}%)
+              {% end %}
             </td>
           </tr>
           {% end %}

@@ -1,0 +1,9 @@
+              {% if sort_key == key %}
+                {% if sort_order == -1 %}
+                <a href="?sort_key={{ key }}&amp;sort_order=1">&darr;</a>
+                {% else %}
+                <a href="?sort_key={{ key }}&amp;sort_order=-1">&uarr;</a>
+                {% end %}
+              {% else %}
+                <a href="?sort_key={{ key }}&amp;sort_order=-1">&larr;</a>
+              {% end %}

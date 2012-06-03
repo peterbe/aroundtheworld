@@ -307,8 +307,82 @@ class DeleteQuestionAdminHandler(BaseQuestionAdminHandler):
         self.redirect(self.reverse_url('admin_questions'))
 
 
+class QuestionStatsMixin(object):
+    def get_or_create_answer_stats(self, question):
+        stats = self.db.QuestionStats.find_one({'question': question['_id']})
+        if stats:
+            # check if it's older than the last time this question was used
+            try:
+                last_used, = (self.db.SessionAnswer
+                              .find({'question': question['_id']})
+                              .sort('add_date', -1)
+                              .limit(1))
+                if last_used['add_date'] > stats['modify_date']:
+                    # stats is too old
+                    stats.delete()
+            except IndexError:
+                pass
+
+        if not stats:
+            stats = self._create_answer_stats(question)
+
+        return stats
+
+    def _create_answer_stats(self, question):
+        stats = self.db.QuestionStats()
+        stats['question'] = question['_id']
+        has_answered = set()
+        times = {
+          'right': [],
+          'wrong': []
+        }
+        unique_count = 0
+        unique_count_timedout = 0
+        rights = 0
+        wrongs = 0
+        for session in (self.db.QuestionSession
+                        .find({'category': question['category']},
+                              ('user',))
+                        .sort('add_date')):
+            if session['user'] in has_answered:
+                continue
+            for answer in (self.db.SessionAnswer
+                           .find({'session': session['_id'],
+                                  'question': question['_id']},
+                                  ('correct', 'time', 'timedout'))
+                           .sort('add_date')):
+                if answer['timedout']:
+                    unique_count_timedout += 1
+                else:
+                    if answer['time'] is None:
+                        continue
+                    unique_count += 1
+                    times[answer['correct'] and 'right' or 'wrong'].append(answer['time'])
+                    if answer['correct']:
+                        rights += 1
+                    else:
+                        wrongs += 1
+                has_answered.add(session['user'])
+
+        #stats['times'] = {}
+        if times['right']:
+            stats['times']['right'] = sum(times['right']) / len(times['right'])
+        if times['wrong']:
+            stats['times']['wrong'] = sum(times['wrong']) / len(times['wrong'])
+        stats['unique_count'] = unique_count
+        stats['unique_count_timedout'] = unique_count_timedout
+        stats['rights'] = rights
+        if rights or wrongs:
+            stats['rights_percentage'] = 100. * rights / (rights + wrongs)
+        stats['wrongs'] = wrongs
+        if rights or wrongs:
+            stats['wrongs_percentage'] = 100. * wrongs / (rights + wrongs)
+        stats.save()
+        return stats
+
+
 @route('/admin/questions/(\w{24})/', name='admin_question')
-class QuestionAdminHandler(BaseQuestionAdminHandler):
+class QuestionAdminHandler(BaseQuestionAdminHandler, QuestionStatsMixin):
 
     def get(self, _id, form=None):
         data = {}
@@ -327,7 +401,9 @@ class QuestionAdminHandler(BaseQuestionAdminHandler):
         data['can_delete'] = self.can_delete(data['question'])
         data['rating_total'] = (self.db.QuestionRatingTotal
                               .find_one({'question': data['question']['_id']}))
+        data['answer_stats'] = self.get_or_create_answer_stats(data['question'])
         self.render('admin/question.html', **data)
+
 
     def post(self, _id):
         data = {}
@@ -752,3 +828,49 @@ class QuestionRatingsBiasAdminHandler(AuthenticatedBaseHandler):
         data['right'] = sum(rights) / len(rights)
         data['wrong'] = sum(wrongs) / len(wrongs)
         self.render('admin/question_ratings_bias.html', **data)
+
+
+@route('/admin/questions/stats/', name='admin_question_stats')
+class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
+
+    def get(self):
+        data = {}
+        filter_ = {}
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+        statss = []
+        _questions = {}
+        data['count'] = self.db.QuestionStats.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        data['filtering'] = bool(filter_)
+        sort_key = self.get_argument('sort_key', 'unique_count')
+        sort_order = int(self.get_argument('sort_order', -1))
+        data['sort_key'] = sort_key
+        data['sort_order'] = sort_order
+        for each in (self.db.QuestionStats
+                     .find(filter_)
+                     .sort(sort_key, sort_order)
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['question'] not in _questions:
+                _questions[each['question']] = \
+                  self.db.Question.find_one({'_id': each['question']})
+            statss.append((
+              each,
+              _questions[each['question']],
+            ))
+        data['statss'] = statss
+        data['no_questions'] = self.db.Question.find({'published': True}).count()
+        self.render('admin/question_stats.html', **data)
+
+    def post(self):
+        for question in self.db.Question.find({'published': True}):
+            self.get_or_create_answer_stats(question)
+
+        self.redirect(self.reverse_url('admin_question_stats'))

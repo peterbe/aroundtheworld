@@ -20,3 +20,12 @@ class Truncate(tornado.web.UIModule):
 
     def render(self, text, characters):
         return tornado.escape.xhtml_escape(truncate_text(text, characters))
+
+
+class SortArrow(tornado.web.UIModule):
+
+    def render(self, key, sort_key, sort_order):
+        return self.render_string("admin/_sort_arrow.html",
+                                  key=key,
+                                  sort_key=sort_key,
+                                  sort_order=sort_order)

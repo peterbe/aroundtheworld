@@ -33,6 +33,7 @@ $(function() {
   {% end %}
 
   {% if rating_total %}
+  <h3>Ratings</h3>
   <table class="table table-condensed">
     <thead>
       <tr>
@@ -47,13 +48,66 @@ $(function() {
         <td>Average:</td>
         <td>{{ '%.1f' % rating_total['average']['all'] }}</td>
         <td>{{ '%.1f' % rating_total['average']['right'] }}</td>
-        <td>{{ '%.1f' % rating_total['average']['wrong'] }}</td>
+        <td>{% if rating_total['average']['wrong'] %}
+          {{ '%.1f' % rating_total['average']['wrong'] }}
+          {% else %}
+          --
+          {% end %}
+          </td>
       </tr>
       <tr>
         <td>Count:</td>
         <td>{{ rating_total['count']['all'] }}</td>
         <td>{{ rating_total['count']['right'] }}</td>
         <td>{{ rating_total['count']['wrong'] }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% end %}
+
+  {% if answer_stats %}
+  <h3>Answer stats</h3>
+  <table class="table table-condensed">
+    <tbody>
+      <tr>
+        <td>Unique # answers:</td>
+        <td>{{ answer_stats['unique_count'] }}</td>
+      </tr>
+      <tr>
+        <td># users getting it <strong>Right</strong>:</td>
+        <td>{{ answer_stats['rights'] }}
+          ({{ '%.1f' % answer_stats['rights_percentage'] }}%)
+        </td>
+      </tr>
+      <tr>
+        <td># users getting it <strong>Wrong</strong>:</td>
+        <td>{{ answer_stats['wrongs'] }}
+          ({{ '%.1f' % answer_stats['wrongs_percentage'] }}%)
+        </td>
+      </tr>
+      <tr>
+        <td># users <strong>Timed out</strong>:</td>
+        <td>{{ answer_stats['unique_count_timedout'] }}</td>
+      </tr>
+      <tr>
+        <td>Average time to answer <strong>Right</strong>:</td>
+        <td>
+          {% if answer_stats['times'].get('right') %}
+          {{ '%.2f' % answer_stats['times']['right'] }} seconds
+          {% else %}
+          --
+          {% end %}
+        </td>
+      </tr>
+      <tr>
+        <td>Average time to answer <strong>Wrong</strong>:</td>
+        <td>
+          {% if answer_stats['times'].get('wrong') %}
+          {{ '%.2f' % answer_stats['times']['wrong'] }} seconds
+          {% else %}
+          --
+          {% end %}
+        </td>
       </tr>
     </tbody>
   </table>
