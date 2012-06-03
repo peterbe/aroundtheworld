@@ -23,12 +23,12 @@ var Plugins = (function() {
     var s;
     if (plugin_url.match(/\.css($|\?)/)) {
       s = $('<link type="text/css" rel="stylesheet">')
-        .attr('href', plugin_url)
-          .ready(callback);
+        .ready(callback)
+          .attr('href', plugin_url);
     } else {
       s = $('<script type="text/javascript">')
-        .attr('src', plugin_url)
-          .ready(callback);
+        .ready(callback)
+          .attr('src', plugin_url);
     }
     $('head').append(s);
   };

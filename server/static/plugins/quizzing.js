@@ -40,8 +40,12 @@ var Quiz = (function() {
         Quiz.show_name(response.quiz_name);
       }
       last_question = response.no_questions.last;
+
       _show_no_questions(response.no_questions['total'],
                          response.no_questions['number']);
+      if (response.pictures) {
+        Utils.preload_images(response.pictures, true);
+      }
       if (response.question) {
         if (response.intro && $.inArray(category, _seen_intros) == -1) {
           _seen_intros.push(category);

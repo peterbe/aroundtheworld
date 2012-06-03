@@ -191,9 +191,26 @@ var Utils = (function() {
       if (!isInt(v)) v = v.toFixed(1);
       return v;
     },
-    preload_image: function(url) {
-      var i = document.createElement('img');
-      i.src = url;
+    preload_image: function(url, callback) {
+      var i = $('<img>');
+      if (callback) {
+        i.ready(callback);
+      }
+      i.attr('src', url);
+    },
+    preload_images: function(urls, synchronous) {
+      if (synchronous) {
+        var url = urls.shift();
+        if (url) {
+          Utils.preload_image(url, function() {
+            Utils.preload_images(urls);
+          });
+        }
+      } else {
+        $.each(urls, function(i, url) {
+          Utils.preload_image(url);
+        });
+      }
     },
     update_title: function () {
       var title = null;

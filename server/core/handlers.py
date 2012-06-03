@@ -460,7 +460,21 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             session['user'] = user['_id']
             session['location'] = location['_id']
             session['category'] = category['_id']
+            try:
+                session['questions'] = self._pick_questions(user, location, category)
+            except NoQuestionsError:
+                self.write_json({'error': 'NOQUESTIONS'})
+                return
             session.save()
+
+            # check which of these have images that need to be preloaded
+            data['pictures'] = []
+            for picture in (self.db.QuestionPicture
+                            .find({'question': {'$in': session['questions']}})
+                            ):
+                uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+                url = self.static_url(uri.replace('/static/', ''))
+                data['pictures'].append(url)
 
         for each in (self.db.SessionAnswer
                      .find({'session': session['_id']})
@@ -478,16 +492,10 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 previous_question['points'] = 0
                 previous_question.save()
 
-        try:
-            question = self._get_next_question(
-              session,
-              category,
-              location,
-              previous_question=previous_question
-            )
-        except NoQuestionsError:
-            self.write_json({'error': 'NOQUESTIONS'})
-            return
+        question_id = session['questions'].pop(0)
+        session.save()
+        question = self.db.Question.find_one({'_id': question_id})
+
         if not question['alternatives_sorted']:
             random.shuffle(question['alternatives'])
 
@@ -526,6 +534,35 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             }
         data['question']['seconds'] = question['seconds']
         self.write_json(data)
+
+    def _pick_questions(self, user, location, category, allow_repeats=False):
+        filter_ = {
+          'location': location['_id'],
+          'category': category['_id']
+        }
+        question_ids = []
+        while len(question_ids) < self.NO_QUESTIONS:
+            if question_ids:
+                this_filter = dict(filter_,
+                                   _id={'$nin': question_ids})
+            else:
+                this_filter = dict(filter_)
+            questions = self.db.Question.find(this_filter, ('_id',))
+            count = questions.count()
+            if not count:
+                if allow_repeats:
+                    raise NoQuestionsError('Not enough questions')
+                else:
+                    return self._pick_questions(user, location, category,
+                                                allow_repeats=True)
+
+            nth = random.randint(0, count - 1)
+            for question in questions.limit(1).skip(nth):
+                question_ids.append(question['_id'])
+
+        # no repeats!
+        assert len(question_ids) == len(set(question_ids))
+        return question_ids
 
     def _get_next_question(self, session, category, location,
                            allow_repeats=False, previous_question=None):

@@ -289,7 +289,6 @@ class Question(BaseDocument):
                 .find({'question': self['_id']})
                 .count())
 
-
     def get_picture(self):
         return self.db.QuestionPicture.find_one({'question': self['_id']})
 
@@ -440,6 +439,7 @@ class QuestionSession(BaseDocument):
       'category': ObjectId,
       'finish_date': datetime.datetime,
       'start_date': datetime.datetime,
+      'questions': [ObjectId],
     }
 
     default_values = {
