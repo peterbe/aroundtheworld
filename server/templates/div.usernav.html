@@ -10,18 +10,18 @@
         </a>
       </li>
 
-      <li class="user-miles logged-in" style="display:none">
+      <li class="user-miles logged-in sprite sprite-miles" style="display:none">
         <a href="#miles" class="overlay-changer">
           {% if state.get('user') %}
             {% module Thousands(state['user']['miles_total']) %} miles{% end %}</a>
       </li>
 
-      <li class="user-coins logged-in" style="display:none">
+      <li class="user-coins logged-in sprite sprite-coins" style="display:none">
         <a href="#coins" class="overlay-changer">
         {% if state.get('user') %}{% module Thousands(state['user']['coins_total']) %} coins{% end %}</a>
       </li>
 
-      <li class="user-name logged-in" style="display:none">
+      <li class="user-name logged-in sprite sprite-settings" style="display:none">
         <a href="#settings" class="overlay-changer" title="Settings">{% if state['user'] %}
           {% if state['user']['anonymous'] %}
           Settings
@@ -31,7 +31,7 @@
         {% end %}</a>
       </li>
 
-      <li class="feedback logged-in" style="display:none">
+      <li class="feedback logged-in sprite sprite-feedback" style="display:none">
         <a href="#feedback" class="overlay-changer" title="Give feedback">Feedback</a>
       </li>
 
@@ -39,7 +39,7 @@
         <a href="/admin/" title="Because you deserve it!">Admin</a>
       </li>
 
-      <li class="signout logged-in" style="display:none">
+      <li class="signout logged-in sprite sprite-signout" style="display:none">
         <a href="#signout" class="overlay-changer" title="Sign out">Sign out</a>
       </li>
 

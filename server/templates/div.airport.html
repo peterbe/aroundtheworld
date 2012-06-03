@@ -1,7 +1,6 @@
 <div id="airport" class="overlay">
-  <img src="{{ static_url('images/airport.png') }}" alt="Airport sign" class="overlay-image">
+  <img class="overlay-image deferred" src="." data-src="{{ static_url('images/airport.png') }}" alt="Airport sign" >
   <h2></h2>
-
 
   <div class="confirm" style="display:none">
     <p><strong>Are you sure you want to buy a ticket to <em></em>?</strong></p>

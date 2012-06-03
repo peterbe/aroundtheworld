@@ -7,7 +7,7 @@
 
     <p>
     <a class="btn btn-large auth" href="/auth/google/">
-      <img src="{{ static_url('images/google-login-small.png') }}" alt="Sign in with Google">
+      <img src="." data-src="{{ static_url('images/google-login-small.png') }}" class="deferred" alt="Sign in with Google">
       Sign in with Google
     </a>
 
@@ -20,21 +20,21 @@
 
     <p>
     <a class="btn btn-large auth" href="/auth/anonymous/">
-      <img src="{{ static_url('images/anonymous.png') }}" alt="Play anonymously">
+      <img src="." data-src="{{ static_url('images/anonymous.png') }}" class="deferred" alt="Play anonymously">
       Play anonymously
     </a>
     </p>
 
   </div>
-  
+
   <div class="hint" style="display:none">
     <h3>Don't worry...</h3>
-    <p>All the <strong>coins</strong> you have earned whilst playing anonymously 
+    <p>All the <strong>coins</strong> you have earned whilst playing anonymously
     <strong>will be transferred</strong> when you sign in properly.</p>
     <p class="small">But you can only do this once per account.</p>
-  
+
   </div>
-  
+
 
   <p class="other-note">Other forms of signing in is coming in a future version.</p>
 

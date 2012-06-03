@@ -16,6 +16,11 @@ var Loader = (function() {
        hash = hash.split(',')[0];
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
+         $('img.deferred', hash).each(function() {
+           var el = $(this);
+           el.attr('src', el.data('src'));
+           el.removeClass('deferred');
+         });
          $(hash + '.overlay').show();
          Plugins.load(hash.substr(1, hash.length - 1), arg, function() {
            Loader.update_title();
