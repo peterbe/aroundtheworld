@@ -28,9 +28,6 @@ var Flying = (function() {
              }
              var hash = '#city';
              Loader.load_hash(hash);
-             setTimeout(function() {
-               State.update();
-             }, 1000);
            });
 
          });

@@ -136,7 +136,6 @@ var City = (function() {
 
   return {
      load: function(page) {
-
        $('.section:visible', container).hide();
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
@@ -258,7 +257,9 @@ var City = (function() {
 
 Plugins.start('city', function(page, callback) {
   City.setup_message_post();
-  City.load(page);
+  State.update(function() {
+    City.load(page);
+  });
 });
 
 

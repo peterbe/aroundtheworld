@@ -16,16 +16,7 @@ var Loader = (function() {
        hash = hash.split(',')[0];
        if ($(hash + '.overlay').size()) {
          $('.overlay:visible').hide();
-         var overlay = $(hash + '.overlay').show();
-
-         // alignment CSS hack
-         /* commented out because I'm not impressed it works
-         overlay.css({
-           'bottom': 'auto',
-           'top': '50%',
-           'marginTop': -((overlay.height() / 2)) + 'px'
-         });
-          */
+         $(hash + '.overlay').show();
          Plugins.load(hash.substr(1, hash.length - 1), arg, function() {
            Loader.update_title();
          });
@@ -47,7 +38,7 @@ var Loader = (function() {
 
 var State = (function() {
 
-  function _show_change(delta, animated, selector, suffix) {
+  function _show_change(delta, animated, selector, suffix, callback) {
     var e = $('#usernav ' + selector + ' a');
     var b_float = parseFloat(e.text().replace(/[^\d]/g, ''));
     var b = parseInt(b_float);
@@ -58,20 +49,20 @@ var State = (function() {
           clearInterval(deltainterval);
           // make sure it really is right
           e.text(Utils.formatCost(parseInt(b_float + delta)) + ' ' + suffix);
+          if (callback) {
+            callback();
+          }
         } else {
           e.text(Utils.formatCost(b + c) + ' ' + suffix);
         }
         c += incr;
         incr++;
-      }, 40);
-      /*
-      e.fadeTo(400, 0.1, function() {
-        e.text(Utils.formatCost(b + delta) + ' ' + suffix)
-          .fadeTo(800, 1.0);
-      });
-       */
+      }, 35);
     } else {
       e.text(Utils.formatCost(b + delta) + ' ' + suffix);
+      if (callback) {
+        callback();
+      }
     }
   }
 
@@ -133,11 +124,11 @@ var State = (function() {
         }
       }
     },
-    show_coin_change: function(delta, animated) {
-      _show_change(delta, animated, '.user-coins', 'coins');
+    show_coin_change: function(delta, animated, callback) {
+      _show_change(delta, animated, '.user-coins', 'coins', callback);
     },
-    show_miles_change: function(delta, animated) {
-      _show_change(delta, animated, '.user-miles', 'miles');
+    show_miles_change: function(delta, animated, callback) {
+      _show_change(delta, animated, '.user-miles', 'miles', callback);
     },
     redirect_login: function() {
       Loader.load_hash('#login');
