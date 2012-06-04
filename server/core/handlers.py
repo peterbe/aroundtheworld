@@ -384,6 +384,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
     #SECONDS = 10
     NO_QUESTIONS = settings.QUIZ_MIN_NO_QUESTIONS
+    NO_QUESTIONS_TUTORIAL = settings.QUIZ_NO_QUESTIONS_TUTORIAL
 
     def points_to_coins(self, points, no_questions=None):
         if not no_questions:
@@ -541,7 +542,10 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
           'category': category['_id']
         }
         question_ids = []
-        while len(question_ids) < self.NO_QUESTIONS:
+        no_questions = self.NO_QUESTIONS
+        if category['name'] == 'Tutorial':
+            no_questions = self.NO_QUESTIONS_TUTORIAL
+        while len(question_ids) < no_questions:
             if question_ids:
                 this_filter = dict(filter_,
                                    _id={'$nin': question_ids})
