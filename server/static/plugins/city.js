@@ -75,6 +75,7 @@ var City = (function() {
         }
         item.appendTo(parent);
       });
+      $('.carousel', container).carousel();
       callback();
     });
   }
@@ -139,6 +140,9 @@ var City = (function() {
        $('.section:visible', container).hide();
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+         if (response.state) {
+           STATE = response.state;
+         }
          $('h2 strong', container).text(response.name);
          if (map && map.getZoom() < 15) {
            var p = new google.maps.LatLng(response.lat, response.lng);
@@ -152,7 +156,8 @@ var City = (function() {
          }
          if (response.count_pictures) {
            $('.pictures-link', container).show();
-
+         } else {
+           $('.pictures-link', container).hide();
          }
          if (page == 'embassy') {
            _load_embassy(function() {
@@ -216,8 +221,7 @@ var City = (function() {
            }
            Utils.update_title();
          }
-         //_load_jobs(response.jobs);
-         State.update();
+         //State.update();
        });
      },
     setup_message_post: function() {
@@ -257,9 +261,7 @@ var City = (function() {
 
 Plugins.start('city', function(page, callback) {
   City.setup_message_post();
-  State.update(function() {
-    City.load(page);
-  });
+  City.load(page);
 });
 
 

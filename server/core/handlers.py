@@ -1060,11 +1060,12 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['country'] = location['country']
             data['lat'] = location['lat']
             data['lng'] = location['lng']
-            data['count_pictures']=0#data['count_pictures'] = self.get_pictures_count(location)
+            data['count_pictures'] = self.get_pictures_count(location)
             data['count_messages'] = self.get_messages_count(location)
 
             data['has_introduction'] = bool(self.get_intro_html(location))
             data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
+            data['state'] = self.get_state()
 
         self.write(data)
 
