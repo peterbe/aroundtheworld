@@ -69,9 +69,34 @@ var Quiz = (function() {
     });
   }
 
+  function _set_exclamation(p) {
+    function rand_pick(options) {
+      function shuffle(o) { //v1.0
+        for (var j, x, i = o.length; i;
+             j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+        return o;
+      }
+      return shuffle(options)[0];
+    }
+    // p is the percentage questions right
+    var c = $('.results .exclamation', container);
+    if (p == 100.0) {
+      c.text('Perfect!!!');
+    } else if (p >= 80) {
+      c.text(rand_pick(['Brilliant!', 'Excellent!', 'Fantastic!']));
+    } else if (p >= 50) {
+      c.text(rand_pick(['Great!', 'Awesome!', 'Nice!']));
+    } else if (p == 0) {
+      c.text(rand_pick(['Hmm...', 'Not so good', 'Might wanna try again']));
+    } else {
+      c.text(rand_pick(['Yay!', 'Good!', 'Alright!']));
+    }
+  }
+
   function _finish() {
     $.post(URL, {finish: true}, function(response) {
       $('.play', container).hide();
+      _set_exclamation(response.results.percentage_right);
       $('.results', container).show();
       $('.short-summary .total-points', container)
         .text(Utils.formatPoints(response.results.total_points, true));

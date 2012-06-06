@@ -292,8 +292,8 @@ $(function() {
 
 mapInitialized(function(map) {
 
-  ErrorCatcher.set_prev_onerror(window.onerror);
-  window.onerror = ErrorCatcher.trigger;
+//  ErrorCatcher.set_prev_onerror(window.onerror);
+//  window.onerror = ErrorCatcher.trigger;
 
   $('a.overlay-changer').click(function() {
     return Loader.load_hash($(this).attr('href'));

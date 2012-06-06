@@ -633,6 +633,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 answer_obj.save()
 
             total_points = 0
+            rights = []
             summary = []
             for answer in (self.db.SessionAnswer
                            .find({'session': session['_id']})
@@ -642,6 +643,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                     raise Exception("this shouldn't happen any more")
                     answer['points'] = 0
                     answer.save()
+
+                rights.append(answer['correct'])
                 total_points += answer['points']
                 question = (self.db.Question
                             .find_one({'_id': answer['question']}))
@@ -680,6 +683,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['results'] = {
               'total_points': total_points,
               'coins': coins,
+              'percentage_right': 100.0 * sum(rights) / len(rights)
             }
 
         else:
