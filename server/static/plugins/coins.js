@@ -130,34 +130,8 @@ var Coins = (function() {
 Plugins.start('coins', function(table) {
   // called every time this plugin is loaded
   Coins.load(table);
-
-  if (window.addEventListener) {
-    var state = 0, konami = [38,38,40,40,37,39,37,39,66,65];
-    window.addEventListener("keydown", function(e) {
-      if ( e.keyCode == konami[state] ) state++;
-      else state = 0;
-      if ( state == 10 ) {
-        $.post('/coins.json', {cheat:true}, function(response) {
-          if (response.coins) {
-            State.update();
-            alert("You cheater!\n" + response.coins + " coins awarded to you");
-          } else if (response.ERROR) {
-            alert(response.ERROR);
-          } else {
-            alert("Sorry. Can't cheat");
-          }
-        });
-      }
-    }, true);
-  }
 });
 
 Plugins.stop('coins', function() {
-  if (window.removeEventListener) {
-    try {
-      window.removeEventListener('keydown');
-    } catch(e) {
-      L("ERROR on removeEventListener");
-    }
-  }
+  //
 });
