@@ -69,28 +69,30 @@ html, body {
     display:inline;
     font-size:0.9em;
     margin-right:5px;
-    
+
   }
-    
+
   /* I generated these by using
     http://spritegen.website-performance.org/
+    Next, time consider using
+    http://glue.readthedocs.org/en/latest/index.html
    */
   #usernav .sprite {
     background: url(../images/sprite-20120603.png) no-repeat top left;
   }
   #usernav .sprite-feedback{
-    background-position: 0 0; width: 16px; height: 16px; 
+    background-position: 0 0; width: 16px; height: 16px;
   }
-  #usernav .sprite-coins{ 
-    background-position: 0 -66px; width: 16px; height: 16px; 
+  #usernav .sprite-coins{
+    background-position: 0 -66px; width: 16px; height: 16px;
   }
   #usernav .sprite-miles{
-    background-position: 0 -132px; width: 16px; height: 16px; 
+    background-position: 0 -132px; width: 16px; height: 16px;
   }
   #usernav .sprite-settings{
-    background-position: 0 -198px; width: 16px; height: 16px; 
+    background-position: 0 -198px; width: 16px; height: 16px;
   }
-  #usernav .sprite-signout{ 
+  #usernav .sprite-signout{
     background-position: 0 -264px; width: 16px; height: 16px;
   }
 
