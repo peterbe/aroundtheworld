@@ -320,7 +320,7 @@ class QuestionStatsMixin(object):
                 if last_used['add_date'] > stats['modify_date']:
                     # stats is too old
                     stats.delete()
-            except IndexError:
+            except ValueError:
                 pass
 
         if not stats:
