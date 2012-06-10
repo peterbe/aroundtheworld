@@ -2,6 +2,7 @@ import tornado.web
 import tornado.escape
 from admin.utils import truncate_text
 
+
 class RenderField(tornado.web.UIModule):
     def render(self, field):
         try:

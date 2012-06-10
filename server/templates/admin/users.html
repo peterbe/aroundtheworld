@@ -42,7 +42,7 @@ tfoot th select[name="countries"] { width:150px; }
           {% for user, user_settings, location in users %}
           <tr>
             <td>
-              <a href="{{ reverse_url('admin_user', user['_id']) }}">{{ user['username'] }}</a>
+              <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
               {% if user['superuser'] %}
                 <span class="label warning">Superuser</span>
               {% end %}

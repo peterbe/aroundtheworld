@@ -2,8 +2,10 @@ import re
 import urllib
 from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
+from tornado_utils import timesince
 from .forms import UserForm
 from .base import djangolike_request_dict, SuperuserBaseHandler
+from core.ui_modules import commafy
 
 
 @route('/admin/users/', name='admin_users')
@@ -123,3 +125,107 @@ class UserAdminHandler(SuperuserBaseHandler):
             self.redirect(self.reverse_url('admin_users'))
         else:
             self.get(_id, form=form)
+
+
+@route('/admin/users/(\w{24})/journey/', name='admin_user_journey')
+class UserJourneyAdminHandler(UserAdminHandler):
+
+    def get(self, _id, form=None):
+        data = {}
+        user = self.db.User.find_one({'_id': ObjectId(_id)})
+        events = []
+        _categories = {}
+        _locations = {}
+
+        for job in (self.db.Job.find({'user': user['_id']})
+                    .sort('add_date', -1)):
+            if job['category'] not in _categories:
+                _categories[job['category']] = \
+                  self.db.Category.find_one({'_id': job['category']})
+            if job['location'] not in _locations:
+                _locations[job['location']] = \
+                  self.db.Location.find_one({'_id': job['location']})
+            category = _categories[job['category']]
+            location = _locations[job['location']]
+            description = ("Completed %s and earned %s coins" %
+                           (category, job['coins']))
+            events.append((
+              job['add_date'],
+              description,
+              location,
+              'job',
+            ))
+
+        for flight in (self.db.Flight.find({'user': user['_id']})
+                      .sort('add_date', -1)):
+            if flight['from'] not in _locations:
+                _locations[flight['from']] = \
+                  self.db.Location.find_one({'_id': flight['from']})
+            if flight['to'] not in _locations:
+                _locations[flight['to']] = \
+                  self.db.Location.find_one({'_id': flight['to']})
+            from_ = _locations[flight['from']]
+            to = _locations[flight['to']]
+            description = ("Flew %s miles from %s to %s" %
+                           (commafy(int(flight['miles'])),
+                            from_, to))
+            events.append((
+              flight['add_date'],
+              description,
+              from_,
+              'flight',
+            ))
+
+        for msg in (self.db.LocationMessage.find({'user': user['_id']})
+                      .sort('add_date', -1)):
+            if msg['location'] not in _locations:
+                _locations[msg['location']] = \
+                  self.db.Location.find_one({'_id': msg['location']})
+            location = _locations[msg['location']]
+            description = "Wrote a message!"
+            if msg['censored']:
+                description += " (censored)"
+            brief = msg['message']
+            if len(brief) > 40:
+                brief = brief[:40] + '...'
+            description += " '%s'" % brief
+            events.append((
+              msg['add_date'],
+              description,
+              location,
+              'message',
+            ))
+
+        for feedback in (self.db.Feedback.find({'user': user['_id']})
+                        .sort('add_date', -1)):
+            if feedback['location'] not in _locations:
+                _locations[feedback['location']] = \
+                  self.db.Location.find_one({'_id': feedback['location']})
+            location = _locations[msg['location']]
+            description = "Wrote feedback!"
+            brief = feedback['comment']
+            if len(brief) > 40:
+                brief = brief[:40] + '...'
+            description += " '%s'" % brief
+            events.append((
+              feedback['add_date'],
+              description,
+              location,
+              'feedback',
+            ))
+
+
+        events.sort()
+        _prev = None
+        for i, each in enumerate(events):
+            if _prev is None:
+                each += ('',)
+            else:
+                each += (timesince.smartertimesince(_prev, each[0]),)
+            _prev = each[0]
+            events[i] = each
+
+
+        data['events'] = events
+        data['user'] = user
+        self.render('admin/user_journey.html', **data)

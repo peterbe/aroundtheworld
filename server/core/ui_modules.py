@@ -8,7 +8,7 @@ from tornado_utils.thumbnailer import get_thumbnail
 import tornado.web
 
 
-def _commafy(s):
+def commafy(s):
     r = []
     for i, c in enumerate(reversed(str(s))):
         if i and (not (i % 3)):
@@ -20,7 +20,7 @@ def _commafy(s):
 class Thousands(tornado.web.UIModule):
 
     def render(self, number):
-        return _commafy(str(number))
+        return commafy(str(number))
 
 
 class JSON(tornado.web.UIModule):

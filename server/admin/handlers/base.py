@@ -274,8 +274,7 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
 
     def get_url(self, item):
         if item.__class__ == self.db.User._obj_class:
-            return (self.reverse_url('admin_users') +
-                    '?q=%s' % urllib.quote(item['username']))
+            return self.reverse_url('admin_user_journey', item['_id'])
 
         if item.__class__ == self.db.Feedback._obj_class:
             return self.reverse_url('admin_feedbacks')

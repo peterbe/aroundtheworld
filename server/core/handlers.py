@@ -24,6 +24,7 @@ from geopy.distance import distance as geopy_distance
 from core.ui_modules import PictureThumbnailMixin
 from models import Question
 import settings
+from .ui_modules import commafy
 
 
 ONE_HOUR = 60 * 60
@@ -910,7 +911,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
                 from_ = self.db.Location.find_one({'_id': flight['from']})
                 to = self.db.Location.find_one({'_id': flight['to']})
                 description = ('Flying from %s to %s (%s miles)' %
-                               (from_, to, _commafy(int(flight['miles']))))
+                               (from_, to, commafy(int(flight['miles']))))
                 type_ = 'flight'
             else:
                 raise NotImplementedError
@@ -952,13 +953,6 @@ class CoinsHandler(AuthenticatedBaseHandler):
         self.write_json({'error': 'Wrong code'})
 
 
-def _commafy(s):
-    r = []
-    for i, c in enumerate(reversed(str(s))):
-        if i and (not (i % 3)):
-            r.insert(0, ',')
-        r.insert(0, c)
-    return ''.join(r)
 
 
 @route('/location.json$', name='location')

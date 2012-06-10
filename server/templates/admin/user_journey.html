@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q_city"],
+tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="countries"] { width:150px; }
+</style>
+{% end %}
+
+{% block content %}
+  <p style="float:right"><a href="..">Go back to Edit user</a></p>
+  <h2>User journey for
+  {% if user['email'] %}
+  {{ user['email'] }}
+  {% else %}
+  {{ user['username'] }}
+  {% end %}
+  </h2>
+  <form action=".">
+      <table class="table condensed-table">
+        <thead>
+          <tr>
+            <th colspan="2">Event</th>
+            <th>Location</th>
+            <th colspan="2">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for date, description, location, event_type, date_diff in events %}
+          <tr>
+            <td>
+              {% if event_type == 'flight' %}
+              <img src="{{ static_url('images/mini-airplane.png') }}" alt="Flight">
+              {% elif event_type == 'message' %}
+              <img src="{{ static_url('images/mini-message.png') }}" alt="Location message">
+              {% elif event_type == 'feedback' %}
+              <img src="{{ static_url('images/feedback.png') }}" alt="Feedback">
+              {% elif event_type == 'job' %}
+              <img src="{{ static_url('images/coins/gold-1.png') }}" alt="Job">
+              {% else %}
+              {{ event_type }}
+              {% end %}
+
+            </td>
+            <td>
+              {{ description }}
+            </td>
+            <td>{{ location }}</td>
+            <td>{{ date.strftime('%d %b %Y %H:%M') }}</td>
+            <td>{{ date_diff }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+    </form>
+{% end %}
