@@ -45,7 +45,6 @@ var Airport = (function() {
        $('.choices:hidden', container).show();
        $.getJSON('/airport.json', function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
-
          $('h2', container).text(response.airport_name);
          $('.current-total', container).text(Utils.formatCost(STATE.user.coins_total, true));
          //var c = $('.destinations', container);
@@ -53,8 +52,17 @@ var Airport = (function() {
          var r;
          $.each(response.destinations, function(i, each) {
            r = $('<tr>');
+           r.data('cost', each.cost);
+           var a_title;
+           if (each.cost > STATE.user.coins_total) {
+             r.addClass('cantafford');
+             a_title = "You can afford to fly to " + each.name;
+           } else {
+             r.removeClass('cantafford');
+             a_title = "You can not yet afford to fly to " + each.name;
+           }
            $('<a href="#">')
-               .text(each.name)
+               .text(each.name).attr('title', a_title)
                  .click(function() {
                    Airport.confirm(each.name, each.id, each.cost);
                    return false;

@@ -14,6 +14,7 @@ var Quiz = (function() {
   var _once = false;
   var _has_mousedover_raty = false;
   var _seen_intros = [];
+  var _loading = false;
 
   function _dirname(src) {
     return src.split('/').slice(0, src.split('/').length - 1).join('/') + '/';
@@ -24,6 +25,10 @@ var Quiz = (function() {
   }
 
   function _load_next_question(category) {
+    if (_loading) {
+      throw "ALREADY LOADING!";
+    }
+    _loading = true;
     category = category || _category;
     _category = category;
     var data = {category: category};
@@ -55,6 +60,7 @@ var Quiz = (function() {
           $('.intro .begin a', container).click(function() {
             $('div.intro', container).hide();
             $('div.play', container).show();
+
             Quiz.start_timer(response.question.seconds);
             return false;
           });
@@ -178,14 +184,15 @@ var Quiz = (function() {
           }
         });
       }
-
     });
-
   }
 
   function setup_once() {
     $('a.next-question', container).click(function() {
-      Quiz.rush_next_question();
+      if (!_loading) {
+        $('.question-attention:visible', container).hide();
+        Quiz.rush_next_question();
+      }
       return false;
     });
 
@@ -235,6 +242,7 @@ var Quiz = (function() {
          setup_once();
          _once = true;
        }
+       _has_finished = false;
        Utils.update_title();
        $('.question-attention', container).hide();
        $('.continue-tutorial-cantafford', container).hide();
@@ -255,6 +263,7 @@ var Quiz = (function() {
      answer: function (value) {
        t1 = new Date();
        Quiz.stop_timer();
+       $('.timer-outer', container).hide();
        $('.pleasewait', container).show();
        $.ajax({
           url: URL,
@@ -300,13 +309,13 @@ var Quiz = (function() {
            if (xhr.responseText)
              msg += ': ' + xhr.responseText;
            alert(msg);
+
          }
        });
      },
     restart_timer: function(seconds) {
       if (last_question) {
         $('a.next-question', container).text('Finish job');
-        //$('.next-timer', container).hide();
       }
       seconds = seconds || 4;  // 4 is the default
       Quiz.start_timer(seconds);
@@ -319,14 +328,12 @@ var Quiz = (function() {
       t0 = new Date();
       countdown = seconds;
       $('.timer', container).text(countdown);
-      $('.timer-outer:hidden', container).show();
       timer = setTimeout(function() {
         Quiz.tick_timer();
       }, 1000);
     },
     rush_next_question: function() {
       countdown = 0;
-      clearTimeout(timer);
       Quiz.stop_timer(true);
     },
     tick_timer: function() {
@@ -364,6 +371,7 @@ var Quiz = (function() {
        }
      },
      show_question: function(question, start_immediately) {
+       _loading = false;
        if (question.picture) {
          Utils.preload_image(question.picture.url);
          $('.thumbnail-wrapper:hidden', container).show();
@@ -411,6 +419,7 @@ var Quiz = (function() {
            .ready(function() {
              $('.thumbnail-wrapper .loading', container).hide();
              if (start_immediately) {
+               $('.timer-outer:hidden', container).show();
                Quiz.start_timer(question.seconds);
              }
            })
@@ -418,6 +427,7 @@ var Quiz = (function() {
            .attr('src', question.picture.url);
        } else {
          if (start_immediately) {
+           $('.timer-outer:hidden', container).show();
            Quiz.start_timer(question.seconds);
          }
        }
@@ -458,4 +468,4 @@ Plugins.start('quizzing', function(category) {
 
 Plugins.stop('quizzing', function() {
   Quiz.teardown();
-});
+})

@@ -67,10 +67,16 @@ class BaseHandler(tornado.web.RequestHandler):
     NOMANSLAND = {
       'city': u'Nomansland',
       'country': u'Tutorialia',
+      'airport_name': u'Tutorial International Airport',
       'code': u'000',
       'lat': 29.0,
       'lng': -42.0,
     }
+
+    #def write(self, *a, **k):
+    #    from time import sleep
+    #    sleep(1.2)
+    #    super(BaseHandler, self).write(*a, **k)
 
     def write_json(self, struct, javascript=False):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
@@ -313,7 +319,7 @@ class AuthenticatedBaseHandler(BaseHandler):
     def prepare(self):
         user = self.get_current_user()
         if not user:
-            self.write_json({'error': 'NOTLOGGEDIN'})
+            self.write({'error': 'NOTLOGGEDIN'})
             self.finish()
 
 
@@ -464,7 +470,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             try:
                 session['questions'] = self._pick_questions(user, location, category)
             except NoQuestionsError:
-                self.write_json({'error': 'NOQUESTIONS'})
+                self.write({'error': 'NOQUESTIONS'})
                 return
             session.save()
 
@@ -607,13 +613,21 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             # called when the plugin is torn down
             # Use this opportunity to close any unfinished sessions
             self._teardown(user, location)
-            self.write_json({'ok': True})
+            self.write({'ok': True})
+            return
+
+        filter_ = {
+          'user': user['_id'],
+          'location': location['_id'],
+          'finish_date': None
+        }
+        if not self.db.QuestionSession.find(filter_).count():
+            self.write({'error': 'ALREADYFINISHED'})
+            logging.warning("Question session already finished %s" % filter_)
             return
 
         session, = (self.db.QuestionSession
-                    .find({'user': user['_id'],
-                           'location': location['_id'],
-                           'finish_date': None})
+                    .find(filter_)
                     .sort('add_date', -1)  # newest first
                     .limit(1))
 
@@ -639,13 +653,11 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                            .find({'session': session['_id']})
                            .sort('add_date', 1)  # oldest first
                            ):
-                if answer['timedout'] and answer['points'] is None:
-                    raise Exception("this shouldn't happen any more")
-                    answer['points'] = 0
-                    answer.save()
-
-                rights.append(answer['correct'])
-                total_points += answer['points']
+                if answer['timedout']:
+                    rights.append(False)
+                else:
+                    rights.append(answer['correct'])
+                    total_points += answer['points']
                 question = (self.db.Question
                             .find_one({'_id': answer['question']}))
                 summary.append({
@@ -680,6 +692,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             job['location'] = session['location']
             job.save()
 
+            print "RIGHTS", rights
             data['results'] = {
               'total_points': total_points,
               'coins': coins,
@@ -1982,6 +1995,7 @@ class BaseAuthHandler(BaseHandler):
                 nomansland = self.db.Location()
                 nomansland['city'] = self.NOMANSLAND['city']
                 nomansland['country'] = self.NOMANSLAND['country']
+                nomansland['airport_name'] = self.NOMANSLAND['airport_name']
                 nomansland['code'] = self.NOMANSLAND['code']
                 nomansland['available'] = False
                 nomansland['lng'] = self.NOMANSLAND['lng']

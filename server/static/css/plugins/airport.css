@@ -1,3 +1,7 @@
 #airport td.number {
   text-align: right;
 }
+
+#airport tr.cantafford td {
+  opacity: 0.6;
+}
