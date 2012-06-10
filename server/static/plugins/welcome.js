@@ -1,8 +1,37 @@
 var Welcome = (function() {
   var URL = '/welcome.json';
+  var LOGIN_URL = '/auth/anonymous/';
   var container = $('#welcome');
+  var _once = false;
+  var _loading = false;
+
+  function setup_once() {
+    $('a.login-shortcut', container).click(function() {
+      if (_loading) return;
+      _loading = true;
+      $('.login', container).hide();
+      $('.loading', container).show();
+      $.post(LOGIN_URL, function() {
+        State.update(function() {
+          $('.loading:visible', container).hide();
+          _loading = false;
+
+          Welcome.update();
+        });
+      });
+      return false;
+    });
+  }
+
   return {
      update: function() {
+       if (!_once) {
+         setup_once();
+         _once = true;
+       }
+       $('.not-logged-in .loading', container).hide();
+       $('.not-logged-in .login', container).show();
+       /*
        if (map && !STATE.location) {
          var t0 = new Date().getTime();
          $.getJSON('/iplookup/', function(response) {
@@ -17,6 +46,7 @@ var Welcome = (function() {
            }
          });
        }
+       */
        $('.alternative', container).hide();
        if (!STATE.user) {
          $('.not-logged-in', container).show();

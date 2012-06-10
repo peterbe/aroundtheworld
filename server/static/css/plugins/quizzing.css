@@ -114,6 +114,10 @@ span.question {
     font-size: 120%;
 }
 
+#quizzing ol.alternatives li {
+  padding: 3px;
+}
+
 @media (max-width: 480px) {
   #quizzing ol.alternatives li {
     padding: 3px;

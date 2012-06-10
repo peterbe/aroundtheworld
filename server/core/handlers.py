@@ -76,7 +76,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
     #def write(self, *a, **k):
     #    from time import sleep
-    #    sleep(1.2)
+    #    sleep(1)
     #    super(BaseHandler, self).write(*a, **k)
 
     def write_json(self, struct, javascript=False):
@@ -693,7 +693,6 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             job['location'] = session['location']
             job.save()
 
-            print "RIGHTS", rights
             data['results'] = {
               'total_points': total_points,
               'coins': coins,
@@ -1479,7 +1478,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
     MIN_DISTANCE = 50.0
     NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
-    SECONDS = 100
+    SECONDS = 10
 
     CATEGORY_NAME = u'Geographer'
 
@@ -2098,7 +2097,7 @@ class BaseAuthHandler(BaseHandler):
 @route('/auth/anonymous/', name='auth_anonymous')
 class AnonymousAuthHandler(BaseAuthHandler):
 
-    def get(self):
+    def post(self):
         user = self.db.User()
         user.username = self._anonymous_username()
         user.anonymous = True

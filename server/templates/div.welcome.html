@@ -1,11 +1,19 @@
 <div id="welcome" class="overlay">
-  <h2>Welcome to {{ page_title }}!</h2>
+  <h1>Welcome to {{ page_title }}!</h1>
 
   <div class="not-logged-in alternative">
-    <p>At some point, there's going to be a bunch of cool stuff right here about what the hell this is.</p>
+    <img class="image-left deferred" src="" data-src="{{ static_url('images/airplane-and-bag.png') }}" alt="Airplane">
+    <a href="#login" class="overlay-changer"><img class="image-right deferred" src="." data-src="{{ static_url('images/passport.png') }}" alt="Passport"></a>
+    <h3>A game where you try to reach every destination around the world.</h3>
 
-    <p class="login" style="text-align:center; font-weight:bold; font-size:1.2em">
-      <a href="#login" class="overlay-changer">Sign in to get going! &gt;&gt;&gt;</a>
+    <p class="login">
+      <a href="#welcome" class="login-shortcut">Get started straight away &gt;&gt;</a>
+      <br>or<br>
+      <a href="#login" class="overlay-changer">Sign in &gt;&gt;</a>
+    </p>
+
+    <p class="loading" style="display:none">
+      Hang on, logging you in anonymously...
     </p>
   </div>
 

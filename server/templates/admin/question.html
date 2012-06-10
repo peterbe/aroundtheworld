@@ -76,13 +76,17 @@ $(function() {
       <tr>
         <td># users getting it <strong>Right</strong>:</td>
         <td>{{ answer_stats['rights'] }}
+          {% if answer_stats['rights'] %}
           ({{ '%.1f' % answer_stats['rights_percentage'] }}%)
+          {% end %}
         </td>
       </tr>
       <tr>
         <td># users getting it <strong>Wrong</strong>:</td>
         <td>{{ answer_stats['wrongs'] }}
+          {% if answer_stats['wrongs'] %}
           ({{ '%.1f' % answer_stats['wrongs_percentage'] }}%)
+          {% end %}
         </td>
       </tr>
       <tr>

@@ -15,3 +15,37 @@
     font-size: 120%;
     text-align: center;
 }
+
+#welcome h1 {
+    text-align: center;
+    margin: 20px;
+}
+
+#welcome .not-logged-in h3 {
+    text-align: center;
+    margin: 20px;
+}
+
+#welcome .not-logged-in p.login,
+#welcome .not-logged-in p.loading {
+    text-align: center;
+    font-weight: bold;
+}
+#welcome .not-logged-in p.login a {
+    font-size: 1.4em;
+}
+
+#welcome img.image-right {
+    float: right;
+}
+#welcome img.image-left {
+    float: left;
+}
+
+@media (max-width: 480px) {
+
+  #welcome h1 {
+      font-size: 20px;
+      margin: 10px;
+  }
+}
