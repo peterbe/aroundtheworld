@@ -170,12 +170,26 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         q1 = self._create_question(self.tour_guide, self.newyork)
         q2 = self._create_question(self.tour_guide, self.newyork)
+        q = _get()
+        self.assertEqual(q, {'error': 'NOQUESTIONS'})
+        for i in range(10):
+            self._create_question(self.tour_guide, self.newyork)
+        # mess with it and un-publish all questions
+        for x in self.db.Question.find():
+            x['published'] = False
+            x.save()
+        q = _get()
+        self.assertEqual(q, {'error': 'NOQUESTIONS'})
+        for x in self.db.Question.find():
+            x['published'] = True
+            x.save()
+
         r = _get()
         assert r['question']
         assert r['no_questions']
         q = r['question']
 
-        self.assertTrue(q['text'] in (q1['text'], q2['text']))
+        #self.assertTrue(q['text'] in (q1['text'], q2['text']))
         qs, = self.db.QuestionSession.find()  # assert there is only 1
         self.assertEqual(qs['user'], user['_id'])
         self.assertEqual(qs['location'], self.newyork['_id'])
@@ -191,7 +205,7 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         sa, = self.db.SessionAnswer.find()
         self.assertEqual(sa['session'], qs['_id'])
-        self.assertTrue(sa['question'] in (q1['_id'], q2['_id']))
+        #self.assertTrue(sa['question'] in (q1['_id'], q2['_id']))
         self.assertEqual(sa['answer'], None)
         self.assertEqual(sa['correct'], None)
         self.assertEqual(sa['time'], None)
@@ -1131,8 +1145,8 @@ class HandlersTestCase(BaseHTTPTestCase):
 
     def test_anonymous_to_real_user(self):
         url = self.reverse_url('auth_anonymous')
-        response = self.client.get(url)
-        assert response.code == 302
+        response = self.client.post(url, {})
+        self.assertEqual(response.code, 302)
         user, = self.db.User.find()
         assert user['anonymous']
 
@@ -1175,7 +1189,9 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_anonymous_to_real_user_with_past(self):
         url = self.reverse_url('auth_anonymous')
         response = self.client.get(url)
-        assert response.code == 302
+        self.assertEqual(response.code, 405)
+        response = self.client.post(url, {})
+        self.assertEqual(response.code, 302)
         user, = self.db.User.find()
         assert user['anonymous']
 

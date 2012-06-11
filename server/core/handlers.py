@@ -546,7 +546,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
     def _pick_questions(self, user, location, category, allow_repeats=False):
         filter_ = {
           'location': location['_id'],
-          'category': category['_id']
+          'category': category['_id'],
+          'published': True,
         }
         question_ids = []
         no_questions = self.NO_QUESTIONS
@@ -1843,9 +1844,7 @@ class FlyHandler(AirportHandler):
           },
           'miles': calculate_distance(from_, to).miles,
         }
-        print "FINAL"
-        pprint(data)
-        self.write_json(data)
+        self.write(data)
 
     def post(self):
         _id = self.get_argument('id')
