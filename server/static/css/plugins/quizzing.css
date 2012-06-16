@@ -110,9 +110,17 @@ span.question {
     font-weight: bold;
 }
 
-#quizzing .tutorial p {
+#quizzing .tutorial p,
+#quizzing .award p {
     font-size: 120%;
 }
+#quizzing .award img  {
+    float: left;
+}
+#quizzing .award {
+    width: 75%;
+}
+
 
 #quizzing ol.alternatives li {
   padding: 3px;

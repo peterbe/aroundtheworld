@@ -616,3 +616,20 @@ class ErrorEvent(BaseDocument):
     default_values = {
       'count': 1
     }
+
+
+@register
+class Award(BaseDocument):
+    __collection__ = 'awards'
+    structure = {
+      'user': ObjectId,
+      'type': unicode,
+      'data': dict,
+      'description': unicode,
+      'location': ObjectId,
+      'category': ObjectId,
+      'ambassador': ObjectId,
+    }
+    default_values = {
+
+    }
