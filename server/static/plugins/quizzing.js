@@ -174,6 +174,7 @@ var Quiz = (function() {
         .text(Utils.formatPoints(_total_points));
 
       Utils.update_title();
+      sounds.play('cash-1');
 
       if (STATE.location.nomansland) {
         $.getJSON(AIRPORT_URL, {only_affordable: true}, function(response) {
@@ -440,6 +441,7 @@ var Quiz = (function() {
     },
     load_next: function(category) {
       if (last_question) {
+        sounds.preload('cash-1');
         _finish();
       } else {
         _load_next_question(category);

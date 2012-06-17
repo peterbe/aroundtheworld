@@ -31,7 +31,8 @@ var Loader = (function() {
            Loader.update_title();
          });
        } else {
-         L('ignoring: ' + hash); // xxx: console.warn(..) instead??
+         throw "Unrecognized hash: " + hash;
+         //L('ignoring: ' + hash); // xxx: console.warn(..) instead??
        }
 
        // when blanking the location hash, don't bubble

@@ -25,12 +25,13 @@ var Plugins = (function() {
       s = $('<link type="text/css" rel="stylesheet">')
         .ready(callback)
           .attr('href', plugin_url);
+      $('head').append(s);
     } else {
       s = $('<script type="text/javascript">')
         .ready(callback)
           .attr('src', plugin_url);
+      $('body').append(s);
     }
-    $('head').append(s);
   };
 
   var _load_dom_elements = function(urls) {

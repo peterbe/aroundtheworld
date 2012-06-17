@@ -21,15 +21,18 @@ var Airport = (function() {
          $('.cant-afford .more-coins', c).text(Utils.formatCost(cost - STATE.user.coins_total, true));
          $('button[type="submit"]', c).attr('disabled', 'disabled');
        }
+       sounds.preload('cash-2');
        $('form', c).unbind('submit').submit(function() {
          if (cost > STATE.user.coins_total) {
            return false;
          }
          $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
            if (response.cant_afford) {
+             // something must have gone wrong
              alert("Sorry. Can't afford the ticket");
              Loader.load_hash('#airport');
            } else {
+             sounds.play('cash-2');
              State.show_coin_change(-1 * response.cost, true);
              var hash = '#fly,' + response.from_code + '->' + response.to_code;
              Loader.load_hash(hash);

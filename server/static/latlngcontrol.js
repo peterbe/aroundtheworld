@@ -1,4 +1,4 @@
-var VELOCITY = 95.0;//120.0; // pixels/second
+var VELOCITY = 90.0;//120.0; // pixels/second
 var MIN_SCALING_START = 0.3;  // minimum percentage scale
 var MIN_SCALING_FINISH = 0.05;  // minimum percentage scale
 var MAX_SCALING = 0.9;  // maximum percentage scale
@@ -86,6 +86,9 @@ LatLngControl.prototype.draw = function() {
 
   if (!$('#latlng-control').size()) {
     // first time
+    if (typeof panes == 'undefined') {
+      throw "getPanes not loaded :(";
+    }
     panes.overlayImage.appendChild(this.div_);
   }
 
@@ -115,7 +118,7 @@ LatLngControl.prototype.draw = function() {
 
   var d = distance(point1.x, point1.y, point2.x, point2.y);
 
-//  L('DISTANCE', d);
+  //L('DISTANCE', d);
   var velocity = VELOCITY;
   if (d < 100) velocity *= 0.6; // 40% slower
   else if (d < 200) velocity *= 0.7; // 30% slower

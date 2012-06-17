@@ -1,13 +1,10 @@
 
-
-
 var Flying = (function() {
   return {
      animate: function (route) {
        if (map == null) {
          throw "Can't run flying plugin without map";
        }
-       //sounds.preload('jet-taking-off');
        $.getJSON('/fly.json', {route: route}, function(response) {
          var from = {lat: response.from.lat, lng: response.from.lng};
          from = new google.maps.LatLng(from.lat, from.lng);
@@ -38,4 +35,9 @@ var Flying = (function() {
 
 Plugins.start('flying', function(route) {
   Flying.animate(route);
+});
+
+
+Plugins.stop('flying', function() {
+  // nothing
 });

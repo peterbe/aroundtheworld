@@ -40,6 +40,9 @@ var PictureDetective = (function() {
       PictureDetective.carryon();
     });
 
+    sounds.preload('sad-trombone');
+    sounds.preload('cash-1');
+
   }
 
   return {
@@ -200,10 +203,13 @@ var PictureDetective = (function() {
         $('.coins', c).text(Utils.formatCost(result.coins, true));
         State.show_coin_change(result.coins, true);
         State.update();
+        sounds.play('cash-1');
 
       } else {
         c = $('.finish-timedout', container);
         $('.correct-answer', c).text(result.correct_answer);
+        sounds.play('sad-trombone');
+
       }
       if (result.left) {
         $('a.start-over .left', c).text(result.left);
