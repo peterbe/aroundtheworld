@@ -25,6 +25,7 @@ var Flying = (function() {
              }
              var hash = '#city';
              Loader.load_hash(hash);
+             State.update();
            });
 
          });
