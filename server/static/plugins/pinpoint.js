@@ -1,5 +1,6 @@
 var Pinpoint = (function() {
   var container = $('#pinpoint');
+  var URL = '/pinpoint.json';
   var timer;
   var skip_timer;
   var countdown;
@@ -92,7 +93,7 @@ var Pinpoint = (function() {
 
   function _finish() {
     Pinpoint.teardown();
-    $.post('/pinpoint.json', {finish: true}, function(response) {
+    $.post(URL, {finish: true}, function(response) {
       $('#pinpoint-tucked:visible').hide();
       $('#pinpoint-splash:visible').hide();
       container.show();
@@ -102,6 +103,14 @@ var Pinpoint = (function() {
       $('.coins', c).text(Utils.formatCost(response.results.coins, true));
       State.show_coin_change(response.results.coins, true);
       _show_summary(response.summary);
+      if (response.results.coins) {
+        $('h2', c).text('Well done!');
+        sounds.play('cash-1');
+      } else {
+        $('h2', c).text('Not so well done');
+        sounds.play('sad-trombone');
+      }
+
       c.show();
 
       setTimeout(function() {  // is this needed?
@@ -143,12 +152,12 @@ var Pinpoint = (function() {
          map: map,
          title: "Your guess!",
          draggable: false,
-         icon: '/static/images/pinpoint/dropped.png',
+         icon: $('img.dropped', container).attr('src'),
          animation: google.maps.Animation.DROP
        });
 
        var _data = {lat: latlng.lat(), lng:latlng.lng(), time: time_taken};
-       $.post('/pinpoint.json', _data, function(response) {
+       $.post(URL, _data, function(response) {
          if (false && response.correct) {
            dropped_marker.setAnimation(google.maps.Animation.BOUNCE);
            setTimeout(function() {
@@ -160,7 +169,7 @@ var Pinpoint = (function() {
            map: map,
            title: "Correct place!",
            draggable: false,
-           icon: '/static/images/pinpoint/correct.png',
+           icon: $('img.correct', container).attr('src'),
            animation: google.maps.Animation.DROP
          });
          setTimeout(function() {
@@ -217,7 +226,7 @@ var Pinpoint = (function() {
          Pinpoint.teardown();
        });
 
-       $.getJSON('/pinpoint.json', function(response) {
+       $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          _waiting_time = response.waiting_time;
          _show_no_questions(1, response.no_questions);
@@ -256,8 +265,8 @@ var Pinpoint = (function() {
            return false;
          });
 
-         Utils.preload_image('/static/images/pinpoint/dropped.png');
-         Utils.preload_image('/static/images/pinpoint/correct.png');
+         sounds.preload('sad-trombone');
+         sounds.preload('cash-1');
 
          callback();
        });
@@ -285,7 +294,7 @@ var Pinpoint = (function() {
         initial_center = map.getCenter();
       } else {
       }
-      $.getJSON('/pinpoint.json', {next: true}, function(response) {
+      $.getJSON(URL, {next: true}, function(response) {
         _show_no_questions(response.no_questions.number, response.no_questions.total);
         if (response.no_questions.last) {
           _next_is_last = true;

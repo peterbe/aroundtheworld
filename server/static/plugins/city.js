@@ -14,13 +14,21 @@ var City = (function() {
         if (each.category) {
           hash += ',' + each.category.replace(' ','+');
         }
+        var li = $('<li>')
         $('<a>')
           .attr('href', hash)
             .text(each.description)
               .click(function() {
                 Loader.load_hash($(this).attr('href'));
                 return true;
-              }).appendTo($('<li>').appendTo(c));
+              }).appendTo($('<p>').appendTo(li));
+        if (each.experience) {
+          $('<p>')
+            .addClass('experience')
+              .text(each.experience)
+                .appendTo(li);
+        }
+        li.appendTo(c)
       });
       callback();
     });

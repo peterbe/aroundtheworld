@@ -25,3 +25,15 @@
 #city .tutorial li strong {
     padding-right: 10px;
 }
+
+#city ul.jobs li {
+    padding: 4px;
+    line-height: 5px;
+}
+#city ul.jobs a {
+    font-size: 110%;
+    font-weight: bold;
+}
+#city ul.jobs .experience {
+    font-size: 90%;
+}

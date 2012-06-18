@@ -1139,7 +1139,8 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             point_values[category['name']] += q['points_value']
 
         jobs = []
-        for category in _categories.values():
+        for _id, category in sorted(_categories.items(),
+                                    lambda x, y: cmp(x[1]['name'], y[1]['name'])):
             no_questions = categories[category['name']]
             if location == nomansland:
                 # you're in Nomansland
@@ -1148,11 +1149,24 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             elif no_questions < QuizzingHandler.NO_QUESTIONS:
                 continue
 
+            experience = None
+            _earned = 0
+            for job in (self.db.Job
+                        .find({'user': user['_id'],
+                               'category': _id,
+                               'location': location['_id']},
+                              ('coins',))):
+                _earned += job['coins']
+            if _earned:
+                experience = "you have earned %s coins" % _earned
+            else:
+                experience = "you have not yet completed this"
+
             job = {
               'type': 'quizzing',
               'category': category['name'],
-              'description': ('%s (%s questions)' %
-                              (category['name'], no_questions)),
+              'description': category['name'],
+              'experience': experience,
             }
             jobs.append(job)
 
@@ -1163,12 +1177,25 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             _center_search = {'country': location['country']}
             _center = self.db.PinpointCenter.find_one(_center_search)
         if _center:
+            _earned = 0
+            category = self.db.Category.find_one({'name': PinpointHandler.CATEGORY_NAME})
+            for job in self.db.Job.find({'user': user['_id'],
+                                         'location': location['_id'],
+                                         'category': category['_id']},
+                                         ('coins',)):
+                _earned += job['coins']
+
+            if _earned:
+                experience = "you have earned %s coins" % _earned
+            else:
+                experience = "you have not yet completed this"
             _cities = self.db.Location.find(_center_search)
             if _cities.count() > PinpointHandler.NO_QUESTIONS:
                 description = 'Geographer (%d cities)' % _cities.count()
                 jobs.append({
                   'type': 'pinpoint',
                   'description': description,
+                  'experience': experience,
                 })
 
         picture_detective_job = self._get_picture_detective_jobs(user, location)
@@ -1473,9 +1500,8 @@ class PictureDetectiveHandler(QuizzingHandler):
 @route('/pinpoint.json$', name='pinpoint')
 class PinpointHandler(AuthenticatedBaseHandler):
 
-    # number between 0 and (inclusive) 1.0 that decides how many coins to
-    # give for a percentage.
-    PERCENTAGE_COINS_RATIO = 1.0
+    # number that is multiplied with the percentage from perfection
+    PERCENTAGE_COINS_RATIO = 1.4
 
     MIN_DISTANCE = 50.0
     NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
