@@ -158,12 +158,14 @@ var Pinpoint = (function() {
 
        var _data = {lat: latlng.lat(), lng:latlng.lng(), time: time_taken};
        $.post(URL, _data, function(response) {
+         /*
          if (false && response.correct) {
            dropped_marker.setAnimation(google.maps.Animation.BOUNCE);
            setTimeout(function() {
              dropped_marker.setAnimation(null);
            }, 3 * 1000);
          }
+         */
          correct_marker = new google.maps.Marker({
             position: new google.maps.LatLng(response.correct_position.lat, response.correct_position.lng),
            map: map,

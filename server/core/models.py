@@ -489,7 +489,7 @@ class PinpointCenter(BaseDocument):
       'north_east': [float],
     }
 
-    required_fields = structure.keys()
+    required_fields = ['country', 'south_west', 'north_east']
 
 
 @register
