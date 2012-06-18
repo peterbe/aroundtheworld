@@ -239,7 +239,7 @@ LatLngControl.prototype.createHtmlNode_ = function() {
   div.id = 'latlng-control';
   div.index = 100;
   var img = document.createElement("img");
-  img.src = "/static/images/airplane.png";
+  img.src = PLANE_IMG_URL;
   div.appendChild(img);
   return div;
 };
