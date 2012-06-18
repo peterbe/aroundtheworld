@@ -1,14 +1,8 @@
-<script>
-// XXX these need to move some day
-var PLANE_IMG_URL = '{{ static_url('images/airplane.png') }}';
-var PLANE_IMG_RADIUS = 107;
-
-window.sounds = new Soundplayer({
+var SOUNDS = {
   'jet-taking-off': '{{ static_url('sounds/jet-taking-off.ogg') }}',
   'jet-taking-off-long': '{{ static_url('sounds/jet-taking-off-long.ogg') }}',
   'airport-pa': '{{ static_url('sounds/airport-pa.ogg') }}',
   'cash-1': '{{ static_url('sounds/till_with_bell.ogg') }}',
   'cash-2': '{{ static_url('sounds/cash-2.ogg') }}',
   'sad-trombone': '{{ static_url('sounds/sad-trombone.ogg') }}'
-});
-</script>
+};

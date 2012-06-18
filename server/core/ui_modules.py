@@ -98,3 +98,18 @@ class GetPictureThumbnailSrc(ShowPictureThumbnail):
         attrs = (super(GetPictureThumbnailSrc, self)
                        .render(*args, return_args=True, **kwargs))
         return attrs['src']
+
+
+class ScriptTags(tornado.web.UIModule):
+
+    def render(self, *uris):
+        if self.handler.application.settings['optimize_static_content']:
+            module = self.handler.application.ui_modules['Static'](self.handler)
+            return module.render(*uris)
+
+        links = []
+        for each in uris:
+            links.append('<script src="%s"></script>' %
+                         self.handler.static_url(each))
+        #return self.handler.static_url(uris)
+        return '\n'.join(links)
