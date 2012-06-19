@@ -23,14 +23,8 @@
 
   <meta http-equiv="cleartype" content="on">
 
-  <link rel="stylesheet" href="{{ static_url('css/lib/bootstrap.min.css') }}">
-  <link rel="stylesheet" href="{{ static_url('css/lib/mobile-style.css') }}">
-  <link rel="stylesheet" href="{{ static_url('css/mobile.css') }}">
-
-  <script src="{{ static_url('lib/modernizr-2.0.6.min.js') }}"></script>
-  <script src="{{ static_url('lib/jquery-1.7.2.min.js') }}"></script>
-  <script src="{{ static_url('lib/jquery-ui-1.8.16-effects.min.js') }}"></script>
-  <script src="{{ static_url('lib/stacktrace-min-0.3.js') }}"></script>
+  {% module LinkTags('css/lib/bootstrap.min.css', 'css/lib/mobile-style.css', 'css/mobile.css') %}
+  {% module ScriptTags('lib/modernizr-2.0.6.min.js', 'lib/jquery-1.7.2.min.js', 'lib/jquery-ui-1.8.16-effects.min.js', 'lib/stacktrace-min-0.3.js') %}
   <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
 </head>
 
@@ -39,14 +33,7 @@
 {% include "_divs.html" %}
 {% include "_js_templates.html" %}
 
-<script src="{{ static_url('lib/helper.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('lib/soundplayer.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('plugins.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('latlngcontrol.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('map.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('flightzoom.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('main.js') }}"></script>
-<script type="text/javascript" src="{{ static_url('mobile.js') }}"></script>
+{% module ScriptTags('lib/helper.js', 'lib/soundplayer.js','plugins.js', 'latlngcontrol.js', 'map.js', 'flightzoom.js', 'main.js', 'mobile.js') %}
 <script>window.sounds = new Soundplayer(SOUNDS);</script>
 
 </body>
