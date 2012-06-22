@@ -29,21 +29,24 @@ var Airport = (function() {
          $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
            if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
            if (response.error == 'FLIGHTALREADYTAKEN') {
-             alert("Error!\nIt appears that flight has already started once.\nTry reloading to arrive in your new city")
+             alert("Error!\nIt appears that flight has already started once.\nTry reloading to arrive in your new city");
+             return;
+           }
+           if (response.error == 'CANTAFFORD') {
+             alert("Sorry. Can't afford the ticket");
+             Loader.load_hash('#airport');
              return;
            }
 
-           if (response.cant_afford) {
-             // something must have gone wrong
-             alert("Sorry. Can't afford the ticket");
-             Loader.load_hash('#airport');
-           } else {
-             sounds.play('cash-2');
-             State.show_coin_change(-1 * response.cost, true);
-             var hash = '#fly,' + response.from_code + '->' + response.to_code;
-             Loader.load_hash(hash);
-             //State.update();
+           sounds.play('cash-2');
+           State.show_coin_change(-1 * response.cost, true);
+           if (!response.from_code || !response.to_code) {
+             alert("Error!\nNo route found for some reason.\nTry reloading to arrive in your new city");
+             return;
            }
+           var hash = '#fly,' + response.from_code + '->' + response.to_code;
+           Loader.load_hash(hash);
+           //State.update();
          });
          return false;
        });
