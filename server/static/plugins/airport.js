@@ -27,6 +27,12 @@ var Airport = (function() {
            return false;
          }
          $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
+           if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+           if (response.error == 'FLIGHTALREADYTAKEN') {
+             alert("Error!\nIt appears that flight has already started once.\nTry reloading to arrive in your new city")
+             return;
+           }
+
            if (response.cant_afford) {
              // something must have gone wrong
              alert("Sorry. Can't afford the ticket");

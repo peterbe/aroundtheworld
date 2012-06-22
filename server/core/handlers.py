@@ -1874,11 +1874,16 @@ class FlyHandler(AirportHandler):
 
     def post(self):
         _id = self.get_argument('id')
-        location = self.db.Location.find_one({'_id': ObjectId(_id)})
-        assert location
+        try:
+            location = self.db.Location.find_one({'_id': ObjectId(_id)})
+            assert location
+        except (InvalidId, AssertionError):
+            raise tornado.web.HTTPError(400, 'Invalid id')
         user = self.get_current_user()
         current_location = self.get_current_location(user)
-        assert location != current_location
+        if location != current_location:
+            self.write_json({'error': 'FLIGHTALREADYTAKEN'})
+            return
         distance = calculate_distance(current_location, location)
         cost = self.calculate_cost(distance.miles, user)
         state = self.get_state()
