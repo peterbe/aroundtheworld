@@ -6,6 +6,11 @@ var Flying = (function() {
          throw "Can't run flying plugin without map";
        }
        $.getJSON('/fly.json', {route: route}, function(response) {
+         if (response.error == 'INVALIDROUTE') {
+           Utils.general_error("It seems that you have selected an invalid route.");
+           return;
+         }
+
          var from = {lat: response.from.lat, lng: response.from.lng};
          from = new google.maps.LatLng(from.lat, from.lng);
          var to = {lat: response.to.lat, lng: response.to.lng};

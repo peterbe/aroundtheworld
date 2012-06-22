@@ -29,7 +29,7 @@ var Airport = (function() {
          $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
            if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
            if (response.error == 'FLIGHTALREADYTAKEN') {
-             alert("Error!\nIt appears that flight has already started once.\nTry reloading to arrive in your new city");
+             Utils.general_error("It appears that flight has already started once.");
              return;
            }
            if (response.error == 'CANTAFFORD') {
@@ -41,7 +41,7 @@ var Airport = (function() {
            sounds.play('cash-2');
            State.show_coin_change(-1 * response.cost, true);
            if (!response.from_code || !response.to_code) {
-             alert("Error!\nNo route found for some reason.\nTry reloading to arrive in your new city");
+             Utils.general_error("No route found for some reason.");
              return;
            }
            var hash = '#fly,' + response.from_code + '->' + response.to_code;

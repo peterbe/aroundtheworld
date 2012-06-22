@@ -309,7 +309,7 @@ var Quiz = (function() {
            var msg = status;
            if (xhr.responseText)
              msg += ': ' + xhr.responseText;
-           alert(msg);
+           Utils.general_error(msg, "Try again in a minute. Sorry.");
 
          }
        });

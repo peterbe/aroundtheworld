@@ -167,6 +167,14 @@ var Utils = (function() {
   }
 
   return {
+     general_error: function(message, reload_tip) {
+       message = 'Error!\n' + message;
+       if (!reload_tip) {
+         reload_tip = "Try reloading to arrive in your current city";
+       }
+       message += '\n' + reload_tip;
+       alert(message);  // XXX which this was something more cool
+     },
      formatCost: function(v, include_suffix) {
        if (include_suffix) {
          if (v == 1) return v + ' coin';

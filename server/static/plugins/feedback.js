@@ -1,4 +1,5 @@
 var Feedback = (function() {
+  var URL = '/feedback.json';
   var container = $('#feedback');
   return {
     setup: function() {
@@ -18,7 +19,7 @@ var Feedback = (function() {
           alert("Please write something first");
           return;
         }
-        $.post('/feedback.json', data, function() {
+        $.post(URL, data, function() {
           Feedback.reset();
           $('.alert:hidden', container).show();
           setTimeout(function() {
@@ -31,7 +32,6 @@ var Feedback = (function() {
    },
     reset: function() {
       $('textarea', container).val('');
-      //$('button[type="reset"]', container).click();
     }
   };
 })();

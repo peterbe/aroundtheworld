@@ -55,7 +55,7 @@ var PictureDetective = (function() {
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          if (response.error == 'NOQUESTIONS') {
-           alert("Error. No more picture detective questions");
+           Utils.general_error("No more picture detective questions");
            return State.redirect_to_city();
          }
          _left_to_load = response.pictures.length;

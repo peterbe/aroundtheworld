@@ -1173,9 +1173,10 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         _center_search = {'country': location['country'],
                           'locality': location['locality']}
         _center = self.db.PinpointCenter.find_one(_center_search)
-        if not _center:
+        if not _center and not location['locality']:
             _center_search = {'country': location['country']}
             _center = self.db.PinpointCenter.find_one(_center_search)
+
         if _center:
             _earned = 0
             category = self.db.Category.find_one({'name': PinpointHandler.CATEGORY_NAME})
@@ -1840,7 +1841,11 @@ class FlyHandler(AirportHandler):
         user = self.get_current_user()
         route = self.get_argument('route')
         # use [0-9] only for the Nomansland thing
-        from_, to = re.findall('[0-9A-Z]{3}', route)
+        try:
+            from_, to = re.findall('[0-9A-Z]{3}', route)
+        except ValueError:
+            self.write_json({'error': 'INVALIDROUTE'})
+            return
         from_ = self.db.Location.find_one({'code': from_})
         if not from_:
             self.write_json({'error': 'INVALIDAIRPORT'})

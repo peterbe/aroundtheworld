@@ -119,7 +119,7 @@ var QuestionWriter = (function() {
     // prepping picture upload
     $('a.upload', container).click(function() {
       if (!_filepicker_key) {
-        alert("Error! Filepicker not initialized");
+        Utils.general_error("Filepicker not initialized", "Try reloading to try again");
         return false;
       }
       filepicker.setKey(_filepicker_key);

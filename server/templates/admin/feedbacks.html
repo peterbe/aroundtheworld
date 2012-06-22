@@ -46,7 +46,14 @@ tfoot th select[name="whats"] { width:120px; }
         <tbody>
           {% for feedback, location, user in documents %}
           <tr>
-            <td>{{ user['username'] }}</td>
+            <td>
+            <a href="{{ reverse_url('admin_user', user['_id']) }}">
+                {% if user['username'] %}
+                  {{ user['username'] }}
+                {% else %}
+                  {{ user['email'] }}
+                {% end %}</a>
+            </td>
             <td><a href="" title="{{ location }}" rel="tooltip">{{ location['code'] }}</a></td>
             <td>{{ feedback['what'] }}</td>
             <td>{% module ShowComment(feedback['comment']) %}</td>
