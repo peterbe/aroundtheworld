@@ -1881,7 +1881,7 @@ class FlyHandler(AirportHandler):
             raise tornado.web.HTTPError(400, 'Invalid id')
         user = self.get_current_user()
         current_location = self.get_current_location(user)
-        if location != current_location:
+        if location == current_location:
             self.write_json({'error': 'FLIGHTALREADYTAKEN'})
             return
         distance = calculate_distance(current_location, location)
