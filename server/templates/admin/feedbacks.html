@@ -70,7 +70,7 @@ tfoot th select[name="whats"] { width:120px; }
           {% for reply in replies %}
           <tr>
             <td colspan="3" style="text-align:right">
-             Reply:
+             <strong>Reply:</strong>
             </td>
             <td colspan="2">{% module ShowComment(reply['comment']) %}</td>
             <td>{{ reply['add_date'].strftime('%d %b %Y') }}</td>
