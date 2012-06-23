@@ -189,7 +189,7 @@ class UserJourneyAdminHandler(UserAdminHandler):
             if feedback['location'] not in _locations:
                 _locations[feedback['location']] = \
                   self.db.Location.find_one({'_id': feedback['location']})
-            location = _locations[msg['location']]
+            location = _locations[feedback['location']]
             description = "Wrote feedback!"
             brief = feedback['comment']
             if len(brief) > 40:
@@ -201,7 +201,6 @@ class UserJourneyAdminHandler(UserAdminHandler):
               location,
               'feedback',
             ))
-
 
         events.sort()
         _prev = None
