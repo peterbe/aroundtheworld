@@ -74,10 +74,10 @@ class BaseHandler(tornado.web.RequestHandler):
       'lng': -42.0,
     }
 
-    def write(self, *a, **k):
-        from time import sleep
-        sleep(1)
-        super(BaseHandler, self).write(*a, **k)
+    #def write(self, *a, **k):
+    #    from time import sleep
+    #    sleep(1)
+    #    super(BaseHandler, self).write(*a, **k)
 
     def write_json(self, struct, javascript=False):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
