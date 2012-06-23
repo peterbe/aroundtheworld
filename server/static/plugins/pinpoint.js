@@ -135,12 +135,17 @@ var Pinpoint = (function() {
        t0 = new Date();
        Pinpoint.tick();
        click_listener = google.maps.event.addListener(map, 'click', function(event) {
+         google.maps.event.removeListener(click_listener);
          t1 = new Date();
-         Pinpoint.place_marker(event.latLng, (t1 - t0) / 1000);
+         var t_diff = (t1 - t0) / 1000;
+         if (t_diff < _waiting_time) {
+           Pinpoint.place_marker(event.latLng, t_diff);
+         } else {
+           console.warn('TOO LATE!', t_diff);
+         }
        });
      },
      place_marker: function (latlng, time_taken) {
-       google.maps.event.removeListener(click_listener);
        Pinpoint.stop_timer(false);
        if (!countdown) {
          //L('sorry too late!');
