@@ -17,7 +17,6 @@ def _bool(s):
 
 @route('/admin/locations/', name='admin_locations')
 class LocationsAdminHandler(AmbassadorBaseHandler):
-    LIMIT = 20
 
     def get(self):
         data = {}
@@ -57,6 +56,7 @@ class LocationsAdminHandler(AmbassadorBaseHandler):
         locations = []
         data['count'] = self.db.Location.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         for each in (self.db.Location
                      .find(filter_)
@@ -212,6 +212,7 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
         pictures = []
         data['count'] = self.db.LocationPicture.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         _locations = {}
         _users = {}
@@ -236,7 +237,6 @@ class LocationPicturesAdminHandler(AmbassadorBaseHandler):
         data['pictures'] = pictures
         data['all_authors'] = _users.values()
         self.render('admin/location_pictures.html', **data)
-
 
 
 @route('/admin/locations/pictures/add/', name='admin_add_location_picture')

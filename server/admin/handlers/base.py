@@ -33,6 +33,25 @@ class BaseHandler(CoreBaseHandler):
         options['messages'] = self.pull_flash_messages()
         return super(BaseHandler, self).render(template, **options)
 
+    def trim_all_pages(self, sequence, page, max_length=15):
+        if len(sequence) < max_length:
+            return
+        popped_end = popped_start = False
+        mid = len(sequence) / 2
+        end = sequence[-1]
+        start = sequence[0]
+        while len(sequence) > max_length and mid in sequence:
+            if sequence.index(page) < sequence.index(mid):
+                sequence.pop(-1)
+                popped_end = True
+            else:
+                sequence.pop(0)
+                popped_start = True
+        if popped_end:
+            sequence.append(end)
+        if popped_start:
+            sequence.insert(0, start)
+
     def push_flash_message(self, title, text=u'', user=None,
                            type_='info'  # 'success' or 'error'
                            ):
@@ -352,7 +371,7 @@ class GitLogHandler(AuthenticatedBaseHandler):
 @route('/admin/jobs/', name='admin_jobs')
 class JobsAdminHandler(AuthenticatedBaseHandler):
 
-    LIMIT = 20
+    LIMIT = 40
 
     def get(self):
         data = {}
@@ -397,6 +416,7 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
         _users = {}
         data['count'] = self.db.Job.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
 
         coins_all = []
@@ -448,8 +468,6 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
 @route('/admin/errors/', name='admin_errors')
 class JobsAdminHandler(SuperuserBaseHandler):
 
-    LIMIT = 20
-
     def get(self):
         data = {}
         filter_ = {}
@@ -465,6 +483,8 @@ class JobsAdminHandler(SuperuserBaseHandler):
         _users = {}
         data['count'] = self.db.ErrorEvent.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+
         data['filtering'] = bool(filter_)
 
         for each in (self.db.ErrorEvent

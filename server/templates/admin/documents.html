@@ -80,14 +80,6 @@ tfoot th select[name="countries"] { width:150px; }
           {% end %}
         </tbody>
       </table>
-      <div class="pagination">
-        <ul>
-          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
-          {% for p in all_pages %}
-          <li {% if p == page %}class="active"{% end %}><a href="?page={{ p }}&amp;{{ query_string }}">{{ p }}</a></li>
-          {% end %}
-          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
-        </ul>
-      </div>
+      {% include "_pagination.html" %}
     </form>
 {% end %}

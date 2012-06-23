@@ -12,7 +12,6 @@ import settings
 
 @route('/admin/feedback/', name='admin_feedbacks')
 class FeedbacksAdminHandler(SuperuserBaseHandler):
-#    LIMIT = 20
 
     def get(self):
         data = {}
@@ -40,6 +39,7 @@ class FeedbacksAdminHandler(SuperuserBaseHandler):
         documents = []
         data['count'] = self.db.Feedback.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         _users = {}
         _locations = {}

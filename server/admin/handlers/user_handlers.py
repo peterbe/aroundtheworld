@@ -20,19 +20,6 @@ class UsersAdminHandler(SuperuserBaseHandler):
             _q = [re.escape(x.strip()) for x in data['q'].split(',')
                   if x.strip()]
             filter_['username'] = re.compile('|'.join(_q), re.I)
-        #data['q_city'] = self.get_argument('q_city', '')
-        #if data['q_city']:
-        #    filter_['city'] = re.compile(
-        #      '^%s' % re.escape(data['q_city']), re.I)
-        #data['q_locality'] = self.get_argument('q_locality', '')
-        #if data['q_locality']:
-        #    filter_['locality'] = re.compile(
-        #      '^%s' % re.escape(data['q_locality']), re.I)
-        #data['all_countries'] = (self.db.Location
-        #                         .find()
-        #                         .distinct('country'))
-        #data['all_countries'].sort()
-        #data['countries'] = self.get_arguments('countries', [])
 
         args = dict(self.request.arguments)
         if 'page' in args:
@@ -44,6 +31,7 @@ class UsersAdminHandler(SuperuserBaseHandler):
         users = []
         data['count'] = self.db.User.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         _locations = {}
         _ambassador_users = {}

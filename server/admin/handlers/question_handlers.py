@@ -120,6 +120,7 @@ class QuestionsAdminHandler(AuthenticatedBaseHandler):
         _users = {}
         data['count'] = self.db.Question.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         for each in (self.db.Question
                      .find(filter_)
@@ -723,6 +724,7 @@ class QuestionRatingsAdminHandler(AuthenticatedBaseHandler):
         _rating_totals = {}
         data['count'] = self.db.QuestionRating.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         for each in (self.db.QuestionRating
                      .find(filter_)
@@ -784,6 +786,8 @@ class QuestionRatingsHighscoreAdminHandler(AuthenticatedBaseHandler):
         _questions = {}
         data['count'] = self.db.QuestionRatingTotal.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+
         data['filtering'] = bool(filter_)
         sort_key = self.get_argument('sort_key', 'average.all')
         sort_order = int(self.get_argument('sort_order', -1))
@@ -848,6 +852,8 @@ class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
         _questions = {}
         data['count'] = self.db.QuestionStats.find(filter_).count()
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+
         data['filtering'] = bool(filter_)
         sort_key = self.get_argument('sort_key', 'unique_count')
         sort_order = int(self.get_argument('sort_order', -1))
