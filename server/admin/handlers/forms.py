@@ -316,3 +316,10 @@ class LocationPictureForm(BaseForm):
 
         if kwargs.get('picture_required'):
             self.picture.validators.append(validators.Required())
+
+
+class FeedbackReplyForm(BaseForm):
+
+    comment = TextAreaField("Reply",
+                            [validators.Required()],
+                            widget=TextArea(**{'class': 'span5'}))

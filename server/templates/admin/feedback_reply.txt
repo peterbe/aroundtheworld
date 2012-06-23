@@ -1,0 +1,14 @@
+Thanks for your feedback on {{ PROJECT_TITLE }}!
+
+When you were in {{ feedback_location }} you wrote:
+
+{% module TextWrap(feedback['comment'], indent=' ' * 4) %}
+
+
+Reply to your comment from {{ reply_user['first_name'] }} {{ reply_user['last_name'] }}:
+
+{% module TextWrap(reply['comment'], indent=' ' * 4) %}
+
+
+--
+{{ SIGNATURE }}

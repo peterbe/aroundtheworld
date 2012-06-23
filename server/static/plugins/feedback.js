@@ -4,6 +4,11 @@ var Feedback = (function() {
   return {
     setup: function() {
       if (!STATE.user) return State.redirect_login();
+      if (STATE.user.anonymous) {
+        $('.email-input', container).show();
+      } else {
+        $('.email-input', container).hide();
+      }
 
       $('button[type="reset"]', container).click(function() {
         Feedback.reset();
@@ -13,7 +18,8 @@ var Feedback = (function() {
       $('form', container).submit(function() {
         var data = {
           what: $('#id_what').val(),
-          comment: $.trim($('#id_comment').val())
+          comment: $.trim($('#id_comment').val()),
+          email: $.trim($('#id_email').val())
         };
         if (!data.comment.length) {
           alert("Please write something first");

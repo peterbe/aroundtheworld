@@ -92,8 +92,8 @@
       {% block container %}
 
          {% for message in messages %}
-         <div class="alert alert-success">
-           <a class="close">×</a>
+         <div class="alert alert-{{ message['type'] }}">
+           <a class="close" href="#">&times;</a>
            <strong>{{ message['title'] }}</strong>
            {{ message['text'] }}
          </div>

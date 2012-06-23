@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <p style="float:right"><a href="..">Go back to all feedback</a></p>
+  <h2>Feedback reply</h2>
+
+  {% include "_show_form_errors.html" %}
+
+  <dl class="dl-horizontal">
+    <dt>Comment:</dt>
+    <dd>{% module ShowComment(feedback['comment']) %}</dd>
+    <dt>User:</dt>
+    <dd>
+        <a href="{{ reverse_url('admin_user', user['_id']) }}">
+            {% if user['username'] %}
+              {{ user['username'] }}
+            {% else %}
+              {{ user['email'] }}
+            {% end %}</a>
+        (currently in {{ user_location }}, total coins: {{ user_settings['coins_total'] }})
+    </dd>
+    {% if feedback.get('email') or user['email'] %}
+    <dt>Email:</dt>
+    <dd>{{ feedback.get('email') or user['email'] }}</dd>
+    {% end %}
+    <dt>Location:</dt>
+    <dd>{{ location }}</dd>
+    <dt>Date:</dt>
+    <dd>{{ feedback['add_date'].strftime('%d %b %Y %H:%M') }}</dd>
+  </dl>
+
+  {% for i, (reply, reply_user) in enumerate(replies, 1) %}
+  <h4>Reply #{{ i }}</h4>
+  <dl class="dl-horizontal">
+    <dt>Comment:</dt>
+    <dd>{% module ShowComment(reply['comment']) %}</dd>
+    <dt>When:</dt>
+    <dd>{{ reply['add_date'].strftime('%d %b %Y %H:%M') }}</dd>
+    <dt>By:</dt>
+    <dd>{{ reply_user }}</dd>
+  </dl>
+  {% end %}
+
+  <form action="." method="post">{% module xsrf_form_html() %}
+  {% include "_show_fieldset.html" %}
+  </form>
+{% end %}

@@ -1,3 +1,4 @@
+import textwrap
 import tornado.web
 import tornado.escape
 from admin.utils import truncate_text
@@ -30,3 +31,11 @@ class SortArrow(tornado.web.UIModule):
                                   key=key,
                                   sort_key=sort_key,
                                   sort_order=sort_order)
+
+class TextWrap(tornado.web.UIModule):
+
+    def render(self, text, indent=''):
+        wrapped = textwrap.wrap(text,
+                             initial_indent=indent,
+                             subsequent_indent=indent)
+        return '\n'.join(wrapped)

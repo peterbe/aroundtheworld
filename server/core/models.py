@@ -65,7 +65,10 @@ class User(BaseDocument):
     }
 
     def __unicode__(self):
-        return self.username
+        return self['username']
+
+    def __str__(self):
+        return str(self.__unicode__())
 
     def get_full_name(self):
         name = ('%s %s' % (self['first_name'], self['last_name'])).strip()
@@ -571,9 +574,11 @@ class Feedback(BaseDocument):
       'comment': unicode,
       'user': ObjectId,
       'location': ObjectId,
+      'reply_to': ObjectId,
+      'email': unicode,
     }
 
-    required_fields = ['what', 'comment']
+    required_fields = ['what', 'comment', 'user']
 
 
 @register

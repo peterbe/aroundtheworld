@@ -2384,12 +2384,15 @@ class FeedbackHandler(AuthenticatedBaseHandler):
     def post(self):
         what = self.get_argument('what')
         comment = self.get_argument('comment')
+        email = self.get_argument('email', u'')
         user = self.get_current_user()
         location = self.get_current_location()
 
         feedback = self.db.Feedback()
         feedback['what'] = what
         feedback['comment'] = comment
+        if email:
+            feedback['email'] = email
         if user:
             feedback['user'] = user['_id']
             feedback['location'] = location['_id']

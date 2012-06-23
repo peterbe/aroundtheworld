@@ -21,6 +21,7 @@ tfoot th select[name="whats"] { width:120px; }
             <th>Location</th>
             <th>What</th>
             <th>Comment</th>
+            <th>&nbsp;</th>
             <th>Added</th>
           </tr>
         </thead>
@@ -38,13 +39,14 @@ tfoot th select[name="whats"] { width:120px; }
               </select>
             </th>
             <th><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th>&nbsp;</th>
             <th>
               <input type="submit" value="Filter">
             </th>
           </tr>
         </tfoot>
         <tbody>
-          {% for feedback, location, user in documents %}
+          {% for feedback, location, user, replies in documents %}
           <tr>
             <td>
             <a href="{{ reverse_url('admin_user', user['_id']) }}">
@@ -53,12 +55,27 @@ tfoot th select[name="whats"] { width:120px; }
                 {% else %}
                   {{ user['email'] }}
                 {% end %}</a>
+             {% if feedback.get('email') %}
+             <br><small>{{ feedback['email'] }}</small>
+             {% end %}
             </td>
-            <td><a href="" title="{{ location }}" rel="tooltip">{{ location['code'] }}</a></td>
+            <td>
+            <a href="" title="{{ location }}" rel="tooltip">{{ location['code'] }}</a>
+            </td>
             <td>{{ feedback['what'] }}</td>
             <td>{% module ShowComment(feedback['comment']) %}</td>
+            <td><a href="{{ reverse_url('admin_feedback_reply', feedback['_id']) }}" title="Reply"><img src="{{ static_url('images/reply.png') }}" alt="Reply"></a></td>
             <td>{{ feedback['add_date'].strftime('%d %b %Y') }}</td>
           </tr>
+          {% for reply in replies %}
+          <tr>
+            <td colspan="3" style="text-align:right">
+             Reply:
+            </td>
+            <td colspan="2">{% module ShowComment(reply['comment']) %}</td>
+            <td>{{ reply['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
           {% end %}
         </tbody>
       </table>

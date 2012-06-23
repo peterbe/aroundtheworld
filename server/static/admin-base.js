@@ -6,10 +6,18 @@ function L() {
 $(function() {
   $('.dropdown-toggle').dropdown();
 
-  $('a.close').click(function() {
-    $(this).parents('.alert').fadeOut(400);
+  $('.alert a.close').click(function() {
+    $(this).parent('div.alert').fadeOut(400);
     return false;
   });
+
+  if ($('div.alert').size()) {
+    setTimeout(function() {
+      $('div.alert:visible').each(function() {
+        $(this).fadeOut(1000);
+      });
+    }, 10 * 1000);
+  }
 
   $('a.thumbnail-preview').click(function() {
     $('h3', '#picture-modal').text($(this).data('title'));
