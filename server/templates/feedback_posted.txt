@@ -1,0 +1,9 @@
+{{ feedback_user }} has posted a piece of feedback.
+
+What: {{ feedback['what'] }}
+{{ feedback['comment'] }}
+
+{{ admin_url }}
+
+--
+{{ SIGNATURE }}

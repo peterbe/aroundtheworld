@@ -1967,7 +1967,9 @@ class BaseAuthHandler(BaseHandler):
         email_body += "%s\n" % user.email
         if extra_message:
             email_body += '%s\n' % extra_message
-
+        logging.info(subject)
+        logging.info(email_body)
+        return
         send_email(self.application.settings['email_backend'],
                    subject,
                    email_body,
@@ -2397,6 +2399,30 @@ class FeedbackHandler(AuthenticatedBaseHandler):
             feedback['user'] = user['_id']
             feedback['location'] = location['_id']
         feedback.save()
+
+        try:
+            admin_url = '%s://%s' % (self.request.protocol,
+                                       self.request.host)
+            admin_url += self.reverse_url('admin_feedback_reply', feedback['_id'])
+            body = self.render_string("feedback_posted.txt", **{
+              'feedback': feedback,
+              'feedback_location': location,
+              'feedback_user': user,
+              'admin_url': admin_url,
+              'SIGNATURE': settings.SIGNATURE,
+              'PROJECT_TITLE': settings.PROJECT_TITLE,
+            })
+            send_email(
+              self.application.settings['email_backend'],
+              "New piece of feedback",
+              body,
+              self.application.settings['admin_emails'][0],
+              self.application.settings['admin_emails'],
+              )
+        except:
+            logging.error("Failed to send email",
+                          exc_info=True)
+
 
         self.write_json({'ok': True})
 
