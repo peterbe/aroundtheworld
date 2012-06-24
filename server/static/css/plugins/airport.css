@@ -5,3 +5,27 @@
 #airport tr.cantafford td {
   opacity: 0.6;
 }
+
+#airport .show-map a {
+    font-weight: bold;
+}
+
+span.cantafford {
+    color: red;
+}
+
+
+#airport-tucked {
+    background-color:white;
+    position:absolute;
+    opacity: 0.8;
+    top:0; left:0;
+    width:180px;
+    min-height: 20px;
+    margin: 0;
+    padding: 0;
+    border-bottom-right-radius:5px;
+  }
+  #airport-tucked p {
+    margin: 10px;
+  }

@@ -1,6 +1,11 @@
+<div id="airport-tucked" style="display:none">
+  <p><a href="#airport">Go back to airport list</a></p>
+</div>
+
+
 <div id="airport" class="overlay">
   <img class="overlay-image deferred" src="." data-src="{{ static_url('images/airport.png') }}" alt="Airport sign" >
-  <h2></h2>
+  <h2>Airport</h2>
 
   <div class="confirm" style="display:none">
     <p><strong>Are you sure you want to buy a ticket to <em></em>?</strong></p>
@@ -24,6 +29,11 @@
   <p>
     Your choices depend on how much coins you have. You currently have
     <strong class="current-total"></strong>.
+  </p>
+
+  <p class="show-map">
+    <a href="#airport,map"><img src="{{ static_url('images/small_google_map.png') }}" alt="map"></a>
+    <a href="#airport,map">Show airports on the map</a>
   </p>
 
   <table class="destinations">

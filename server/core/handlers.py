@@ -1783,6 +1783,7 @@ class AirportHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
+        user_settings = self.get_current_user_settings(user)
         current_location = self.get_current_location(user)
         data = {
           'airport_name': current_location['airport_name'],
@@ -1798,7 +1799,6 @@ class AirportHandler(AuthenticatedBaseHandler):
             distance = calculate_distance(current_location, location)
             cost = self.calculate_cost(distance.miles, user)
             if only_affordable:
-                user_settings = self.get_current_user_settings(user)
                 if cost > user_settings['coins_total']:
                     continue
 
@@ -1810,7 +1810,10 @@ class AirportHandler(AuthenticatedBaseHandler):
               'locality': location['locality'],
               'country': location['country'],
               'cost': cost,
+              'canafford': cost <= user_settings['coins_total'],
               'miles': distance.miles,
+              'lat': location['lat'],
+              'lng': location['lng'],
             }
             destinations.append(destination)
 

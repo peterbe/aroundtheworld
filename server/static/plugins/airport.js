@@ -1,8 +1,41 @@
 var Airport = (function() {
   var played_sound = [];
   var container = $('#airport');
+  var open_infowindows = [];
+  var made_markers = [];
+  var _once = false;
+
+  function setup_once() {
+    $('.show-map a', container).click(function() {
+      Airport.show_on_map();
+    });
+
+    $('#airport-tucked a').click(function() {
+      $('#airport-tucked').hide();
+      container.show();
+      Airport.teardown();
+      Airport.load();
+    });
+  }
+
   return {
+     setup: function() {
+       if (!_once) {
+         setup_once();
+         _once = true;
+       }
+       sounds.preload('airport-pa');
+
+     },
      confirm: function(name, id, cost) {
+       if ($('#airport:hidden').size()) {
+         // was on the interactive map
+         $('#airport').show();
+         if (map.getZoom() != 15) {
+           map.setZoom(15);
+         }
+         $('#airport-tucked').hide();
+       }
        $('.choices', container).hide();
        var c = $('.confirm', container);
        c.show();
@@ -52,7 +85,6 @@ var Airport = (function() {
        });
      },
      load: function() {
-       sounds.preload('airport-pa');
        $('.confirm:visible', container).hide();
        $('.choices:hidden', container).show();
        $.getJSON('/airport.json', function(response) {
@@ -93,22 +125,86 @@ var Airport = (function() {
 
          if (!STATE.user.disable_sound) {
            if ($.inArray(response.airport_name, played_sound) == -1) {
-             sounds.play('airport-pa');
+             //sounds.play('airport-pa');
+             console.warn('sound disabled');
              played_sound.push(response.airport_name);
            }
          }
          Utils.update_title();
 
        });
-     }
+     },
+    show_on_map: function() {
+      if (map == null) {
+        throw "Can't run pinpoint plugin without a map";
+      }
+      container.hide();
+      map.setZoom(3);
+      $.getJSON('/airport.json', function(response) {
+        if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+        $.each(response.destinations, function(i, each) {
+
+          var center = new google.maps.LatLng(each.lat, each.lng);
+          var marker = new google.maps.Marker({
+             position: center,
+            map: map,
+            title: each.name,
+            draggable: false//,
+            //animation: google.maps.Animation.DROP
+          });
+          made_markers.push(marker);
+          var content = '<strong>'+each.name+'</strong><br>';
+          content += Utils.formatMiles(each.miles, true) + '<br>';
+          content += Utils.formatCost(each.cost, true) + '<br>';
+          if (!each.canafford) {
+            content += ' <span class="cantafford">can\'t afford it yet</span><br>';
+          } else {
+            content += ' <a href="#airport,' + each.code + '"';
+            content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.id+ '\',\''+each.cost+'\');return false">Buy ticket</a>';
+          }
+          var infowindow = new google.maps.InfoWindow({
+              content: content
+          });
+          google.maps.event.addListener(marker, 'click', function() {
+            map.panTo(center);
+            $.each(open_infowindows, function() {
+              this.close();
+            });
+            open_infowindows = [];
+            open_infowindows.push(infowindow);
+            infowindow.open(map, marker);
+          });
+        })
+      });
+      $('#airport-tucked').show();
+    },
+    teardown: function() {
+      if (open_infowindows.length) {
+        $.each(open_infowindows, function() {
+          this.close();
+        });
+        open_infowindows = [];
+      }
+      if (made_markers.length) {
+        $.each(made_markers, function() {
+          this.setVisible(false);
+        });
+      }
+
+    }
   };
 })();
 
-Plugins.start('airport', function() {
-  Airport.load();
+Plugins.start('airport', function(map) {
+  Airport.setup();
+  if (map) {
+    Airport.show_on_map();
+  } else {
+    Airport.load();
+  }
 });
 
 
 Plugins.stop('airport', function() {
-  //Airport.teardown();
+  Airport.teardown();
 });
