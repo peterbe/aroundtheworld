@@ -517,9 +517,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                        .count())
         no_questions = self.NO_QUESTIONS
         if category['name'] == u'Tutorial':
-            no_questions = (self.db.Question
-                            .find({'category': category['_id']})
-                            .count())
+            no_questions = self.NO_QUESTIONS_TUTORIAL
         data['no_questions'] = {
           'total': no_questions,
           'number': _no_answers,

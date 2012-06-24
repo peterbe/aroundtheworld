@@ -172,6 +172,20 @@ class BaseLocationPictureHandler(AmbassadorBaseHandler):
                 .find(filter_)
                 .sort('code', 1))
 
+    @property
+    def locations_with_airports(self):
+        user = self.get_current_user()
+        filter_ = {'airport_name': {'$ne': None}}
+        if not user['superuser']:
+            countries = (self.db.Ambassador
+                         .find({'user': user['_id']})
+                         .distinct('country'))
+            assert countries  # no support for mayors yet
+            filter_['country'] = {'$in': countries}
+        return (self.db.Location
+                .find(filter_)
+                .sort('code', 1))
+
 @route('/admin/locations/pictures/', name='admin_location_pictures')
 class LocationPicturesAdminHandler(AmbassadorBaseHandler):
     LIMIT = 20
@@ -257,7 +271,7 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
             initial['index'] = q['index'] + 1
 
         if form is None:
-            form = LocationPictureForm(locations=self.locations,
+            form = LocationPictureForm(locations=self.locations_with_airports,
                                        picture_required=True,
                                        **initial)
         data['form'] = form
