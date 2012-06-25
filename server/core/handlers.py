@@ -121,6 +121,7 @@ class BaseHandler(tornado.web.RequestHandler):
             # skip mongokit
             return self.db.UserSettings.collection.find_one(_search)
         else:
+            assert 'BtreeCursor' in self.db.UserSettings.find(_search).explain()['cursor']
             user_settings = self.db.UserSettings.find_one(_search)
             if create_if_necessary and not user_settings:
                 user_settings = self.db.UserSettings()
@@ -171,7 +172,6 @@ class BaseHandler(tornado.web.RequestHandler):
             state['user']['coins_total'] = user_settings['coins_total']
             state['user']['disable_sound'] = user_settings['disable_sound']
             location = self.get_current_location(user)
-
             if user['superuser'] or (self.db.Ambassador
                                      .find({'user': user['_id']})
                                      .count()):
@@ -1051,7 +1051,6 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             day += 1
         return day
 
-
     def get_pictures_count(self, location):
         search = {'location': location['_id'], 'published': True}
         return self.db.LocationPicture.find(search).count()
@@ -1444,11 +1443,12 @@ class PictureDetectiveHandler(QuizzingHandler):
 
         # if the last job was of the same category and location
         # then increment the number of coins
-        for job in (self.db.Job.find({'user': user['_id'],
-                                     'category': session['category'],
-                                     'location': session['location']})
-                               .sort('add_date', 1)
-                               .limit(1)):
+        for job in (self.db.Job
+                    .find({'user': user['_id'],
+                           'category': session['category'],
+                           'location': session['location']})
+                    .sort('add_date', 1)
+                    .limit(1)):
             job['coins'] += data['coins']
             job.save()
             break
@@ -1463,7 +1463,11 @@ class PictureDetectiveHandler(QuizzingHandler):
         if question['didyouknow']:
             data['didyouknow'] = self.render_didyouknow(question['didyouknow'])
 
-        data['left'] = self._count_questions_left(category, user, current_location)
+        data['left'] = self._count_questions_left(
+          category,
+          user,
+          current_location
+        )
 
         self.write(data)
 
@@ -2608,7 +2612,11 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                     f.write(source.read())
 
         try:
-            self._notify_about_new_question(question, current_user, current_location)
+            self._notify_about_new_question(
+              question,
+              current_user,
+              current_location
+            )
         except Exception:
             logging.error("Failed to notify about new question",
                           exc_info=True)
@@ -2629,20 +2637,21 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         try:
             body = out.getvalue()
-            send_email(self.application.settings['email_backend'],
-                   subject,
-                   body,
-                   self.application.settings['admin_emails'][0],
-                   self.application.settings['admin_emails'],
-                   )
+            send_email(
+              self.application.settings['email_backend'],
+              subject,
+              body,
+              self.application.settings['admin_emails'][0],
+              self.application.settings['admin_emails'],
+            )
         except:
             logging.error("Failed to send email",
                           exc_info=True)
 
 
 @route('/questionwriter-check.json', name='questionwriter_check')
-class QuestionFileURLCheckHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
-
+class QuestionFileURLCheckHandler(AuthenticatedBaseHandler,
+                                  PictureThumbnailMixin):
 
     @tornado.web.asynchronous
     @tornado.gen.engine
@@ -2670,11 +2679,13 @@ class QuestionFileURLCheckHandler(AuthenticatedBaseHandler, PictureThumbnailMixi
                     new_file_path = None
 
                 if new_file_path:
-                    #uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+                    #uri, (width, height) =\
+                    # self.make_thumbnail(picture, (250, 250))
                     static_path = self.static_url(new_file_path
-                      .replace(self.application.settings['static_path'] + '/', ''))
-                    print "FINALLY", static_path
-                    self.write({'url': new_file_path, 'static_url': static_path})
+                      .replace(self.application.settings['static_path'] + '/',
+                               ''))
+                    self.write({'url': new_file_path,
+                                'static_url': static_path})
                 else:
                     self.write({'error': 'Picture has to be a .png or .jpg'})
 
@@ -2703,7 +2714,6 @@ class QuestionFileURLCheckHandler(AuthenticatedBaseHandler, PictureThumbnailMixi
             os.mkdir(f)
 
         return f
-
 
 
 @route('/errors/$', name='errors')

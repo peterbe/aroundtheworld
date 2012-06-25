@@ -7,3 +7,6 @@
 [submodule "server/vendor/src/wtforms"]
 	path = server/vendor/src/wtforms
 	url = git://github.com/clones/wtforms.git
+[submodule "professor"]
+	path = professor
+	url = git://github.com/dcrosta/professor.git
