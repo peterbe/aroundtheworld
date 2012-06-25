@@ -20,6 +20,34 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'user')
 
+    collection = db.QuestionSession.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+    yield ensure(collection, 'location')
+    yield ensure(collection, 'finish_date')
+
+    collection = db.SessionAnswer.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'session')
+
+    collection = db.PinpointAnswer.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'session')
+
+    collection = db.PinpointSession.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+    yield ensure(collection, 'center')
+
+    collection = db.Transaction.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+
     test()
 
 
