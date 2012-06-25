@@ -125,8 +125,7 @@ var Airport = (function() {
 
          if (!STATE.user.disable_sound) {
            if ($.inArray(response.airport_name, played_sound) == -1) {
-             //sounds.play('airport-pa');
-             console.warn('sound disabled');
+             sounds.play('airport-pa');
              played_sound.push(response.airport_name);
            }
          }
