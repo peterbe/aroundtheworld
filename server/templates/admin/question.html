@@ -47,13 +47,18 @@ $(function() {
       <tr>
         <td>Average:</td>
         <td>{{ '%.1f' % rating_total['average']['all'] }}</td>
-        <td>{{ '%.1f' % rating_total['average']['right'] }}</td>
+        <td>{% if rating_total['average']['right'] %}
+  	  {{ '%.1f' % rating_total['average']['right'] }}
+	  {% else %}
+	  --
+	  {% end %}
+	</td>
         <td>{% if rating_total['average']['wrong'] %}
           {{ '%.1f' % rating_total['average']['wrong'] }}
           {% else %}
           --
           {% end %}
-          </td>
+        </td>
       </tr>
       <tr>
         <td>Count:</td>
