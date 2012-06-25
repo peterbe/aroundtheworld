@@ -121,7 +121,6 @@ class BaseHandler(tornado.web.RequestHandler):
             # skip mongokit
             return self.db.UserSettings.collection.find_one(_search)
         else:
-            assert 'BtreeCursor' in self.db.UserSettings.find(_search).explain()['cursor']
             user_settings = self.db.UserSettings.find_one(_search)
             if create_if_necessary and not user_settings:
                 user_settings = self.db.UserSettings()
