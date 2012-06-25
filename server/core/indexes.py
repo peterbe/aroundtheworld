@@ -48,6 +48,18 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'user')
 
+    collection = db.QuestionAnswerEarning.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+
+    collection = db.Job.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+    yield ensure(collection, 'category')
+    yield ensure(collection, 'location')
+
     test()
 
 
