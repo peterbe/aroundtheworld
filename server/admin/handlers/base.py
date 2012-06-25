@@ -40,13 +40,14 @@ class BaseHandler(CoreBaseHandler):
         mid = len(sequence) / 2
         end = sequence[-1]
         start = sequence[0]
-        while len(sequence) > max_length and mid in sequence:
+        while len(sequence) > max_length:
             if sequence.index(page) < sequence.index(mid):
                 sequence.pop(-1)
                 popped_end = True
             else:
                 sequence.pop(0)
                 popped_start = True
+            mid = sequence[len(sequence) / 2]
         if popped_end:
             sequence.append(end)
         if popped_start:
