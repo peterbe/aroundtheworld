@@ -310,6 +310,7 @@ class DeleteQuestionAdminHandler(BaseQuestionAdminHandler):
 
 class QuestionStatsMixin(object):
     def get_or_create_answer_stats(self, question):
+        created = False
         stats = self.db.QuestionStats.find_one({'question': question['_id']})
         if stats:
             # check if it's older than the last time this question was used
@@ -326,8 +327,9 @@ class QuestionStatsMixin(object):
 
         if not stats:
             stats = self._create_answer_stats(question)
+            created = True
 
-        return stats
+        return stats, created
 
     def _create_answer_stats(self, question):
         stats = self.db.QuestionStats()
@@ -402,9 +404,8 @@ class QuestionAdminHandler(BaseQuestionAdminHandler, QuestionStatsMixin):
         data['can_delete'] = self.can_delete(data['question'])
         data['rating_total'] = (self.db.QuestionRatingTotal
                               .find_one({'question': data['question']['_id']}))
-        data['answer_stats'] = self.get_or_create_answer_stats(data['question'])
+        data['answer_stats'], __ = self.get_or_create_answer_stats(data['question'])
         self.render('admin/question.html', **data)
-
 
     def post(self, _id):
         data = {}
@@ -876,7 +877,18 @@ class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
         self.render('admin/question_stats.html', **data)
 
     def post(self):
+        max_count = 100
+        count = 0
+        broke = False
         for question in self.db.Question.find({'published': True}):
-            self.get_or_create_answer_stats(question)
+            __, created = self.get_or_create_answer_stats(question)
+            if created:
+                count += 1
+                if count >= max_count:
+                    broke = True
+                    break
 
-        self.redirect(self.reverse_url('admin_question_stats'))
+        url = self.reverse_url('admin_question_stats')
+        if broke:
+            url += '?capped-to=%s' % max_count
+        self.redirect(url)

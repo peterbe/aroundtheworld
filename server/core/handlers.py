@@ -294,8 +294,8 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def get_cdn_prefix(self):
         """return something that can be put in front of the static filename
-        E.g. if filename is '/static/image.png' and you return '//cloudfront.com'
-        then final URL presented in the template becomes
+        E.g. if filename is '/static/image.png' and you return
+        '//cloudfront.com' then final URL presented in the template becomes
         '//cloudfront.com/static/image.png'
         """
         return self.application.settings.get('cdn_prefix')
@@ -714,8 +714,9 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             time_bonus_p = round(float(time_left) / question['seconds'], 1)
             data['time_bonus'] = 1 + time_bonus_p
             data['points_value'] = question.get('points_value', 1)
-            data['points'] = data['time_bonus'] * data['points_value'] * data['correct']
-            #data['points'] = float('%.1f' % data['points'])
+            data['points'] = (data['time_bonus'] *
+                              data['points_value'] *
+                              data['correct'])
             data['points'] = round(data['points'], 1)
             assert isinstance(data['points_value'], int)
 
@@ -739,6 +740,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 earning.save()
 
         self.write_json(data)
+
 
 @route('/questionrating.json$', name='question_rating')
 class QuestionRatingHandler(AuthenticatedBaseHandler):
@@ -812,24 +814,30 @@ class MilesHandler(AuthenticatedBaseHandler):
         user = self.get_current_user()
         data = {}
         _cities = set()
-        for each in self.db.Flight.collection.find({'user': user['_id']}):
+        for each in self.db.Flight.find({'user': user['_id']}):
             _cities.add(each['from'])
             _cities.add(each['to'])
         data['no_cities'] = max(1, len(_cities))
         data['flights'] = self.get_flights(user)
         data['percentage'] = 0
-        self.write_json(data)
+        self.write(data)
 
     def get_flights(self, user):
         flights = []
         filter_ = {'user': user['_id']}
         _locations = {}
-        for location in self.db.Location.find():
-            _locations[location['_id']] = location.dictify()
-
         for each in (self.db.Flight
                      .find(filter_)
                      .sort('add_date', 1)):  # oldest first
+
+            if each['from'] not in _locations:
+                _locations[each['from']] = (self.db.Location
+                                            .find_one({'_id': each['from']})
+                                            .dictify())
+            if each['to'] not in _locations:
+                _locations[each['to']] = (self.db.Location
+                                          .find_one({'_id': each['to']})
+                                          .dictify())
             flight = {
               'from': _locations[each['from']],
               'to': _locations[each['to']],
@@ -1121,9 +1129,12 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         _categories = dict((x['_id'], x)
                            for x in self.db.Category.find())
 
-        nomansland = self.db.Location.find_one({'city': self.NOMANSLAND['city']})
+        nomansland = (self.db.Location
+                      .find_one({'city': self.NOMANSLAND['city']}))
         if nomansland:
-            if not self.db.Question.find({'location': nomansland['_id']}).count():
+            if not (self.db.Question
+                    .find({'location': nomansland['_id']})
+                    .count()):
                 # we need to create the tutorial questions
                 self.create_tutorial_questions(nomansland)
 
@@ -1287,6 +1298,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         messages = self.get_messages(location, limit=1)
         self.write({'messages': messages})
 
+
 @route('/picturedetective.json$', name='picturedetective')
 class PictureDetectiveHandler(QuizzingHandler):
 
@@ -1364,7 +1376,8 @@ class PictureDetectiveHandler(QuizzingHandler):
         }
 
         for other_session in self.db.QuestionSession.find(session_filter):
-            for answer in self.db.SessionAnswer.find({'session': other_session['_id']}):
+            for answer in (self.db.SessionAnswer
+                           .find({'session': other_session['_id']})):
                 past_question_ids.add(answer['question'])
 
         if past_question_ids:
@@ -1418,7 +1431,9 @@ class PictureDetectiveHandler(QuizzingHandler):
                 answer_obj['correct'] = True
                 points = float(points_value * seconds_left)
                 answer_obj['points'] = points
-                coins = self.points_to_coins(points, seconds_total, points_value)
+                coins = self.points_to_coins(points,
+                                             seconds_total,
+                                             points_value)
                 data['points'] = points
                 data['coins'] = coins
 
@@ -2094,7 +2109,6 @@ class BaseAuthHandler(BaseHandler):
 
         old.delete()
 
-
     def email_inviter(self, inviter, invitation, user):
         if not inviter['email']:
             return
@@ -2157,8 +2171,10 @@ class AnonymousAuthHandler(BaseAuthHandler):
 
     def _anonymous_username(self):
         prefix = u'anonymous'
+
         def mk():
             return prefix + uuid.uuid4().hex[:4]
+
         name = mk()
         while self.db.User.find({'username': name}).count():
             name = mk()
@@ -2243,7 +2259,6 @@ class AuthLogoutHandler(BaseAuthHandler):
     def get(self):  # not sure if we need this other than for debugging
         self.clear_all_cookies()
         self.redirect(self.get_next_url())
-
 
 
 @route(r'/iplookup/', name='iplookup')
@@ -2427,8 +2442,8 @@ class FeedbackHandler(AuthenticatedBaseHandler):
             logging.error("Failed to send email",
                           exc_info=True)
 
-
         self.write_json({'ok': True})
+
 
 @route('/questionwriter.json', name='questionwriter')
 class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
@@ -2457,11 +2472,11 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['published'] = question['published']
             data['points_value'] = question['points_value']
             if data['points_value'] == 1:
-                data['points_value'] = '%s (easy)' % data['points_value'];
+                data['points_value'] = '%s (easy)' % data['points_value']
             elif data['points_value'] == 3:
-                data['points_value'] = '%s (medium)' % data['points_value'];
+                data['points_value'] = '%s (medium)' % data['points_value']
             elif data['points_value'] == 5:
-                data['points_value'] = '%s (hard)' % data['points_value'];
+                data['points_value'] = '%s (hard)' % data['points_value']
             category, = self.db.Category.find({'_id': question['category']})
             data['category'] = category['name']
             data['didyouknow'] = question['didyouknow']
@@ -2659,12 +2674,9 @@ class QuestionFileURLCheckHandler(AuthenticatedBaseHandler,
         http_client = tornado.httpclient.AsyncHTTPClient()
         response = yield tornado.gen.Task(http_client.fetch, file_url)
         if response.code == 200:
-            effective_url = response.effective_url
-            ext = effective_url.split('.')[-1]
             file_path = os.path.join(self.get_save_path(), str(uuid.uuid4()))
             with open(file_path, 'wb') as f:
                 f.write(response.body)
-
             try:
                 image = Image.open(file_path)
 
