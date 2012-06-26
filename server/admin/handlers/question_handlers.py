@@ -868,9 +868,34 @@ class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
             if each['question'] not in _questions:
                 _questions[each['question']] = \
                   self.db.Question.find_one({'_id': each['question']})
+            question = _questions[each['question']]
+            pv = each.get('question_points_value')
+            if not pv:
+                each['question_points_value'] = question['points_value']
+                each.save()
+                pv = question['points_value']
+            try:
+                expected_percentage = 100 - 100.0 * pv / 6
+                actual_percentage = round(100.0 * each['rights'] /
+                                          (each['unique_count'] +
+                                           each['unique_count_timedout']), 1)
+                diff = abs(actual_percentage - expected_percentage)
+                if actual_percentage > expected_percentage:
+                    too_something = 'too easy'
+                else:
+                    too_something = 'too hard'
+                if diff > 20.0:
+                    verdict = (too_something, 'important')
+                elif diff > 10.0:
+                    verdict = (too_something, 'warning')
+                else:
+                    verdict = ('fine', 'success')
+            except ZeroDivisionError:
+                verdict = None
             statss.append((
               each,
-              _questions[each['question']],
+              question,
+              verdict
             ))
         data['statss'] = statss
         data['no_questions'] = self.db.Question.find({'published': True}).count()
@@ -879,16 +904,13 @@ class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
     def post(self):
         max_count = 100
         count = 0
-        broke = False
         for question in self.db.Question.find({'published': True}):
             __, created = self.get_or_create_answer_stats(question)
             if created:
                 count += 1
                 if count >= max_count:
-                    broke = True
+                    self.push_flash_message("Capped",
+                      "Capped stats creation to %d" % max_count)
                     break
 
-        url = self.reverse_url('admin_question_stats')
-        if broke:
-            url += '?capped-to=%s' % max_count
-        self.redirect(url)
+        self.redirect(self.reverse_url('admin_question_stats'))

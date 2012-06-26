@@ -27,8 +27,9 @@ tfoot th select[name="authors"] { width:100px; }
         <thead>
           <tr>
             <th>Question</th>
+            <th><abbr title="Points Value (1 - 5)">PV</abbr></th>
             <th>&nbsp;</th>
-            <th>Unique Answers
+            <th><abbr title="Number of Unique answers">#Answers</abbr>
               {% module SortArrow('unique_count', sort_key, sort_order) %}
             </th>
             <th>Timed out
@@ -40,10 +41,13 @@ tfoot th select[name="authors"] { width:100px; }
             <th>Wrongs
               {% module SortArrow('wrongs', sort_key, sort_order) %}
             </th>
+            <th>&nbsp;</th>
           </tr>
         </thead>
+        {% if 0 %}
         <tfoot>
           <tr>
+            <th>&nbsp;</th>
             <th>&nbsp;</th>
             <th>&nbsp;</th>
             <th>
@@ -60,11 +64,15 @@ tfoot th select[name="authors"] { width:100px; }
             </th>
           </tr>
         </tfoot>
+        {% end %}
         <tbody>
-          {% for stats, question in statss %}
+          {% for stats, question, verdict in statss %}
           <tr>
             <td>
               <a href="{{ reverse_url('admin_question', question['_id']) }}">{% module Truncate(question['text'], 60) %}</a>
+            </td>
+            <td>
+              {{ question['points_value'] }}
             </td>
             <td>
             {% if question.has_picture() %}
@@ -95,6 +103,13 @@ tfoot th select[name="authors"] { width:100px; }
               {{ stats['wrongs'] }}
               {% if stats['wrongs_percentage'] is not None %}
               ({{ '%.1f' % stats['wrongs_percentage'] }}%)
+              {% end %}
+            </td>
+            <td>
+              {% if verdict %}
+              <span class="label label-{{ verdict[1] }}">{{ verdict[0] }}</span>
+              {% else %}
+              n/a
               {% end %}
             </td>
           </tr>

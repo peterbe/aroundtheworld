@@ -384,6 +384,9 @@ class QuestionStats(BaseDocument):
       'rights_percentage': float,
       'wrongs': int,
       'wrongs_percentage': float,
+      # store what the points_value of the question was at the time of
+      # calculating these stats.
+      'question_points_value': int,
     }
 
 @register
