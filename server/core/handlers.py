@@ -479,7 +479,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             for picture in (self.db.QuestionPicture
                             .find({'question': {'$in': session['questions']}})
                             ):
-                uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+                uri, (width, height) = self.get_thumbnail(picture, (250, 250))
                 url = self.static_url(uri.replace('/static/', ''))
                 data['pictures'].append(url)
 
@@ -529,7 +529,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         }
         if question.has_picture():
             picture = question.get_picture()
-            uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+            uri, (width, height) = self.get_thumbnail(picture, (250, 250))
 
             url = self.static_url(uri.replace('/static/', ''))
             data['question']['picture'] = {
@@ -1060,7 +1060,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         for item in (self.db.LocationPicture
                      .find(search)
                      .sort('index')):
-            uri, (width, height) = self.make_thumbnail(item, (700, 700))  # XXX might need some more thought
+            uri, (width, height) = self.get_thumbnail(item, (700, 700))  # XXX might need some more thought
             picture = {
               'src': uri,
               'width': width,
@@ -1334,7 +1334,7 @@ class PictureDetectiveHandler(QuizzingHandler):
         for item in (self.db.QuestionPicture
                      .find({'question': question['_id']})
                      .sort('index')):
-            uri, (width, height) = self.make_thumbnail(item, (300, 300))
+            uri, (width, height) = self.get_thumbnail(item, (300, 300))
             url = self.static_url(uri.replace('/static/', ''))
             picture = {
               'src': url,
@@ -2472,7 +2472,7 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
             if question.has_picture():
                 picture = question.get_picture()
-                uri, (width, height) = self.make_thumbnail(picture, (250, 250))
+                uri, (width, height) = self.get_thumbnail(picture, (250, 250))
 
                 url = self.static_url(uri.replace('/static/', ''))
                 data['picture'] = {
@@ -2679,7 +2679,7 @@ class QuestionFileURLCheckHandler(AuthenticatedBaseHandler,
 
                 if new_file_path:
                     #uri, (width, height) =\
-                    # self.make_thumbnail(picture, (250, 250))
+                    # self.get_thumbnail(picture, (250, 250))
                     static_path = self.static_url(new_file_path
                       .replace(self.application.settings['static_path'] + '/',
                                ''))

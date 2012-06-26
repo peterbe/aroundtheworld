@@ -86,7 +86,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert self.db.UserSettings.find_one({'user': user['_id']})
         return user
 
-
     def _create_question(self, category, location):
         q = self.db.Question()
         q['text'] = (u'(%s) What number question is this?' %
@@ -1329,3 +1328,39 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(r['question_answers_right'], 0)
         self.assertEqual(r['question_answered_unique_questions'], 0)
         #print r
+
+    def test_quizzing_with_pictures(self):
+
+        for __ in range(QuizzingHandler.NO_QUESTIONS):
+            q = self._create_question(self.tour_guide, self.newyork)
+            self._create_question_pictures(q)
+
+        self._login(location=self.newyork)
+        url = self.reverse_url('quizzing')
+        def _get():
+            return self.get_struct(url, {'category': self.tour_guide['name']})
+
+        r = _get()
+        assert r['question']
+        r1 = r
+        self.assertTrue(r['pictures'])
+        self.assertEqual(len(set(r['pictures'])), QuizzingHandler.NO_QUESTIONS)
+
+        r = self.post_struct(url, {
+          'answer': "One",
+          'time': random.random() * 10
+        })
+        self.assertTrue(r['correct'])
+
+        self.client.get(self.reverse_url('logout'))
+
+        self._login(u'matt', u'matt@example.com', location=self.newyork)
+
+        r2 = _get()
+        assert r2['question']
+        self.assertTrue(r2['pictures'])
+
+        # this works because there are exactly QuizzingHandler.NO_QUESTIONS
+        # number of questions
+        self.assertEqual(sorted(r1['pictures']),
+                         sorted(r2['pictures']))

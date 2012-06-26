@@ -8,6 +8,10 @@ from tornado_utils.thumbnailer import get_thumbnail
 import tornado.web
 
 
+ONE_HOUR = 60 * 60
+ONE_DAY = ONE_HOUR * 24
+ONE_WEEK = ONE_DAY * 7
+
 def commafy(s):
     r = []
     for i, c in enumerate(reversed(str(s))):
@@ -55,6 +59,7 @@ class PictureThumbnailMixin:
         try:
             (width, height) = get_thumbnail(path, image.read(),
                                         (max_width, max_height))
+            assert os.path.isfile(path), path
         except IOError:
             logging.error("Unable to make thumbnail out of %r" % question_image,
                           exc_info=True)
@@ -67,13 +72,31 @@ class PictureThumbnailMixin:
 
         return path.replace(settings.ROOT, ''), (width, height)
 
+    def get_thumbnail(self, question_image, (max_width, max_height)):
+        """wrapper on PictureThumbnailMixin.make_thumbnail() that uses
+        a global object cache."""
+
+        # with this trick, this mixin can be used for UIModules as well as
+        # RequestHandlers
+        redis_ = getattr(self, 'redis', None) or self.handler.redis
+
+        cache_key = '%s%s%s' % (question_image['_id'], max_width, max_height)
+        result = redis_.get(cache_key)
+        if result is not None:
+            #print 'Cache hit'
+            return tornado.escape.json_decode(result)
+        #print 'Cache miss'
+        result = self.make_thumbnail(question_image, (max_width, max_height))
+        redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
+        return result
+
 
 class ShowPictureThumbnail(tornado.web.UIModule,
                                  PictureThumbnailMixin):
     def render(self, question_image, (max_width, max_height), alt="",
                return_json=False, return_args=False,
                **kwargs):
-        uri, (width, height) = self.make_thumbnail(question_image,
+        uri, (width, height) = self.get_thumbnail(question_image,
                                                    (max_width, max_height))
         url = self.handler.static_url(uri.replace('/static/', ''))
         args = {'src': url, 'width': width, 'height': height, 'alt': alt}
