@@ -269,16 +269,29 @@ class Question(BaseDocument):
     HIGHEST_POINTS_VALUE = 5
 
     def check_answer(self, value, alternatives_are_correct=False):
+        value = value.lower()
         correct = [self['correct'].lower()]
         if alternatives_are_correct:
             correct.extend([x.lower() for x in self['alternatives']])
-        if value.lower() in correct:
+        if value in correct:
             return True
 
-        if len(correct[0]) >= 4 and len(value) >= 3:
-            ed = EditDistance(correct)
-            if ed.match(value):
-                return True
+        for each in correct:
+            if len(each) >= 4 and len(value) >= 3:
+                ed = EditDistance(each)
+                if ed.match(value):
+                    return True
+                # perhaps there are multiple words, like "Tupac Shakur"
+                if (len(each.split()) > 1 and len(value.split()) > 1 and
+                    len(each.split()) == len(value.split())):
+                    all = True
+                    for i, part in enumerate(each.split()):
+                        ed = EditDistance(part)
+                        if not ed.match(value.split()[i]):
+                            all = False
+                            break
+                    if all:
+                        return True
         return False
 
     def has_picture(self):

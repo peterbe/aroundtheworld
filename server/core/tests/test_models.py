@@ -32,3 +32,7 @@ class ModelsTestCase(TestCase, DatabaseTestCaseMixin):
         q['correct'] = u'Correct'
         self.assertTrue(q.check_answer('corect'))
         self.assertTrue(not q.check_answer('korecct'))
+
+        q['correct'] = u'Tupac Shakur'
+        self.assertTrue(q.check_answer('tupak Shacur'))
+        self.assertTrue(not q.check_answer('Toopack shakure'))  # too wrong
