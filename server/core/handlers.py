@@ -1,3 +1,4 @@
+import time
 import uuid
 import re
 import datetime
@@ -2328,14 +2329,13 @@ class WelcomeHandler(AuthenticatedBaseHandler):
         data['spent_flights'] = spent_flights
 
         earned_jobs = 0
-        for job in self.db.Job.find(user_search, ('coins',)):
+        for job in self.db.Job.collection.find(user_search, ('coins',)):
             earned_jobs += job['coins']
 
         earned_questions = 0
-        for earning in (self.db.QuestionAnswerEarning
+        for earning in (self.db.QuestionAnswerEarning.collection
                         .find(user_search, ('coins',))):
             earned_questions += earning['coins']
-
         invitations = self.db.Invitation.find(user_search).count()
         data['invitations'] = invitations
         invitations = (self.db.Invitation
@@ -2362,7 +2362,7 @@ class WelcomeHandler(AuthenticatedBaseHandler):
         data['earned_total'] = earned_total
 
         _tos = set()
-        for flight in self.db.Flight.find(user_search):
+        for flight in self.db.Flight.collection.find(user_search):
             _tos.add(flight['to'])
         data['visited_cities'] = len(_tos)
         _available_cities = (self.db.Location
@@ -2379,11 +2379,11 @@ class WelcomeHandler(AuthenticatedBaseHandler):
         answers = 0
         answers_right = 0
         _answered_questions = set()
-        for session in (self.db.QuestionSession
+        for session in (self.db.QuestionSession.collection
                         .find(dict(user_search, finish_date={'$ne': None}),
                               ('_id',))):
             sessions += 1
-            for answer in (self.db.SessionAnswer
+            for answer in (self.db.SessionAnswer.collection
                            .find({'session': session['_id']},
                                  ('correct', 'question'))):
                 answers += 1
