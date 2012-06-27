@@ -192,11 +192,38 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           .find()
           .count()
         )
-        then = datetime.datetime.utcnow() - datetime.timedelta(days=14)
-        options['count_new_users'] = (
-          self.db.User
-          .find({'add_date': {'$gte': then}})
+        options['count_jobs'] = (
+          self.db.Job
+          .find()
           .count()
+        )
+        tutorial = self.db.Category.find_one({'name': 'Tutorial'})
+        assert tutorial
+        options['count_jobs_tutorial'] = (
+          self.db.Job
+          .find({'category': tutorial['_id']})
+          .count()
+        )
+        options['total_miles'] = (
+          sum(int(x['miles']) for x in self.db.Flight.collection
+                                        .find(None, ('miles',)))
+        )
+        options['total_coins'] = (
+          sum(x['coins'] for x in self.db.Job.collection
+                                   .find(None, ('coins',)))
+          +
+          sum(x['coins'] for x in self.db.QuestionAnswerEarning.collection
+                                   .find(None, ('coins',)))
+        )
+        options['count_users_anonymous'] = (
+          self.db.User
+          .find({'anonymous': True})
+          .count()
+        )
+        options['latest_user'] = (
+          list(self.db.User.find()
+          .sort('add_date', -1)
+          .limit(1))[0]
         )
         options['count_ambassadors'] = len(
           self.db.Ambassador
@@ -207,41 +234,7 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           .find().distinct('user')
         )
 
-        question_statuses = defaultdict(list)
-        min_no_countries = QuizzingHandler.NO_QUESTIONS
-        _categories = {}  # for optimization
-        countries = self.get_relevant_status_countries()
-        for country in countries:
-            for location in (self.db.Location
-                             .find({'country': country,
-                                    'airport_name': {'$ne': None}})):
-                counts = defaultdict(int)
-                for q in self.db.Question.find({'location': location['_id']}):
-                    counts[q['category']] += 1
-                for cat, count in counts.items():
-                    if count >= min_no_countries:
-                        continue
-                    if cat not in _categories:
-                        _categories[cat] = self.db.Category.find_one({'_id': cat})
-                    question_statuses[location].append(dict(
-                      category=_categories[cat]['name'],
-                      count=count,
-                      excess=max(0, count - min_no_countries),
-                      left=min_no_countries - count,
-                      percentage=int(min(100, 100.0 * count / min_no_countries)),
-                      close=float(count) / min_no_countries > 0.8 and count < min_no_countries
-                    ))
-        options['question_statuses'] = sorted(question_statuses.items())
-
         self.render('admin/home.html', **options)
-
-    def get_relevant_status_countries(self):
-        current_user = self.get_current_user()
-        if current_user['superuser']:
-            return sorted(list(self.db.Location.find().distinct('country')))
-        return sorted(list(self.db.Ambassador
-                           .find({'user': current_user['_id']})
-                           .distinct('country')))
 
 
 @route('/admin/news.json', name='admin_news')
@@ -262,20 +255,25 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         filter_ = {'add_date': {'$gt': cutoff}}
         if max_date:
             filter_['add_date']['$lt'] = max_date
-        users = self.db.User.find(filter_)
+
+        _categories = {}
+        _locations = {}
         for model in (self.db.User,
                       self.db.Feedback,
                       self.db.Question,
                       self.db.HTMLDocument):
-            objects = model.find(filter_).sort('add_date', -1)
+            objects = model.collection.find(filter_).sort('add_date', -1)
             for item in objects:
                 items.append({
-                  'summary': self.get_summary(item),
-                  'url': self.get_url(item),
+                  # send our dict of categories/locations to prevent excessive
+                  # lookups inside get_summary()
+                  'summary': self.get_summary(item, model,
+                                              categories=_categories,
+                                              locations=_locations),
+                  'url': self.get_url(item, model),
                   'ts': time.mktime(item['add_date'].timetuple()),
                   'date': smartertimesince(item['add_date'], now=now),
                 })
-
         items.sort(lambda x,y: cmp(y['ts'], x['ts']))
         if len(items) > no_items:
             items = items[:no_items]
@@ -292,45 +290,57 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         else:
             return items
 
-    def get_url(self, item):
-        if item.__class__ == self.db.User._obj_class:
+    def get_url(self, item, model):
+        if model is self.db.User:
             return self.reverse_url('admin_user_journey', item['_id'])
 
-        if item.__class__ == self.db.Feedback._obj_class:
+        if model is self.db.Feedback:
             return self.reverse_url('admin_feedbacks')
 
-        if item.__class__ == self.db.Question._obj_class:
+        if model is self.db.Question:
             return self.reverse_url('admin_question', item['_id'])
 
-        if item.__class__ == self.db.HTMLDocument._obj_class:
+        if model is self.db.HTMLDocument:
             return self.reverse_url('admin_document', item['_id'])
 
-        raise NotImplementedError(item.__class__.__name__)
+        raise NotImplementedError(model._obj_class)
 
-    def get_summary(self, item):
-        if item.__class__ == self.db.Feedback._obj_class:
+    def get_summary(self, item, model, categories=None, locations=None):
+        if model is self.db.Feedback:
             comment = item['comment']
             if len(comment) > 40:
                 comment = comment[:40].strip() + '...'
             return ("<strong>'%s' feedback!</strong> %s"
                     % (item['what'], comment))
 
-        if item.__class__ == self.db.User._obj_class:
-            current_location = (self.db.Location
-                                .find_one({'_id': item['current_location']}))
+        if model is self.db.User:
+            if locations is None:
+                locations = {}
+            if item['current_location'] not in locations:
+                locations[item['current_location']] = \
+                                 (self.db.Location
+                                  .find_one({'_id': item['current_location']}))
+            current_location = locations[item['current_location']]
             return ('<strong>User!</strong> %s (currently in %s)' %
                     (item['username'], current_location))
 
-        if item.__class__ == self.db.Question._obj_class:
-            category = self.db.Category.find_one({'_id': item['category']})
+        if model is self.db.Question:
+            if categories is None:
+                categories = {}
+            if item['category'] not in categories:
+                categories[item['category']] = (self.db.Category
+                                          .find_one({'_id': item['category']}))
+            category = categories[item['category']]
             text = truncate_text(item['text'], 80)
             text = ("<strong>'%s' question!</strong> %s" %
                     (category['name'], text))
-            if item.has_picture():
+            if (self.db.QuestionPicture
+                .find({'question': item['_id']})
+                .count()):
                 text += ' (with picture)'
             return text.strip()
 
-        if item.__class__ == self.db.HTMLDocument._obj_class:
+        if model is self.db.HTMLDocument:
             text = "<strong>'%s' document!</strong> " % item['type']
             if item['user']:
                 user = self.db.User.find_one({'_id': item['user']})
@@ -343,7 +353,8 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
                 text += 'for %s ' % category
 
             return text.strip()
-        raise NotImplementedError(item.__class__.__name__)
+
+        raise NotImplementedError(model._obj_class)
 
 
 @route('/admin/git.log', name='admin_git_log')

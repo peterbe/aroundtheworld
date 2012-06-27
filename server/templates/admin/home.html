@@ -9,18 +9,8 @@
 {% end %}
 
 {% block extrajs %}
-<script src="{{ static_url('admin/jquery.cookie.js') }}"></script>
 <script>
 $(function() {
-  if ($.cookie('admin-hero') != 'hide') {
-    $('.hero-unit').show();
-    $('.hero-unit .btn').click(function() {
-      $('.hero-unit').fadeOut('slow');
-      $.cookie('admin-hero', 'hide');
-      return false;
-    });
-  }
-
   $.getJSON('/admin/news.json', function(response) {
     var container = $('#latest-news');
     $('.loading', container).hide();
@@ -42,33 +32,38 @@ $(function() {
 
 {% block content %}
       <!-- Main hero unit for a primary marketing message or call to action -->
-      <div class="hero-unit" style="display:none">
-        {% if question_statuses %}
-          {% for location, stat_groups in question_statuses %}
-          <div class="question-statuses-country">
-          <h3>{{ location }}</h3>
-            {% for stats in stat_groups %}
-              <div class="category">
-              <h4 class="number">
-                {% if stats['close'] %}
-                  <a href="{{ reverse_url('admin_add_question') }}?location={{ location['code'] }}&amp;category={{ stats['category'] }}">only {{ stats['left'] }} more needed</a>
-                {% else %}
-                  {{ stats['count'] }} questions <small>(<a href="{{ reverse_url('admin_add_question') }}?location={{ location['code'] }}&amp;category={{ stats['category'] }}">{{ stats['left'] }} left</a>)</small>
-                {% end %}
-              </h4>
-              <h4>{{ stats['category'] }}</h4>
-              <div class="progress {% if stats['close'] %}active progress-danger{% else %}progress-info{% end %} {% if not stats['excess'] %}progress-striped{% end %}">
-                <div class="bar" style="width: {{ stats['percentage'] }}%;"></div>
-              </div>
-              </div>
-            {% end %}
-          </div>
-          {% end %}
-        {% else %}
-        <h1>Admin Home!</h1>
-        <p>Wow! You must be awesomely amazing if you managed to get here. What are you going to do?</p>
-        <p><a class="btn primary large">Alright alright &raquo;</a></p>
-        {% end %}
+      <div class="hero-unit">
+        <h2>Admin Home!</h2>
+        <dl class="dl-horizontal">
+          <dt>Users:</dt>
+          <dd><strong>{{ count_users - count_users_anonymous }} registered
+              + {{ count_users_anonymous }} anonymous
+              = {{ count_users }} users in total
+              </strong></dd>
+          <dd>latest user joined {% module TimeSince(latest_user['add_date']) %} ago</dd>
+
+          <dt>Jobs:</dt>
+          <dd><strong>
+          {{ count_jobs - count_jobs_tutorial }} non-tutorial jobs
+          + {{ count_jobs_tutorial }} tutorial jobs
+          = {{ count_jobs }} jobs completed in total
+          </strong></dd>
+
+          <dt>Miles:</dt>
+          <dd><strong>{% module Thousands(total_miles) %} miles</strong> flown in total</dd>
+
+          <dt>Coins:</dt>
+          <dd><strong>{% module Thousands(total_coins) %} coins</strong> earned in total</dd>
+
+          <dt>Questions:</dt>
+          <dd><strong>
+          {% module Thousands(count_questions_published) %} published
+          + {% module Thousands(count_questions_not_published) %} not published
+          = {% module Thousands(count_questions_published + count_questions_not_published) %} questions in total
+          </strong></dd>
+
+        </dl>
+
       </div>
 
       <div id="latest-news">

@@ -1,6 +1,7 @@
 import textwrap
 import tornado.web
 import tornado.escape
+from tornado_utils.timesince import smartertimesince
 from admin.utils import truncate_text
 
 
@@ -39,3 +40,9 @@ class TextWrap(tornado.web.UIModule):
                              initial_indent=indent,
                              subsequent_indent=indent)
         return '\n'.join(wrapped)
+
+
+class TimeSince(tornado.web.UIModule):
+    def render(self, date, date2=None):
+        assert date
+        return smartertimesince(date, date2)

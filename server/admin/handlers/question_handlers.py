@@ -62,7 +62,6 @@ class QuestionsNumbersHandler(AuthenticatedBaseHandler):
 
 @route('/admin/questions/', name='admin_questions')
 class QuestionsAdminHandler(AuthenticatedBaseHandler):
-    LIMIT = 20
 
     def get(self):
         data = {}
@@ -180,6 +179,46 @@ class BaseQuestionAdminHandler(AuthenticatedBaseHandler):
                 return False
 
         return True
+
+@route('/admin/questions/inprogress/', name='admin_questions_in_progress')
+class QuestionsInProgressAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        options = {}
+        question_statuses = defaultdict(list)
+        min_no_countries = QuizzingHandler.NO_QUESTIONS
+        _categories = {}  # for optimization
+        countries = self.get_relevant_status_countries()
+        for country in countries:
+            for location in (self.db.Location
+                             .find({'country': country,
+                                    'airport_name': {'$ne': None}})):
+                counts = defaultdict(int)
+                for q in self.db.Question.find({'location': location['_id']}):
+                    counts[q['category']] += 1
+                for cat, count in counts.items():
+                    if count >= min_no_countries:
+                        continue
+                    if cat not in _categories:
+                        _categories[cat] = self.db.Category.find_one({'_id': cat})
+                    question_statuses[location].append(dict(
+                      category=_categories[cat]['name'],
+                      count=count,
+                      excess=max(0, count - min_no_countries),
+                      left=min_no_countries - count,
+                      percentage=int(min(100, 100.0 * count / min_no_countries)),
+                      close=float(count) / min_no_countries > 0.8 and count < min_no_countries
+                    ))
+        options['question_statuses'] = sorted(question_statuses.items())
+        self.render('admin/questions_in_progress.html', **options)
+
+    def get_relevant_status_countries(self):
+        current_user = self.get_current_user()
+        if current_user['superuser']:
+            return sorted(list(self.db.Location.find().distinct('country')))
+        return sorted(list(self.db.Ambassador
+                           .find({'user': current_user['_id']})
+                           .distinct('country')))
 
 
 @route('/admin/questions/add/', name='admin_add_question')
