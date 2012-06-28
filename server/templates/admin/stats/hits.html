@@ -1,0 +1,25 @@
+{% extends "../base.html" %}
+
+{% block extrahead %}
+<style>
+</style>
+{% end %}
+
+{% block content %}
+      <table class="condensed-table table">
+        <thead>
+          <tr>
+            <th>URI</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for uri, count in hits %}
+          <tr>
+            <td>{{ uri }}</td>
+            <td>{{ int(count) }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+{% end %}

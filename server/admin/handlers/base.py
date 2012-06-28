@@ -520,3 +520,12 @@ class JobsAdminHandler(SuperuserBaseHandler):
         data['errors'] = errors
         data['filtering'] = bool(filter_)
         self.render('admin/errors.html', **data)
+
+
+@route('/admin/stats/hits/', name='admin_stats_hits')
+class StatsHitsAdminHandler(SuperuserBaseHandler):
+
+    def get(self):
+        data = {}
+        data['hits'] = self.redis.zrevrange('hits', 0, 100, withscores=True)
+        self.render('admin/stats/hits.html', **data)

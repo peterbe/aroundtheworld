@@ -81,6 +81,9 @@
                   ><a href="{{ reverse_url('admin_jobs') }}">Jobs</a></li>
                 <li {% if '/errors/' in current_url %}class="active"{% end %}
                   ><a href="{{ reverse_url('admin_errors') }}">Errors</a></li>
+                <li class="divider"></li>
+                <li {% if '/stats/hits/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_stats_hits') }}">Stats Hits</a></li>
 	     </ul>
             {% end %}
             <li><a href="/">Exit Admin</a></li>

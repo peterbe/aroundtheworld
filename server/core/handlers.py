@@ -80,7 +80,18 @@ class BaseHandler(tornado.web.RequestHandler):
     #    sleep(1)
     #    super(BaseHandler, self).write(*a, **k)
 
+    def initialize(self):
+        key = ('%s %s %s' %
+               (self.request.method, self.request.path, self.request.query)
+               ).strip()
+        try:
+            self.redis.zincrby('hits', key, 1)
+        except:
+            logging.critical("Unable to store %r" % key, exc_info=True)
+
     def write_json(self, struct, javascript=False):
+        import warnings
+        warnings.warn("Just use regular self.write()", DeprecationWarning, 2)
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(tornado.escape.json_encode(struct))
 
@@ -539,7 +550,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
               'height': height,
             }
         data['question']['seconds'] = question['seconds']
-        self.write_json(data)
+        self.write(data)
 
     def _pick_questions(self, user, location, category, allow_repeats=False):
         filter_ = {
@@ -740,7 +751,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 earning['coins'] = QuestionWriterHandler.COINS_EARNING_VALUE
                 earning.save()
 
-        self.write_json(data)
+        self.write(data)
 
 
 @route('/questionrating.json$', name='question_rating')
