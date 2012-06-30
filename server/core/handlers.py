@@ -364,13 +364,13 @@ class BaseHandler(tornado.web.RequestHandler):
 class PluginsJSHandler(BaseHandler):
 
     def get(self):
-        self.set_header('Content-Type', 'application/x-javascript')
+        self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         plugins = {}
         for k, urls in self.PLUGINS.items():
             urls = [x.startswith('//') and x or self.static_url(x)
                     for x in urls]
             plugins[k] = urls
-        self.write('var PLUGINS=%s;' % tornado.escape.json_encode(plugins))
+        self.write('window.PLUGINS=%s;' % tornado.escape.json_encode(plugins))
 
 
 class AuthenticatedBaseHandler(BaseHandler):

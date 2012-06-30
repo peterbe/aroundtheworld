@@ -1,6 +1,10 @@
 <div id="welcome" class="overlay">
   <h1>Welcome to {{ page_title }}!</h1>
 
+  <!--[if lt IE 7]> {% include "_no-ie.html" %} <![endif]-->
+  <!--[if IE 7]> {% include "_no-ie.html" %} <![endif]-->
+  <!--[if IE 8]> {% include "_no-ie.html" %} <![endif]-->
+
   <div class="not-logged-in alternative">
     <img class="image-left deferred" src="." data-src="{{ static_url('images/airplane-and-bag.png') }}" alt="Airplane">
     <a href="#login" class="overlay-changer"><img class="image-right deferred" src="." data-src="{{ static_url('images/passport.png') }}" alt="Passport"></a>
