@@ -64,6 +64,7 @@ class NoLocationsError(RuntimeError):
     pass
 
 
+
 class BaseHandler(tornado.web.RequestHandler):
 
     NOMANSLAND = {
@@ -74,6 +75,40 @@ class BaseHandler(tornado.web.RequestHandler):
       'lat': 29.0,
       'lng': -42.0,
     }
+
+    PLUGINS = {
+      'login': ['css/plugins/login.css',
+                'plugins/login.js'],
+      'quizzing': ['css/plugins/quizzing.css',
+                   'lib/jwerty.js',
+	           'lib/raty/jquery.raty.min.js',
+                   'plugins/quizzing.js'],
+      'picturedetective': ['css/plugins/picturedetective.css',
+                           'plugins/picturedetective.js'],
+      'settings': ['css/plugins/settings.css',
+                   'plugins/settings.js'],
+      'miles': ['plugins/miles.js'],
+      'coins': ['css/plugins/coins.css',
+                'lib/bootstrap-tab.js',
+                'plugins/coins.js'],
+      'welcome': ['css/plugins/welcome.css',
+                  'plugins/welcome.js'],
+      'city': ['css/plugins/city.css',
+               'lib/bootstrap-carousel.js',
+               'plugins/city.js'],
+      'airport': ['css/plugins/airport.css',
+                  'plugins/airport.js'],
+      'signout': ['plugins/signout.js'],
+      'flying': ['plugins/flying.js'],
+      'pinpoint': ['css/plugins/pinpoint.css',
+                   'plugins/pinpoint.js'],
+      'feedback': ['plugins/feedback.js'],
+      'questionwriter': ['//api.filepicker.io/v0/filepicker.js',
+                         'css/plugins/questionwriter.css',
+                         'lib/bootstrap-tab.js',
+                         'plugins/questionwriter.js']
+    }
+
 
     #def write(self, *a, **k):
     #    from time import sleep
@@ -324,6 +359,18 @@ class BaseHandler(tornado.web.RequestHandler):
                 return True
 
         return False
+
+@route('/plugins.js', name='plugins_js')
+class PluginsJSHandler(BaseHandler):
+
+    def get(self):
+        self.set_header('Content-Type', 'application/x-javascript')
+        plugins = {}
+        for k, urls in self.PLUGINS.items():
+            urls = [x.startswith('//') and x or self.static_url(x)
+                    for x in urls]
+            plugins[k] = urls
+        self.write('var PLUGINS=%s;' % tornado.escape.json_encode(plugins))
 
 
 class AuthenticatedBaseHandler(BaseHandler):
