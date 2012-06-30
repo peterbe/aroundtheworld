@@ -77,11 +77,16 @@ var Awards = (function() {
          _once = true;
        }
        Utils.update_title();
+       var _has_preloaded = false;
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          $('.index .award', container).remove();
          loaded = {};
          $.each(response.awards, function(i, award) {
+           if (!award.read && !_has_preloaded) {
+             sounds.preload('applause');
+             _has_preloaded = true;
+           }
            _display_award(award);
          });
          if (!response.awards.length) {
@@ -97,6 +102,9 @@ var Awards = (function() {
         if (response.error == 'INVALIDAWARD') {
           alert('Error! Invalid award');
           return;
+        }
+        if (response.award.was_unread) {
+          sounds.play('applause');
         }
         //loaded = {};
         _display_modal_award(response.award);
@@ -127,7 +135,6 @@ var Awards = (function() {
 Plugins.start('awards', function(id) {
   if (id) {
     Awards.load_award(id);
-
   }
   Awards.load();
 });

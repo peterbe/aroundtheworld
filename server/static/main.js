@@ -123,8 +123,18 @@ var State = (function() {
           $('.user-awards a', container).text('Awards')
         }
         if (state.user.awards.unread) {
-          $('.user-awards a', container).addClass('unread');
+          $('.user-awards a', container)
+            .attr('title', state.user.awards.unread + ' unread')
+              .addClass('unread');
+
         } else {
+          if (state.user.awards.count == 1) {
+            $('.user-awards a', container)
+              .attr('title', '1 award');
+          } else {
+            $('.user-awards a', container)
+              .attr('title', state.user.awards.count + ' awards');
+          }
           $('.user-awards a.unread', container).removeClass('unread');
         }
         if (!MOBILE) {

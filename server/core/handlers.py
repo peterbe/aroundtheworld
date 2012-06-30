@@ -2981,10 +2981,13 @@ class AwardsHandler(BaseHandler):
             if not award:
                 self.write({'error': 'INVALIDAWARD'})
                 return
+            was_unread = False
             if award['user'] == user['_id']:
                 award['read'] = True
                 award.save()
+                was_unread = True
             info = describe_award(award)
+            info['was_unread'] = was_unread
             if user['first_name']:
                 name = u'%s %s' % (user['first_name'], user['last_name'])
                 name = name.strip()

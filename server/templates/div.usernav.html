@@ -22,7 +22,8 @@
       </li>
 
       <li class="user-awards logged-in sprite sprite-awards" style="display:none">
-        <a href="#awards" class="overlay-changer {% if state.get('user') and state['user']['awards'].get('unread') %}unread{% end %}">
+        <a href="#awards" class="overlay-changer {% if state.get('user') and state['user']['awards'].get('unread') %}unread{% end %}"
+        {% if state.get('user') and state['user']['awards'].get('unread') %}title="{{ state['user']['awards']['unread'] }} unread"{% end %}>
         {% if state.get('user') %}Awards{% if state['user']['awards']['count'] %} ({{ state['user']['awards']['count'] }}){% end %}{% end %}</a>
       </li>
 
