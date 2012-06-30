@@ -466,11 +466,9 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             session.delete()
 
     def render_didyouknow(self, text):
-        #print repr(tornado.escape.linkify(text))
         text = markdown.markdown(
           tornado.escape.linkify(text, extra_params='target="_blank"')
         )
-        #print repr(text)
         return text
 
     def get_intro_html(self, category, location):
@@ -806,7 +804,6 @@ class QuestionRatingHandler(AuthenticatedBaseHandler):
 
     def post(self):
         score = int(self.get_argument('score'))
-        #print "SCORE", repr(score)
         assert score >= 1 and score <= 5, score
         user = self.get_current_user()
         location = self.get_current_location(user)
