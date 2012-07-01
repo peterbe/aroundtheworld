@@ -261,6 +261,7 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         for model in (self.db.User,
                       self.db.Feedback,
                       self.db.Question,
+                      self.db.Award,
                       self.db.HTMLDocument):
             objects = model.collection.find(filter_).sort('add_date', -1)
             for item in objects:
@@ -302,6 +303,9 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
 
         if model is self.db.HTMLDocument:
             return self.reverse_url('admin_document', item['_id'])
+
+        if model is self.db.Award:
+            return self.reverse_url('admin_awards')
 
         raise NotImplementedError(model._obj_class)
 
@@ -353,6 +357,14 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
                 text += 'for %s ' % category
 
             return text.strip()
+
+        if model is self.db.Award:
+            user = self.db.User.find_one({'_id': item['user']})
+            return (
+                "<strong>%s earned %s award with %s coins reward!</strong> "
+                % (user['username'], item['type'], item['reward'])
+            )
+
 
         raise NotImplementedError(model._obj_class)
 
@@ -529,3 +541,100 @@ class StatsHitsAdminHandler(SuperuserBaseHandler):
         data = {}
         data['hits'] = self.redis.zrevrange('hits', 0, 100, withscores=True)
         self.render('admin/stats/hits.html', **data)
+
+
+@route('/admin/awards/?', name='admin_awards')
+class AwardsAdminHandler(AuthenticatedBaseHandler):
+
+    @tornado.web.addslash
+    def get(self):
+        data = {}
+        filter_ = {}
+        data['all_locations'] = list(
+          self.db.Location
+          .find({'airport_name': {'$ne': None}})
+          .sort('code')
+        )
+        data['all_categories'] = list(
+          self.db.Category
+          .find()
+          .sort('name')
+        )
+        from core import handlers
+        data['all_types'] = (
+          handlers.AWARDTYPE_JOB,
+          handlers.AWARDTYPE_TUTORIAL,
+          handlers.AWARDTYPE_SIGNIN,
+          handlers.AWARDTYPE_10KMILES,
+          handlers.AWARDTYPE_50KMILES,
+          handlers.AWARDTYPE_100KMILES,
+        )
+        data['types'] = self.get_arguments('types', [])
+        if data['types']:
+            filter_['type'] = {
+              '$in': data['types']
+            }
+        data['locations'] = self.get_arguments('locations', [])
+        if data['locations']:
+            filter_['location'] = {
+              '$in': [x['_id'] for x in
+                       self.db.Location
+                        .find({'code': {'$in': data['locations']}})]
+            }
+        data['categories'] = self.get_arguments('categories', [])
+        if data['categories']:
+            filter_['category'] = {
+              '$in': [x['_id'] for x in
+                       self.db.Category
+                        .find({'name': {'$in': data['categories']}})]
+            }
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = (data['page'] - 1) * self.LIMIT
+
+        awards = []
+        _locations = dict([(x['_id'], x) for x in data['all_locations']])
+        _categories = dict([(x['_id'], x) for x in data['all_categories']])
+        _users = {}
+        data['count'] = self.db.Award.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+        data['filtering'] = bool(filter_)
+
+        #coins_all = []
+        #coins_categories = defaultdict(list)
+        #coins_locations = defaultdict(list)
+
+        for each in (self.db.Award
+                     .find(filter_)
+                     .sort('add_date', -1)  # newest first
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['user'] and each['user'] not in _users:
+                _users[each['user']] = \
+                  self.db.User.find_one({'_id': each['user']})
+            if each['location'] not in _locations:
+                _locations[each['location']] = (self.db.Location
+                                          .find_one({'_id': each['location']}))
+
+            awards.append((
+              each,
+              _users[each['user']],
+              each['category'] and _categories[each['category']] or None,
+              _locations[each['location']],
+            ))
+
+            #category = _categories[each['category']]['name']
+            #coins_all.append(each['coins'])
+            #coins_categories[category].append(each['coins'])
+            #location = _locations[each['location']]['code']
+            #coins_locations[location].append(each['coins'])
+
+        data['awards'] = awards
+        data['filtering'] = bool(filter_)
+        self.render('admin/awards.html', **data)

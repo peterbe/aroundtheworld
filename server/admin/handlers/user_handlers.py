@@ -164,6 +164,25 @@ class UserJourneyAdminHandler(UserAdminHandler):
               'flight',
             ))
 
+        for award in (self.db.Award.find({'user': user['_id']})
+                      .sort('add_date', -1)):
+            location = '--'
+            if award['location']:
+                if award['location'] not in _locations:
+                    _locations[award['location']] = \
+                      self.db.Location.find_one({'_id': award['location']})
+                location = _locations[award['location']]
+            description = (
+              "%s award earning %s coins reward"
+              % (award['type'], award['reward'])
+            )
+            events.append((
+              award['add_date'],
+              description,
+              location,
+              'award',
+            ))
+
         for msg in (self.db.LocationMessage.find({'user': user['_id']})
                       .sort('add_date', -1)):
             if msg['location'] not in _locations:

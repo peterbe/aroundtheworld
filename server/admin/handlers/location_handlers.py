@@ -281,7 +281,8 @@ class AddLocationPictureAdminHandler(BaseLocationPictureHandler):
         post_data = djangolike_request_dict(self.request.arguments)
         if self.request.files:
             post_data.update(djangolike_request_dict(self.request.files))
-        form = LocationPictureForm(post_data, locations=self.locations,
+        form = LocationPictureForm(post_data,
+                                   locations=self.locations_with_airports,
                                    picture_required=True)
         if form.validate():
             picture = self.db.LocationPicture()

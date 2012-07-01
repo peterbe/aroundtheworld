@@ -31,11 +31,13 @@ tfoot th select[name="countries"] { width:150px; }
           <tr>
             <td>
               {% if event_type == 'flight' %}
-              <img src="{{ static_url('images/mini-airplane.png') }}" alt="Flight">
+              <img src="{{ static_url('images/sprite-images/mini-airplane.png') }}" alt="Flight">
               {% elif event_type == 'message' %}
               <img src="{{ static_url('images/mini-message.png') }}" alt="Location message">
+              {% elif event_type == 'award' %}
+              <img src="{{ static_url('images/sprite-images/mini-awards.png') }}" alt="Award">
               {% elif event_type == 'feedback' %}
-              <img src="{{ static_url('images/feedback.png') }}" alt="Feedback">
+              <img src="{{ static_url('images/sprite-images/mini-feedback.png') }}" alt="Feedback">
               {% elif event_type == 'job' %}
               <img src="{{ static_url('images/coins/gold-1.png') }}" alt="Job">
               {% else %}

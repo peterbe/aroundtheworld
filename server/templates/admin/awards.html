@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+th { text-align: left; }
+tfoot th select[name="types"] { width:100px; }
+tfoot th select[name="locations"] { width:70px; }
+tfoot th select[name="categories"] { width:130px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} awards {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="condensed-table table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>User</th>
+            <th>Reward</th>
+            <th>Location</th>
+            <th>Category</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            <th colspan="2">
+              <select multiple name="types">
+                {% for type_ in all_types %}
+                <option value="{{ type_ }}"
+                  {% if type_ in types %}selected{% end %}
+                >{{ type_ }}</option>
+                {% end %}
+              </select>
+              &nbsp;
+            </th>
+            <th>
+              &nbsp;
+            </th>
+            <th>
+              <select multiple name="locations">
+                {% for location in all_locations %}
+                <option value="{{ location['code'] }}"
+                  {% if location['code'] in locations %}selected{% end %}
+                >{{ location['code'] }}<!-- ({{ location['country'] }})--></option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <select multiple name="categories">
+                {% for category in all_categories %}
+                <option value="{{ category['name'] }}"
+                  {% if category['name'] in categories %}selected{% end %}
+                >{{ category['name'] }}</option>
+                {% end %}
+              </select>
+            </th>
+            <th>
+              <input type="submit" value="Filter">
+            </th>
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for award, user, category, location in awards %}
+          <tr>
+            <td>
+              {{ award['type'] }}
+            </td>
+            <td>
+              <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
+            </td>
+            <td>{{ award['reward'] }}</td>
+            <td>
+              {% if location %}
+              <abbr title="{{ location }}">{{ location['code'] }}</abbr>
+              {% else %}
+              --
+              {% end %}
+            </td>
+            <td>
+              {% if category %}
+              {{ category['name'] }}
+              {% else %}
+              --
+              {% end %}
+            </td>
+            <td>{{ award['add_date'].strftime('%d %b %Y') }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      {% include "_pagination.html" %}
+    </form>
+
+
+{% end %}
