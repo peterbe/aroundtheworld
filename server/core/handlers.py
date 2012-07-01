@@ -122,10 +122,10 @@ class BaseHandler(tornado.web.RequestHandler):
     }
 
 
-    #def write(self, *a, **k):
-    #    from time import sleep
-    #    sleep(1)
-    #    super(BaseHandler, self).write(*a, **k)
+#    def write(self, *a, **k):
+#        from time import sleep
+#        sleep(4)
+#        super(BaseHandler, self).write(*a, **k)
 
     def initialize(self):
         key = ('%s %s %s' %
@@ -1035,6 +1035,10 @@ class MilesHandler(AuthenticatedBaseHandler):
             _cities.add(each['from'])
             _cities.add(each['to'])
         data['no_cities'] = max(1, len(_cities))
+        # add +1 for the moon :)
+        data['no_cities_possible'] = (self.db.Location
+                                      .find({'available': True})
+                                      .count()) + 1
         data['flights'] = self.get_flights(user)
         data['percentage'] = 0
         self.write(data)

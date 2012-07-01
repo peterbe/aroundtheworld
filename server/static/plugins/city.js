@@ -145,9 +145,11 @@ var City = (function() {
 
   return {
      load: function(page) {
+       Utils.loading_overlay_reset();
        $('.section:visible', container).hide();
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+         Utils.loading_overlay_stop();
          if (response.state) {
            STATE = response.state;
          }

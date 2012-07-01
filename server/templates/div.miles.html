@@ -1,15 +1,18 @@
-<div id="miles" class="overlay">
+<div id="miles" class="overlay" style="display:none">
   <img src="." data-src="{{ static_url('images/big-airplane.png') }}" alt="Miles" class="overlay-image deferred">
-  <h2>Miles</h2>
+  <h2>Miles and Flight Log</h2>
+
+  {% include "_loading.html" %}
+
 
 <ul class="short-stats" style="display:none">
 <li><strong>You have travelled <em class="miles-friendly">x,xxx miles</em></strong></li>
-<li>You have visited <strong class="no-cities"></strong></li>
+<li>You have visited <strong class="no-cities"></strong>
+of a total of <strong class="no-cities-possible"></strong> possible</li>
 <!--<li>And covered <em class="percentage">xx%</em> of going around the world</li>-->
 </ul>
 
 <div class="flightlog" style="display:none">
-<h3>Flight Log</h3>
 <table class="table table-condensed">
   <thead>
     <tr>

@@ -40,6 +40,7 @@ var Quiz = (function() {
     }
     $.getJSON(URL, data, function(response) {
       if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+      Utils.loading_overlay_stop();
 
       if (response.quiz_name) {
         Quiz.show_name(response.quiz_name);

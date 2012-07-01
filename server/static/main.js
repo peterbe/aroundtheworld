@@ -5,9 +5,10 @@ var Loader = (function() {
      load_hash: function (hash, blank_location_hash) {
        // so that reloads works nicer
        if (hash == '#signout' || hash == '#welcome') blank_location_hash = true;
-
        if (blank_location_hash) {
-         window.location.hash = '';
+         if (window.location.hash) {
+           window.location.hash = '';
+         }
        } else if (hash !== window.location.hash) {
          window.location.hash = hash;
        }
@@ -166,6 +167,7 @@ var State = (function() {
 })();
 
 var Utils = (function() {
+  var _loading_timer;
 
   function isInt(x) {
     var y = parseInt(x);
@@ -186,16 +188,34 @@ var Utils = (function() {
     return ps.replace(/(\d)(?=(\d{3})+([.]|$))/g,"$1"+ts)+ss;
   }
 
+  function dotdotdot_loading() {
+    $('.loading-overlay:visible')
+      .text($('.loading-overlay:visible').text() + '.');
+  }
+
   return {
-     general_error: function(message, reload_tip) {
-       message = 'Error!\n' + message;
-       if (!reload_tip) {
-         reload_tip = "Try reloading to arrive in your current city";
-       }
-       message += '\n' + reload_tip;
-       alert(message);  // XXX which this was something more cool
+     loading_overlay_reset: function() {
+       $('.overlay:visible .loading-overlay').show();
+       _loading_timer = setInterval(function() {
+         dotdotdot_loading();
+       }, 1000);
+
      },
-     formatCost: function(v, include_suffix) {
+    loading_overlay_stop: function() {
+      $('.loading-overlay:visible')
+        .text($('.loading-overlay:visible').text().replace(/[\.]+$/, '...'));
+      $('.overlay:visible .loading-overlay').hide();
+      clearInterval(_loading_timer);
+    },
+    general_error: function(message, reload_tip) {
+      message = 'Error!\n' + message;
+      if (!reload_tip) {
+        reload_tip = "Try reloading to arrive in your current city";
+      }
+      message += '\n' + reload_tip;
+      alert(message);  // XXX which this was something more cool
+    },
+    formatCost: function(v, include_suffix) {
        if (include_suffix) {
          if (v == 1) return v + ' coin';
          return tsep(v) + ' coins';

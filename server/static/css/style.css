@@ -158,3 +158,8 @@ html, body {
 thead td {
   font-weight: bold;
 }
+
+.loading-overlay {
+    font-size: 120%;
+    margin: 50px;
+}

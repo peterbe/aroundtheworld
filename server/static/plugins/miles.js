@@ -3,9 +3,8 @@ var Miles = (function() {
   var container = $('#miles');
 
   function _show_flights(flights) {
+    var tbody = $('.flightlog tbody', container);
     $.each(flights, function(i, each) {
-      $('.flightlog:hidden', container).show();
-
       var c = $('<tr>');
       $('<td>')
         .addClass('flight-from')
@@ -26,20 +25,26 @@ var Miles = (function() {
         .addClass('flight-when')
         .text(each.date)
           .appendTo(c);
-      c.appendTo($('.flightlog tbody', container));
+      c.appendTo(tbody);
     });
-
+    $('.flightlog', container).hide().fadeIn(400);
   }
 
   return {
      load: function() {
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+         Utils.loading_overlay_stop();
          $('.miles-friendly', container)
            .text(Utils.formatMiles(STATE.user.miles_total) + ' miles');
          $('.percentage', container).text(response.percentage);
-         $('.no-cities', container).text(response.no_cities + ' cities');
-         $('.short-stats:hidden', container).fadeIn(100);
+         if (response.cities == 1) {
+           $('.no-cities', container).text('1 city');
+         } else {
+           $('.no-cities', container).text(response.no_cities + ' cities');
+         }
+         $('.no-cities-possible', container).text(response.no_cities_possible + ' cities');
+         $('.short-stats', container).hide().fadeIn(600);
          _show_flights(response.flights);
          Utils.update_title();
        });
@@ -49,7 +54,13 @@ var Miles = (function() {
        } else {
          $('.exit:visible', container).hide();
        }
-     }
+     },
+    teardown: function() {
+      Utils.loading_overlay_reset();
+      $('.short-stats', container).hide();
+      $('.flightlog', container).hide();
+      $('tbody tr', container).remove();
+    }
   };
 })();
 
@@ -59,5 +70,5 @@ Plugins.start('miles', function() {
 });
 
 Plugins.stop('miles', function() {
-  //Miles.teardown();
+  Miles.teardown();
 });
