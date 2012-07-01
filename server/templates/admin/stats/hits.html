@@ -16,7 +16,7 @@
         <tbody>
           {% for uri, count in hits %}
           <tr>
-            <td>{{ uri }}</td>
+            <td>{{ uri[:75] }}</td>
             <td>{{ int(count) }}</td>
           </tr>
           {% end %}

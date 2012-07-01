@@ -6,6 +6,7 @@ tfoot th select[name="locations"] { width:70px; }
 tfoot th select[name="categories"] { width:130px; }
 tfoot th select[name="points_values"] { width:40px; }
 tfoot th select[name="authors"] { width:100px; }
+tfoot th select[name="published"] { width:100px; }
 </style>
 {% end %}
 
@@ -31,7 +32,17 @@ tfoot th select[name="authors"] { width:100px; }
         </thead>
         <tfoot>
           <tr>
-            <th><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th><input name="q" value="{{ q }}" placeholder="Search...">
+
+              <select name="published">
+                <option value="">All</option>
+                <option value="published" {% if published == 'published' %}selected{% end %}
+                >Published</option>
+                <option value="not" {% if published == 'not' %}selected{% end %}
+                >Not published</option>
+              </select>
+
+            </th>
             <th>
               &nbsp;
             </th>

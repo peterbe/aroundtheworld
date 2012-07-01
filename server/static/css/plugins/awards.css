@@ -63,21 +63,13 @@
     color: #0000A0;  /* dark blue */
     border-bottom: 1px solid rgb(220,220,220);
     width: 140px;
-    /*
-    position: relative;
-    top: 40px;
-    left: 190px;*/
 }
-
 #awards .wrapper p.date {
     float: right;
 }
-
-
 #awards .award img {
     float: left;
     margin-right: 10px;
-
 }
 #awards .award a.title {
     font-weight: bold;
@@ -89,4 +81,16 @@
 }
 #awards .new-award {
     margin-left: 10px;
+}
+#awards .index {
+    width: 40%;
+}
+#awards .explanation {
+    background-color: white;
+    padding-left: 10px;
+    float: right;
+    width: 50%;
+}
+#awards li.done {
+    text-decoration: line-through;
 }

@@ -6,9 +6,11 @@ var Awards = (function() {
   var _once = false;
 
   function _display_award(award) {
-    var c = $('.index', container);
+    var c = $('.index-outer', container);
     loaded[award.id] = award;
-    var d = $('<div>').addClass('award');
+    var d = $('<div>')
+      .addClass('award')
+        .addClass('type-' + award.type);
     function make_a(award_id) {
       return $('<a href="#awards,">')
         .attr('href', '#awards,' + award_id)
@@ -61,7 +63,7 @@ var Awards = (function() {
   function setup_once() {
     $('a.return', container).click(function() {
       $('.wrapper-outer', container).hide();
-      $('.index', container).show();
+      $('.index-outer', container).show();
       Utils.update_title();
       if (location.hash != '#awards') {
         location.hash = '#awards';
@@ -88,6 +90,7 @@ var Awards = (function() {
              _has_preloaded = true;
            }
            _display_award(award);
+           $('.index-outer .explanation-' + award.type).addClass('done');
          });
          if (!response.awards.length) {
            $('.none', container).show();
@@ -109,7 +112,7 @@ var Awards = (function() {
         //loaded = {};
         _display_modal_award(response.award);
         $('.wrapper-outer', container).show();
-        $('.index', container).hide();
+        $('.index-outer', container).hide();
 
         $('.new-award', container).each(function() {
           if ($(this).data('id') == response.award.id) {

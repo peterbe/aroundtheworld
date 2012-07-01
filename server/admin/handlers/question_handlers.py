@@ -71,6 +71,11 @@ class QuestionsAdminHandler(AuthenticatedBaseHandler):
             _q = [re.escape(x.strip()) for x in data['q'].split(',')
                   if x.strip()]
             filter_['text'] = re.compile('|'.join(_q), re.I)
+        data['published'] = self.get_argument('published', '')
+        if data['published'] == 'not':
+            filter_['published'] = False
+        elif data['published'] == 'published':
+            filter_['published'] = True
         data['all_locations'] = (
           self.db.Location
           .find({'airport_name': {'$ne': None}})

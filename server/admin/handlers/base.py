@@ -286,7 +286,7 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
             ))
 
         if max_date is None:
-            self.write_json({'items': items})
+            self.write({'items': items})
         else:
             return items
 

@@ -40,6 +40,9 @@ MOBILE_USER_AGENTS = re.compile(
 AWARDTYPE_JOB = u'job'
 AWARDTYPE_TUTORIAL = u'tutorial'
 AWARDTYPE_SIGNIN = u'signin'
+AWARDTYPE_10KMILES = u'10k'
+AWARDTYPE_50KMILES = u'50k'
+AWARDTYPE_100KMILES = u'100k'
 
 TUTORIAL_INTRO = u"""
 **This is the tutorial job.**
@@ -127,6 +130,8 @@ class BaseHandler(tornado.web.RequestHandler):
         key = ('%s %s %s' %
                (self.request.method, self.request.path, self.request.query)
                ).strip()
+        if len(key) > 75:
+            key = key[:75 - 3] + '...'
         try:
             self.redis.zincrby('hits', key, 1)
         except:
@@ -423,6 +428,24 @@ class BaseHandler(tornado.web.RequestHandler):
                        'type': AWARDTYPE_SIGNIN})
                 .count())
 
+    def has_10k_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_10KMILES})
+                .count())
+
+    def has_50k_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_50KMILES})
+                .count())
+
+    def has_100k_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_100KMILES})
+                .count())
+
     def create_signin_award(self, user, location, reward, data):
         data['sign_in'] = True
         award = self.db.Award()
@@ -433,6 +456,37 @@ class BaseHandler(tornado.web.RequestHandler):
         award['type'] = AWARDTYPE_SIGNIN
         award['reward'] = reward
         award.save()
+
+    def create_10k_award(self, user, location, reward, data):
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'Flying over 10,000 miles'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['type'] = AWARDTYPE_10KMILES
+        award['reward'] = reward
+        award.save()
+
+    def create_50k_award(self, user, location, reward, data):
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'Flying over 50,000 miles'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['type'] = AWARDTYPE_50KMILES
+        award['reward'] = reward
+        award.save()
+
+    def create_100k_award(self, user, location, reward, data):
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'Flying over 100,000 miles'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['type'] = AWARDTYPE_100KMILES
+        award['reward'] = reward
+        award.save()
+
 
 @route('/plugins.js', name='plugins_js')
 class PluginsJSHandler(BaseHandler):
@@ -1956,7 +2010,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
 
-    BASE_PRICE = 20  # coins
+    BASE_PRICE = 50  # coins
 
     def get(self):
         user = self.get_current_user()
@@ -2009,7 +2063,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         self.write(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .05))
+        return self.BASE_PRICE + int(round(miles * .04))
 
 
 @route('/fly.json$', name='fly')
@@ -2077,7 +2131,9 @@ class FlyHandler(AirportHandler):
         # make the transaction
         user_settings = self.get_current_user_settings(user)
         user_settings['coins_total'] -= cost
+        miles_total_before = user_settings['miles_total']
         user_settings['miles_total'] += distance.miles
+        miles_total_after = user_settings['miles_total']
         user_settings.save()
         user['current_location'] = location['_id']
         user.save()
@@ -2110,6 +2166,32 @@ class FlyHandler(AirportHandler):
                 )
                 user_settings['coins_total'] += reward
                 user_settings.save()
+        else:
+            if miles_total_after > 10000 and miles_total_before < 10000:
+                if not self.has_10k_award(user):
+                    reward = 75
+                    data = {
+                      'from': unicode(current_location),
+                      'to': unicode(location)
+                    }
+                    self.create_10k_award(user, current_location, reward, data)
+            elif miles_total_after > 50000 and miles_total_before < 50000:
+                if not self.has_50k_award(user):
+                    reward = 150
+                    data = {
+                      'from': unicode(current_location),
+                      'to': unicode(location)
+                    }
+                    self.create_50k_award(user, current_location, reward, data)
+            elif miles_total_after > 100000 and miles_total_before < 100000:
+                if not self.has_100k_award(user):
+                    reward = 500
+                    data = {
+                      'from': unicode(current_location),
+                      'to': unicode(location)
+                    }
+                    self.create_100k_award(user, current_location, reward, data)
+################################################################################
 
         data = {
           'from_code': current_location['code'],
@@ -2982,7 +3064,7 @@ class AwardsHandler(BaseHandler):
                 self.write({'error': 'INVALIDAWARD'})
                 return
             was_unread = False
-            if award['user'] == user['_id']:
+            if award['user'] == user['_id'] and not award['read']:
                 award['read'] = True
                 award.save()
                 was_unread = True
