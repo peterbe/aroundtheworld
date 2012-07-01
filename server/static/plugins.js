@@ -21,7 +21,7 @@ var Plugins = (function() {
       plugin_url += 'r=' + Math.random();
     }
     var s;
-    if (plugin_url.match(/\.css($|\?)/)) {
+    if (plugin_url.match(/\.css($|\?)/) || plugin_url.match(/fonts\.googleapis\.com/)) {
       s = $('<link type="text/css" rel="stylesheet">')
         .ready(callback)
           .attr('href', plugin_url);

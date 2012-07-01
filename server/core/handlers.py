@@ -115,6 +115,7 @@ class BaseHandler(tornado.web.RequestHandler):
                          'lib/bootstrap-tab.js',
                          'plugins/questionwriter.js'],
       'awards': ['css/plugins/awards.css',
+                 '//fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Tangerine|Homemade+Apple|UnifrakturMaguntia',
                  'lib/jwerty.js',
                  'plugins/awards.js'],
 
@@ -513,11 +514,12 @@ class AuthenticatedBaseHandler(BaseHandler):
 @route('/')
 class HomeHandler(BaseHandler):
 
+#    def compute_etag(self):
+#        return None
+
     def render(self, template, **options):
-        options['javascript_test_file'] = self.get_argument('test', None)
         options['state'] = self.get_state()
-        #options['state_json'] = tornado.escape.json_encode(self.get_state())
-        return super(HomeHandler, self).render(template, **options)
+        super(HomeHandler, self).render(template, **options)
 
     def get(self):
         options = {}
@@ -528,16 +530,18 @@ class HomeHandler(BaseHandler):
         self.render('home.html', **options)
 
 
-@route('/offline/')
+@route('/offline/?')
 class OfflineHomeHandler(HomeHandler):
 
+    @tornado.web.addslash
     def get(self):
         options = {}
         self.render('offline.html', **options)
 
-@route('/mobile/')
+@route('/mobile/?')
 class MobileHomeHandler(HomeHandler):
 
+    @tornado.web.addslash
     def get(self):
         options = {}
         self.render('mobile.html', **options)
@@ -559,13 +563,13 @@ class FlightPathsHandler(BaseHandler):
     def get(self):
         data = [{u'to': [35.772095999999998, -78.638614500000017],
                  u'from': [37.774929499999999, -122.41941550000001]}]
-        self.write_json(data)
+        self.write(data)
 
     def post(self):
         print repr(self.request.body)
         data = tornado.escape.json_decode(self.request.body)
         print data
-        self.write_json({'status': 'OK'})
+        self.write({'status': 'OK'})
 
 
 @route('/quizzing.json$', name='quizzing')
@@ -1009,7 +1013,7 @@ class SettingsHandler(AuthenticatedBaseHandler):
         assert user_settings
         data = {}
         data['disable_sound'] = user_settings['disable_sound']
-        self.write_json(data)
+        self.write(data)
 
     def post(self):
         user = self.get_current_user()
@@ -1073,7 +1077,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
         if self.get_argument('jobs-page', None) is not None:
             data['jobs'], count = self.get_jobs(user)
             data['count_jobs'] = count
-        self.write_json(data)
+        self.write(data)
 
     def get_jobs(self, user, limit=10):
         jobs = []
@@ -1172,7 +1176,7 @@ class LocationHandler(AuthenticatedBaseHandler):
             locations.append(option)
         if ip_location:
             locations.sort(lambda x, y: cmp(x['distance'], y['distance']))
-        self.write_json({'locations': locations})
+        self.write({'locations': locations})
 
     def post(self):
         _id = self.get_argument('id')
@@ -1185,7 +1189,7 @@ class LocationHandler(AuthenticatedBaseHandler):
           'id': str(location['_id']),
           'name': unicode(location)
         }
-        self.write_json({'state': data})
+        self.write({'state': data})
 
 
 @route('/city.json$', name='city')
@@ -1821,7 +1825,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
                                      if previous_answer else None),
                 )
             except NoLocationsError:
-                self.write_json({'error': 'NOLOCATIONS'})
+                self.write({'error': 'NOLOCATIONS'})
                 return
 
             _no_answers = (self.db.PinpointAnswer
@@ -1844,7 +1848,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
                   'seconds': self.SECONDS,
                 }
             else:
-                self.write_json({'error': 'ALREADYSENTALLLOCATIONS'})
+                self.write({'error': 'ALREADYSENTALLLOCATIONS'})
                 return
         else:
             # close any unfinished sessions
@@ -1856,7 +1860,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
                 session['finish_date'] = datetime.datetime.utcnow()
                 session.save()
 
-        self.write_json(data)
+        self.write(data)
 
     def _get_next_location(self, session, country,
                            locality=None,
@@ -2004,7 +2008,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             answer['timedout'] = False
             answer.save()
 
-        self.write_json(data)
+        self.write(data)
 
 
 @route('/airport.json$', name='airport')
@@ -2076,18 +2080,18 @@ class FlyHandler(AirportHandler):
         try:
             from_, to = re.findall('[0-9A-Z]{3}', route)
         except ValueError:
-            self.write_json({'error': 'INVALIDROUTE'})
+            self.write({'error': 'INVALIDROUTE'})
             return
         from_ = self.db.Location.find_one({'code': from_})
         if not from_:
-            self.write_json({'error': 'INVALIDAIRPORT'})
+            self.write({'error': 'INVALIDAIRPORT'})
             return
         to = self.db.Location.find_one({'code': to})
         if not to:
-            self.write_json({'error': 'INVALIDAIRPORT'})
+            self.write({'error': 'INVALIDAIRPORT'})
             return
         if from_ == to:
-            self.write_json({'error': 'INVALIDROUTE'})
+            self.write({'error': 'INVALIDROUTE'})
             return
         flight = self.db.Flight.find_one({
           'user': user['_id'],
@@ -2095,7 +2099,7 @@ class FlyHandler(AirportHandler):
           'to': to['_id'],
         })
         if not flight:
-            self.write_json({'error': 'INVALIDROUTE'})
+            self.write({'error': 'INVALIDROUTE'})
             return
 
         data = {
@@ -2119,13 +2123,13 @@ class FlyHandler(AirportHandler):
         user = self.get_current_user()
         current_location = self.get_current_location(user)
         if location == current_location:
-            self.write_json({'error': 'FLIGHTALREADYTAKEN'})
+            self.write({'error': 'FLIGHTALREADYTAKEN'})
             return
         distance = calculate_distance(current_location, location)
         cost = self.calculate_cost(distance.miles, user)
         state = self.get_state()
         if cost > state['user']['coins_total']:
-            self.write_json({'error': 'CANTAFFORD'})
+            self.write({'error': 'CANTAFFORD'})
             return
 
         # make the transaction
@@ -2540,7 +2544,7 @@ class IPLookupHandler(BaseHandler):
     def get(self):
         ip = self.get_current_ip()
         if not ip:
-            self.write_json({})
+            self.write({})
             self.finish()
             return
         cache_key = 'iplookup-%s' % ip
@@ -2564,7 +2568,7 @@ class IPLookupHandler(BaseHandler):
                 )
             else:
                 logging.warn("%s: %r" % (response.code, response.body))
-        self.write_json(data)
+        self.write(data)
         self.finish()
 
 
@@ -2712,7 +2716,7 @@ class FeedbackHandler(AuthenticatedBaseHandler):
             logging.error("Failed to send email",
                           exc_info=True)
 
-        self.write_json({'ok': True})
+        self.write({'ok': True})
 
 
 @route('/questionwriter.json', name='questionwriter')

@@ -3,7 +3,6 @@ var MOBILE = false;
 var Loader = (function() {
   return {
      load_hash: function (hash, blank_location_hash) {
-
        // so that reloads works nicer
        if (hash == '#signout' || hash == '#welcome') blank_location_hash = true;
 
