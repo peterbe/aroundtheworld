@@ -665,12 +665,25 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
             # check which of these have images that need to be preloaded
             data['pictures'] = []
-            for picture in (self.db.QuestionPicture
-                            .find({'question': {'$in': session['questions']}})
-                            ):
-                uri, (width, height) = self.get_thumbnail(picture, (250, 250))
-                url = self.static_url(uri.replace('/static/', ''))
-                data['pictures'].append(url)
+            for q_id in session['questions']:
+                pictures = list(
+                    self.db.QuestionPicture
+                    .find({'question': q_id})
+                )
+                if len(pictures) == 4:
+                    max_width, max_height = settings.FOUR_PICTURES_WIDTH_HEIGHT
+                    kwargs = {'crop': True}
+                else:
+                    max_width, max_height = 250, 250
+                    kwargs = {}
+                for picture in pictures:
+                    uri, (width, height) = self.get_thumbnail(
+                        picture,
+                        (max_width, max_height),
+                        **kwargs
+                    )
+                    url = self.static_url(uri.replace('/static/', ''))
+                    data['pictures'].append(url)
 
         for each in (self.db.SessionAnswer
                      .find({'session': session['_id']})
@@ -715,17 +728,33 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         data['question'] = {
           'text': question['text'],
           'alternatives': question['alternatives'],
+          'pictures': []
         }
-        if question.has_picture():
-            picture = question.get_picture()
-            uri, (width, height) = self.get_thumbnail(picture, (250, 250))
-
+        pictures = list(question.get_pictures())
+        max_width, max_height = (250, 250)
+        kwargs = {}
+        if len(pictures) == 4:
+            max_width, max_height = settings.FOUR_PICTURES_WIDTH_HEIGHT
+            kwargs = {'crop': True}
+        for picture in pictures:
+            uri, (width, height) = self.get_thumbnail(
+                picture,
+                (max_width, max_height),
+                **kwargs
+            )
             url = self.static_url(uri.replace('/static/', ''))
-            data['question']['picture'] = {
+            data['question']['pictures'].append({
               'url': url,
               'width': width,
               'height': height,
-            }
+              'index': picture['index'],
+            })
+        if len(data['question'].get('pictures', [])) == 4:
+            random.shuffle(data['question']['pictures'])
+        elif len(data['question'].get('pictures', [])) == 1:
+            data['question']['picture'] = data['question']['pictures'][0]
+            data['question'].pop('pictures')
+
         data['question']['seconds'] = question['seconds']
         self.write(data)
 
@@ -848,11 +877,44 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                     total_points += answer['points']
                 question = (self.db.Question
                             .find_one({'_id': answer['question']}))
+                your_answer = answer['answer']
+                correct_answer = answer['correct']
+                if question.count_pictures() == 4:
+                    if your_answer:
+                        # re-write your answer as a dict
+                        picture = (self.db.QuestionPicture
+                                   .find_one({'question': question['_id'],
+                                              'index': int(your_answer)}))
+                        uri, (width, height) = self.get_thumbnail(
+                            picture,
+                            (40, 40),
+                        )
+                        url = self.static_url(uri.replace('/static/', ''))
+                        your_answer = {
+                          'url': url,
+                          'width': width,
+                          'height': height,
+                        }
+                    # re-write correct answer as a dict
+                    picture = (self.db.QuestionPicture
+                               .find_one({'question': question['_id'],
+                                          'index': int(correct_answer)}))
+                    uri, (width, height) = self.get_thumbnail(
+                        picture,
+                        (40, 40),
+                    )
+                    url = self.static_url(uri.replace('/static/', ''))
+                    correct_answer = {
+                      'url': url,
+                      'width': width,
+                      'height': height,
+                    }
+
                 summary.append({
                   'question': question['text'],
-                  'correct_answer': question['correct'],
-                  'your_answer': answer['answer'],
-                  'correct': answer['correct'],
+                  'correct_answer': correct_answer,
+                  'your_answer': your_answer,
+                  'correct': question['correct'],
                   'time': (not answer['timedout']
                            and answer['time']
                            or None),
@@ -926,6 +988,21 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['correct'] = question.check_answer(answer)
             if not data['correct']:
                 data['correct_answer'] = question['correct']
+                if question.count_pictures() == 4:
+                    # instead of returning the correct answer, return a URL
+                    picture = (self.db.QuestionPicture
+                               .find_one({'question': question['_id'],
+                                          'index': int(question['correct'])}))
+                    uri, (width, height) = self.get_thumbnail(
+                        picture,
+                        (100, 100),
+                    )
+                    url = self.static_url(uri.replace('/static/', ''))
+                    data['correct_answer'] = {
+                      'url': url,
+                      'width': width,
+                      'height': height,
+                    }
 
             time_left = question['seconds'] - time_
             time_bonus_p = round(float(time_left) / question['seconds'], 1)

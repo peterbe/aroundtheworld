@@ -35,7 +35,7 @@ class JSON(tornado.web.UIModule):
 
 class PictureThumbnailMixin:
 
-    def make_thumbnail(self, question_image, (max_width, max_height)):
+    def make_thumbnail(self, question_image, (max_width, max_height), **kwargs):
         timestamp = int(mktime(question_image.modify_date.timetuple()))
         image = question_image.fs.get_last_version('original')
         if image.content_type == 'image/png':
@@ -50,15 +50,31 @@ class PictureThumbnailMixin:
         path = (datetime.datetime.now()
                 .strftime('%Y %m %d')
                 .split())
-        path.append('%s-%s-%s-%s%s' % (question_image._id,
-                                       max_width, max_height,
-                                       timestamp,
-                                       ext))
+        if kwargs.get('crop'):
+            filename = (
+              '%s-%s-%s-cropped%s%s'
+               % (question_image._id,
+                  max_width, max_height,
+                  timestamp,
+                  ext)
+            )
+        else:
+            filename = (
+                '%s-%s-%s-%s%s'
+                % (question_image._id,
+                   max_width, max_height,
+                   timestamp,
+                   ext)
+            )
+        path.append(filename)
         path.insert(0, settings.THUMBNAIL_DIRECTORY)
         path = os.path.join(*path)
         try:
-            (width, height) = get_thumbnail(path, image.read(),
-                                        (max_width, max_height))
+            (width, height) = get_thumbnail(
+                path, image.read(),
+                (max_width, max_height),
+                **kwargs
+            )
             assert os.path.isfile(path), path
         except IOError:
             logging.error("Unable to make thumbnail out of %r" % question_image,
@@ -72,7 +88,7 @@ class PictureThumbnailMixin:
 
         return path.replace(settings.ROOT, ''), (width, height)
 
-    def get_thumbnail(self, question_image, (max_width, max_height)):
+    def get_thumbnail(self, question_image, (max_width, max_height), **kwargs):
         """wrapper on PictureThumbnailMixin.make_thumbnail() that uses
         a global object cache."""
 
@@ -81,23 +97,31 @@ class PictureThumbnailMixin:
         redis_ = getattr(self, 'redis', None) or self.handler.redis
 
         cache_key = '%s%s%s' % (question_image['_id'], max_width, max_height)
+        cache_key += str(kwargs)
         result = redis_.get(cache_key)
         if result is not None:
-            #print 'Cache hit'
             return tornado.escape.json_decode(result)
-        #print 'Cache miss'
-        result = self.make_thumbnail(question_image, (max_width, max_height))
+        logging.debug('Thumbnail Cache miss')
+        result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
         redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
         return result
 
 
 class ShowPictureThumbnail(tornado.web.UIModule,
-                                 PictureThumbnailMixin):
+                           PictureThumbnailMixin):
+
     def render(self, question_image, (max_width, max_height), alt="",
                return_json=False, return_args=False,
                **kwargs):
-        uri, (width, height) = self.get_thumbnail(question_image,
-                                                   (max_width, max_height))
+        uri, (width, height) = self.get_thumbnail(
+            question_image,
+            (max_width, max_height),
+            **kwargs
+        )
+        if kwargs.get('crop'):
+            if width != max_width or height != max_height:
+                logging.warn("Cropped failed (%s, %s)" % (width, height))
+
         url = self.handler.static_url(uri.replace('/static/', ''))
         args = {'src': url, 'width': width, 'height': height, 'alt': alt}
         if (not question_image.render_attributes

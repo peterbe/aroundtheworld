@@ -107,7 +107,7 @@ tfoot th select[name="published"] { width:100px; }
                href="{% module GetPictureThumbnailSrc(question.get_picture(), (300,300)) %}"
                >{% module ShowPictureThumbnail(question.get_picture(), (20, 20)) %}</a>
                {% if question.has_many_pictures() %}
-               <a href="{{ reverse_url('admin_question_pictures', question['_id']) }}" title="Has many pictures">+</a>
+               <a href="{{ reverse_url('admin_question_pictures', question['_id']) }}" title="Has {{ question.count_pictures() }} pictures">+</a>
                {% end %}
             {% else %}
              -

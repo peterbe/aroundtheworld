@@ -26,6 +26,8 @@ QUIZ_NO_QUESTIONS_TUTORIAL = 3
 
 COOKIE_SECRET = ""
 
+FOUR_PICTURES_WIDTH_HEIGHT = (170, 170)
+
 try:
     from local_settings import *
 except ImportError:

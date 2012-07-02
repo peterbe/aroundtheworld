@@ -3,6 +3,7 @@ import tornado.web
 import tornado.escape
 from tornado_utils.timesince import smartertimesince
 from admin.utils import truncate_text
+import settings
 
 
 class RenderField(tornado.web.UIModule):
@@ -46,3 +47,14 @@ class TimeSince(tornado.web.UIModule):
     def render(self, date, date2=None):
         assert date
         return smartertimesince(date, date2)
+
+
+class FourPicturesTable(tornado.web.UIModule):
+
+    def render(self, pictures):
+        data = {
+          'pictures': pictures,
+          'width': settings.FOUR_PICTURES_WIDTH_HEIGHT[0],
+          'height': settings.FOUR_PICTURES_WIDTH_HEIGHT[1],
+        }
+        return self.render_string("admin/_four-pictures.html", **data)
