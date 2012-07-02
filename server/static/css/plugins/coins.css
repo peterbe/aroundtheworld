@@ -4,7 +4,7 @@
 }
 #coins td.transaction-type-flight {
     width:16px;
-    background: url(../../images/mini-airplane.png) 0 -2px no-repeat;
+    background: url(../../images/sprite-images/mini-airplane.png) 0 -2px no-repeat;
 }
 #coins td.load-more {
     text-align: right;

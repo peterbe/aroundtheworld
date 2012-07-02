@@ -80,7 +80,7 @@ var Quiz = (function() {
     function rand_pick(options) {
       function shuffle(o) { //v1.0
         for (var j, x, i = o.length; i;
-             j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+             j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x) {};
         return o;
       }
       return shuffle(options)[0];
@@ -225,26 +225,29 @@ var Quiz = (function() {
       return src.split('/')[src.split('/').length - 1];
     }
 
-    $('.rate', container).raty({
-       path: _dirname($('.face-a', c).attr('src')),
-       iconRange: [
-        { range: 2, on: _bname('face-a'), off: _bname('face-a-off')},
-        { range: 3, on: _bname('face-b'), off: _bname('face-b-off')},
-        { range: 4, on: _bname('face-c'), off: _bname('face-c-off')},
-        { range: 5, on: _bname('face-d'), off: _bname('face-d-off')}
-        ],
-      mouseover : function(score, evt) {
-        if (!_has_mousedover_raty) {
-          Quiz.wait_longer(10);
-          _has_mousedover_raty = true;
+    // sometimes raty isn't loaded
+    if (typeof raty !== 'undefined') {
+      $('.rate', container).raty({
+         path: _dirname($('.face-a', c).attr('src')),
+        iconRange: [
+                    { range: 2, on: _bname('face-a'), off: _bname('face-a-off')},
+                    { range: 3, on: _bname('face-b'), off: _bname('face-b-off')},
+                    { range: 4, on: _bname('face-c'), off: _bname('face-c-off')},
+                    { range: 5, on: _bname('face-d'), off: _bname('face-d-off')}
+                   ],
+        mouseover : function(score, evt) {
+          if (!_has_mousedover_raty) {
+            Quiz.wait_longer(10);
+            _has_mousedover_raty = true;
+          }
+        },
+        click : function(score, evt) {
+          $.post(RATE_URL, {score: score});
+          $('a.next-question:visible', container).click();
+          $('.rate:visible', container).raty('reload');
         }
-      },
-      click : function(score, evt) {
-        $.post(RATE_URL, {score: score});
-        $('a.next-question:visible', container).click();
-        $('.rate:visible', container).raty('reload');
-      }
-    });
+      });
+    }
 
     $('.rating-images', container).hide();
 

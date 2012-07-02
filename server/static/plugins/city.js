@@ -38,6 +38,7 @@ var City = (function() {
     $.getJSON(URL, {get: 'pictures'}, function(response) {
       var parent = $('#picture-carousel .carousel-inner');
       var no_pictures = response.pictures.length;
+      $('div.item', parent).remove();
       $.each(response.pictures, function(i, each) {
         var item = $('<div>').addClass('item');
         $('<img>')
