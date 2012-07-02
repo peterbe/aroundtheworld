@@ -295,18 +295,21 @@ class Question(BaseDocument):
         return False
 
     def has_picture(self):
-        return self._count_pictures() > 0
+        return self.count_pictures() > 0
 
     def has_many_pictures(self):
-        return self._count_pictures() > 1
+        return self.count_pictures() > 1
 
-    def _count_pictures(self):
+    def count_pictures(self):
         return (self.db.QuestionPicture
                 .find({'question': self['_id']})
                 .count())
 
     def get_picture(self):
         return self.db.QuestionPicture.find_one({'question': self['_id']})
+
+    def get_pictures(self):
+        return self.db.QuestionPicture.find({'question': self['_id']})
 
     def calculate_ratings(self):
         data = {}

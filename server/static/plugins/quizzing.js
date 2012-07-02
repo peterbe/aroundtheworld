@@ -15,6 +15,8 @@ var Quiz = (function() {
   var _has_mousedover_raty = false;
   var _seen_intros = [];
   var _loading = false;
+  var _left_to_load = null;
+  var _question_seconds;
 
   function _dirname(src) {
     return src.split('/').slice(0, src.split('/').length - 1).join('/') + '/';
@@ -132,8 +134,8 @@ var Quiz = (function() {
 
       var _total_points = 0;
       var tbody = $('.results tbody', container);
-      $('tbody tr', container).remove();
-      $('tfoot .points-total').text('');
+      $('.results tbody tr', container).remove();
+      $('.results tfoot .points-total').text('');
       $.each(response.summary, function(i, each) {
         var tr = $('<tr>');
         if (each.correct) {
@@ -154,15 +156,37 @@ var Quiz = (function() {
               .text('timed out')
                 .appendTo(tr);
         } else {
+          if (each.your_answer.url) {
+            $('<td>')
+              .addClass('answer')
+                .append($('<img>')
+                        .attr('alt', 'Your answer')
+                        .attr('src', each.your_answer.url)
+                        .attr('width', each.your_answer.width)
+                        .attr('height', each.your_answer.height))
+                  .appendTo(tr);
+          } else {
+            $('<td>')
+              .addClass('answer')
+                .text(each.your_answer)
+                  .appendTo(tr);
+          }
+        }
+        if (each.correct_answer.url) {
+            $('<td>')
+              .addClass('answer')
+                .append($('<img>')
+                        .attr('alt', 'Correct')
+                        .attr('src', each.correct_answer.url)
+                        .attr('width', each.correct_answer.width)
+                        .attr('height', each.correct_answer.height))
+                  .appendTo(tr);
+        } else {
           $('<td>')
             .addClass('answer')
-              .text(each.your_answer)
+              .text(each.correct_answer)
                 .appendTo(tr);
         }
-        $('<td>')
-          .addClass('answer')
-          .text(each.correct_answer)
-            .appendTo(tr);
         if (each.timedout) {
           $('<td>')
             .addClass('timedout')
@@ -301,11 +325,20 @@ var Quiz = (function() {
                $('.points-total', container).text(v + response.points);
              }
            } else {
-             if (response.correct_answer) {
+             if (response.correct_answer.url) {
+               $('.correct-answer', container).html('');
+               $('.correct-answer', container)
+                 .append($('<img>')
+                         .attr('src', response.correct_answer.url)
+                         .attr('width', response.correct_answer.width)
+                         .attr('height', response.correct_answer.height)
+                         .attr('alt', 'Correct picture'));
+             } else if (response.correct_answer) {
                $('.correct-answer', container).text(response.correct_answer);
              }
              $('.wrong', container).show();//fadeIn(200);
            }
+
            if (response.didyouknow) {
              $('.didyouknow p', container).remove();
              $('.didyouknow', container)
@@ -399,7 +432,6 @@ var Quiz = (function() {
          $('.thumbnail-wrapper img', container).remove();
        }
        $('p.question span.question', container).remove();
-       //$('ul.question li', container).remove();
        $('.alternatives li', container).remove();
        $('.alternatives', container).css('opacity', 1.0);
        $('.pleasewait:visible', container).hide();
@@ -410,7 +442,8 @@ var Quiz = (function() {
            .html(question.text)
              .appendTo($('p.question', container));
        $('.alternatives li', container).remove();
-       $('.alternatives', container).css('opacity', 1.0);
+       $('.four-pictures', container).hide();
+       $('.alternatives', container).show().css('opacity', 1.0);
        $.each(question.alternatives, function(i, each) {
          $('<a href="#">')
            .html(each)
@@ -427,7 +460,33 @@ var Quiz = (function() {
            });
          }
        });
-       if (question.picture) {
+       if (question.pictures && question.pictures.length == 4) {
+         $('.alternatives', container).hide();
+         var c = $('.four-pictures', container).show();
+         _question_seconds = question.seconds;
+         _left_to_load = question.pictures.length;
+         $('td img', c).remove();
+//         $('.four-pictures', container).show();  // safer to have it visible when inserting
+         $.each(question.pictures, function(i, picture) {
+           var img = $('<img>')
+                       .attr('width', picture.width)
+                       .attr('height', picture.height)
+                       .attr('alt', 'Alternative ' + (i + 1))
+                       .ready(function() {
+                         Quiz.picture_alternative_loaded();
+                       }).attr('src', picture.url);
+           $('<a href="#"></a>')
+             .data('index', picture.index)
+             .click(function() {
+               Quiz.answer_picture($(this).data('index'));
+               return false;
+             })
+               .append(img)
+                 .appendTo($('td.four-pictures-' + (i + 1), c));
+         });
+         // the container is shown when all pictures are loaded
+
+       } else if (question.picture) {
          $('<img>')
            .attr('width', question.picture.width)
            .attr('height', question.picture.height)
@@ -462,6 +521,19 @@ var Quiz = (function() {
       } else {
         _load_next_question(category);
       }
+    },
+    picture_alternative_loaded: function() {
+      _left_to_load--;
+      if (!_left_to_load) {
+        $('.timer-outer:hidden', container).show();
+        setTimeout(function() {
+          Quiz.start_timer(_question_seconds);
+        }, 500);
+      }
+    },
+    answer_picture: function(index) {
+      Quiz.answer(index);
+      return false;
     },
     teardown: function() {
       // reset everything!

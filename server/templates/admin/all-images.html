@@ -1,0 +1,17 @@
+<html>
+<body>
+{% for url, (width, height) in pictures %}
+<p><img src="{{ url }}" width="{{ width }}" height="{{ height }}"></p>
+{% end %}
+
+      {% if len(all_pages) > 1 %}
+      <div class="pagination">
+        <ul>
+          <li class="prev{% if page - 1 <= 0 %} disabled{% end %}"><a href="?page={{ page - 1 }}&amp;{{ query_string }}">&larr; Previous</a></li>
+          <li class="next {% if page + 1 > all_pages[-1] %}disabled{% end %}"><a href="?page={{ page + 1 }}&amp;{{ query_string }}">Next &rarr;</a></li>
+        </ul>
+      </div>
+      {% end %}
+
+</body>
+</html>

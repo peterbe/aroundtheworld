@@ -173,29 +173,28 @@ var City = (function() {
          if (page == 'embassy') {
            _load_embassy(function() {
              $('.embassy .none', container).hide();
-             $('.embassy', container).show();
+             $('.embassy', container).hide().fadeIn(300);
              Utils.update_title();
            });
          } else if (page == 'intro') {
            _load_intro(function() {
              $('.intro .none', container).hide();
-             $('.intro', container).show();
+             $('.intro', container).hide().fadeIn(300);
              Utils.update_title();
            });
          } else if (page == 'jobs') {
            _load_jobs(function() {
-             $('.jobs', container).show();
+             $('.jobs', container).hide().fadeIn(300);
              Utils.update_title();
            });
          } else if (page == 'pictures') {
            _load_pictures(function() {
-             //$('.pictures .none', container).hide();
-             $('.pictures', container).show();
+             $('.pictures', container).hide().fadeIn(300);
              Utils.update_title();
            });
          } else if (page == 'messages') {
            _load_messages(function() {
-             $('.messages', container).show();
+             $('.messages', container).hide().fadeIn(300);
              Utils.update_title();
            });
          } else {
@@ -216,7 +215,6 @@ var City = (function() {
                });
              });
            } else {
-             $('.home', container).show();
              // introduction?
              if (response.has_introduction) {
                $('li.intro-link', container).show();
@@ -229,6 +227,7 @@ var City = (function() {
              } else {
                $('li.ambassadors-link', container).hide();
              }
+             $('.home', container).hide().fadeIn(300);
            }
            Utils.update_title();
          }

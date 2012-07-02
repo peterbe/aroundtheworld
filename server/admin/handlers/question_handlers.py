@@ -1,3 +1,4 @@
+import random
 import mimetypes
 import datetime
 import re
@@ -9,7 +10,7 @@ from pymongo.objectid import ObjectId
 import tornado.escape
 from tornado.web import HTTPError
 from tornado_utils.routes import route
-from .forms import QuestionForm, CategoryForm
+from .forms import QuestionForm, CategoryForm, QuestionPictureForm
 from .base import AuthenticatedBaseHandler, AmbassadorBaseHandler
 from .base import djangolike_request_dict
 from core.handlers import QuizzingHandler
@@ -548,11 +549,16 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
         data['iterations'] = int(self.get_argument('iterations', 10))
         data['effect'] = int(self.get_argument('effect', 12))
         data['function'] = self.get_argument('function', '')
-
         #data['can_delete'] = self.can_delete(data['question'])
+        data['form'] = QuestionPictureForm()
+
+        data['preview'] = None
+        if data['count'] == 4:
+            data['preview'] = list(self.db.QuestionPicture
+                    .find({'question': data['question']['_id']}))
+            random.shuffle(data['preview'])
         self.render('admin/question_pictures.html', **data)
 
-#    @tornado.web.asynchronous
     def post(self, _id):
         data = {}
         question = self.db.Question.find_one({'_id': ObjectId(_id)})
@@ -608,6 +614,51 @@ class QuestionPicturesAdminHandler(BaseQuestionAdminHandler):
         url += '&function=%s' % function
         self.redirect(url)
         #self.get(_id)
+
+@route('/admin/questions/(\w{24})/pictures/upload/',
+       name='admin_question_pictures_upload')
+class QuestionPicturesUploadAdminHandler(QuestionPicturesAdminHandler):
+
+    def post(self, _id):
+        data = {}
+        question = self.db.Question.find_one({'_id': ObjectId(_id)})
+        data['question'] = question
+        post_data = djangolike_request_dict(self.request.arguments)
+        if self.request.files:
+            post_data.update(djangolike_request_dict(self.request.files))
+        form = QuestionPictureForm(post_data)
+        if form.validate():
+            picture = self.db.QuestionPicture()
+            picture['question'] = question['_id']
+            picture['index'] = (self.db.QuestionPicture
+                                .find({'question': question['_id']})
+                                .count())
+            picture.save()
+            try:
+                ok = False
+                image = form.picture.data
+                if not any([image['filename'].lower().endswith(x)
+                            for x in ('.png', '.jpg', '.gif', '.jpeg')]):
+                    raise HTTPError(400)
+                assert isinstance(image['body'], str), type(image['body'])
+                type_, __ = mimetypes.guess_type(image['filename'])
+                with picture.fs.new_file('original') as f:
+                    f.content_type = type_
+                    f.write(image['body'])
+                ok = True
+            finally:
+                if not ok:
+                    picture.delete()
+                    self.push_flash_message(
+                      'Picture upload failed',
+                      text=('Check that the requirements for the picture '
+                            'is correct'),
+                      type_='error'
+                      )
+            self.redirect(self.reverse_url('admin_question_pictures', question['_id']))
+        else:
+            self.get(_id, form=form)
+
 
 
 class xxxBaseQuestionAdminHandler(AuthenticatedBaseHandler):

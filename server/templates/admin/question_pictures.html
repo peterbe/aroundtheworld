@@ -60,24 +60,42 @@ $(function() {
 
 
 {% block content %}
+  <p style="float:right"><a href="..">Back to question</a></p>
+
   <h2>{{ count }} pictures {% if filtering %}found{% end %}</h2>
   {% if filtering %}
   <p><a href=".">Reset filtering</a></p>
   {% end %}
-  <p><a href="..">Back to question</a></p>
 
-  {% if count > 1 %}
+  {% if count > 4 %}
   <div id="play">
     <p><a href="#play">Play!</a></p>
     <p style="display:none">Time left: <strong class="seconds"></strong></p>
   </div>
   {% end %}
 
+  <!--
   <form action="." method="post" class="form-inline">
       <button type="submit" name="delete" class="btn">Delete all but the first</button>
   </form>
+  -->
 
-  <form action="." method="post" class="">
+  {% if count <= 4 %}
+  <form action="upload/" method="post" class="form-horizontal" style="float:right;width:50%"
+  enctype="multipart/form-data">{% module xsrf_form_html() %}
+    <h3>Upload more pictures</h3>
+    {% include "_show_fieldset.html" %}
+
+    {% if preview %}
+    <div>
+      <h4>Preview</h4>
+      {% module FourPicturesTable(preview) %}
+    </div>
+    {% end %}
+  </form>
+  {% end %}
+
+  <form action="." method="post" class="" style="float:left;width:50%">
 
       <label>Iterations:</label>
       <input name="iterations" value="{{ iterations }}" style="width:35px">
@@ -92,6 +110,7 @@ $(function() {
       <br>
       <button type="submit" class="btn">{% if count == 1 %}Generate{% else %}Regenerate{% end %}</button>
   </form>
+  <br style="clear:both">
 
     <div class="pictures">
       {% for picture in pictures %}

@@ -27,7 +27,7 @@ var Miles = (function() {
           .appendTo(c);
       c.appendTo(tbody);
     });
-    $('.flightlog', container).hide().fadeIn(400);
+    $('.flightlog', container).hide().fadeIn(300);
   }
 
   return {

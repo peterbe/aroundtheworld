@@ -204,6 +204,24 @@ class QuestionForm(BaseForm):
         return success
 
 
+class QuestionPictureForm(BaseForm):
+    picture = FileField("Picture (JPG or PNG)",
+                        description="Optional picture to go with the question")
+
+
+    def validate(self, *args, **kwargs):
+        success = super(QuestionPictureForm, self).validate(*args, **kwargs)
+        if success:
+            if self.data['picture']:
+                ext = self.data['picture']['filename'].split('.')[-1].lower()
+                if ext not in ('png', 'jpeg', 'jpg'):
+                    (self._fields['picture']
+                     .errors.append("Picture not a JPG or PNG"))
+                    success = False
+
+        return success
+
+
 class Floatable(object):
 
     def __call__(self, form, field):

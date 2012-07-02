@@ -15,7 +15,7 @@ REDIS_PORT = 6379
 ADMIN_EMAILS = (
 )
 
-NOREPLY_EMAIL = 'noreply@aroundtheworld.peterbe.com'
+NOREPLY_EMAIL = 'noreply@aroundtheworldgame.com'
 
 SIGNATURE = PROJECT_TITLE
 
@@ -25,6 +25,9 @@ PINPOINT_NO_QUESTIONS = 10
 QUIZ_NO_QUESTIONS_TUTORIAL = 3
 
 COOKIE_SECRET = ""
+
+PICTURE_QUESTION_WIDTH_HEIGHT = (250, 250)
+FOUR_PICTURES_WIDTH_HEIGHT = (170, 170)
 
 try:
     from local_settings import *
