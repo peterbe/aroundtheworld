@@ -320,11 +320,19 @@ var Quiz = (function() {
            $('.didyouknow', container).hide();
            if (response.correct) {
              $('.correct', container).show();
+             $('a.clicked', container)
+               .parents('.chunky-alternative')
+                 .addClass('chunky-right')
+                   .removeClass('chunky-alternative');
              if (response.points) {
                var v = parseInt($('.points-total', container).text());
                $('.points-total', container).text(v + response.points);
              }
            } else {
+             $('a.clicked', container)
+               .parents('.chunky-alternative')
+                 .addClass('chunky-wrong')
+                   .removeClass('chunky-alternative');
              if (response.correct_answer.url) {
                $('.correct-answer', container).html('');
                $('.correct-answer', container)
@@ -444,16 +452,24 @@ var Quiz = (function() {
        $('.alternatives li', container).remove();
        $('.four-pictures', container).hide();
        $('.alternatives', container).show().css('opacity', 1.0);
+       var c = $('.alternatives', container);
+       c.css('opacity', 1.0);
+
        $.each(question.alternatives, function(i, each) {
          $('<a href="#">')
            .html(each)
            .addClass('alt' + i)
            .attr('title', 'Press ' + (i + 1) + ' to select this answer')
            .click(function () {
+             $(this).addClass('clicked');
              Quiz.answer(each);
              return false;
            }).appendTo($('<li>')
-                       .appendTo($('.alternatives', container)));
+                       .addClass('chunky')
+                       .appendTo($('<div>')
+                                  .addClass('chunky-alternative')
+                                  .appendTo(c)));
+
          if (typeof jwerty !== 'undefined') {
            jwerty.key('' + (i + 1), function() {
              $('.alt' + i + ':visible', container).click();
