@@ -353,6 +353,47 @@ class DeleteQuestionAdminHandler(BaseQuestionAdminHandler):
         self.redirect(self.reverse_url('admin_questions'))
 
 
+@route('/admin/questions/(\w{24})/change-points-value.json',
+       name='admin_question_change_points_value')
+class QuestionChangePointsValueAdminHandler(BaseQuestionAdminHandler):
+
+    def post(self, _id):
+        question = self.db.Question.find_one({'_id': ObjectId(_id)})
+        delta = int(self.get_argument('delta'))
+        question['points_value'] += delta
+        assert 0 < question['points_value'] <= 5, question['points_value']
+        question.save()
+        self.write({'points_value': question['points_value']})
+
+@route('/admin/questions/(\w{24})/alternatives.json',
+       name='admin_question_alternatives')
+class QuestionAlternativesAdminHandler(BaseQuestionAdminHandler):
+
+    def get(self, _id):
+        question = self.db.Question.find_one({'_id': ObjectId(_id)})
+        categories = []
+        for alternative in question['alternatives']:
+            if alternative == question['correct']:
+                categories.append('%s (CORRECT)' % alternative)
+            else:
+                categories.append(alternative)
+        categories.append('Timed out')
+        categories = defaultdict(int)
+        for answer in (self.db.SessionAnswer.collection
+                       .find({'question': question['_id']}, ('answer', 'timedout'))):
+            if answer['timedout']:
+                categories['Timed out'] += 1
+            elif answer['answer']:
+                categories[answer['answer']] += 1
+        count = sum(categories.values())
+        groups = []
+        data = []
+        for key, value in categories.items():
+            groups.append(key)
+            data.append(round(100.0 * value / count))
+        self.write({'categories': groups, 'data': data})
+
+
 class QuestionStatsMixin(object):
     def get_or_create_answer_stats(self, question):
         created = False
@@ -885,7 +926,7 @@ class QuestionRatingsHighscoreAdminHandler(AuthenticatedBaseHandler):
         self.trim_all_pages(data['all_pages'], data['page'])
 
         data['filtering'] = bool(filter_)
-        sort_key = self.get_argument('sort_key', 'average.all')
+        sort_key = self.get_argument('sort_key', 'count.all')
         sort_order = int(self.get_argument('sort_order', -1))
         data['sort_key'] = sort_key
         data['sort_order'] = sort_order

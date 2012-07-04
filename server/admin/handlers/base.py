@@ -361,10 +361,9 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         if model is self.db.Award:
             user = self.db.User.find_one({'_id': item['user']})
             return (
-                "<strong>%s earned %s award with %s coins reward!</strong> "
+                "%s earned the <strong>%s award</strong> with %s coins reward! "
                 % (user['username'], item['type'], item['reward'])
             )
-
 
         raise NotImplementedError(model._obj_class)
 

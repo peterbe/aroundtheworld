@@ -14,6 +14,10 @@ $(function() {
   }
 });
 </script>
+{% if answer_stats %}
+<script src="{{ static_url('lib/highcharts.min.js') }}"></script>
+<script src="{{ static_url('admin/question-alternatives.js') }}"></script>
+{% end %}
 {% end %}
 
 {% block content %}
@@ -120,6 +124,8 @@ $(function() {
       </tr>
     </tbody>
   </table>
+  <div id="question-alternatives">
+  </div>
   {% end %}
 
   {% if question.has_picture() %}

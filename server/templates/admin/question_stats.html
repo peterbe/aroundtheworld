@@ -6,6 +6,11 @@ tfoot th select[name="authors"] { width:100px; }
 </style>
 {% end %}
 
+{% block extrajs %}
+<script src="{{ static_url('admin/question-stats.js') }}"></script>
+{% end %}
+
+
 {% block content %}
   {% if not filtering %}
   {% if no_questions > count %}
@@ -71,8 +76,10 @@ tfoot th select[name="authors"] { width:100px; }
             <td>
               <a href="{{ reverse_url('admin_question', question['_id']) }}">{% module Truncate(question['text'], 60) %}</a>
             </td>
-            <td>
-              {{ question['points_value'] }}
+            <td data-id="{{ question['_id'] }}">
+              <span>{{ question['points_value'] }}</span>
+              <a href="#" class="increase-points-value" title="Increase the PV by 1">+</a>
+              <a href="#" class="decrease-points-value" title="Decrease the PV by 1">-</a>
             </td>
             <td>
             {% if question.has_picture() %}
