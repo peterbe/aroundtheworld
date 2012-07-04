@@ -3233,7 +3233,7 @@ class PageNotFoundHandler(BaseHandler):
 @route('/admin/all-images/?')
 class AllImagesHandler(BaseHandler, PictureThumbnailMixin):
 
-    LIMIT = 25
+    LIMIT = 100
 
     @tornado.web.addslash
     def get(self):
