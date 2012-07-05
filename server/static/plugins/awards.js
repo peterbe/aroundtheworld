@@ -82,7 +82,7 @@ var Awards = (function() {
        var _has_preloaded = false;
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
-         $('.index .award', container).remove();
+         $('.index-outer .award', container).remove();
          loaded = {};
          $.each(response.awards, function(i, award) {
            if (!award.read && !_has_preloaded) {
