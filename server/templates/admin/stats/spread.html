@@ -1,0 +1,20 @@
+{% extends "../base.html" %}
+
+{% block content %}
+      <table class="condensed-table table">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for count, location in locations %}
+          <tr>
+            <td><a href="{{ reverse_url('admin_location', location['_id']) }}">{{ location }}</a></td>
+            <td>{{ count }}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+{% end %}

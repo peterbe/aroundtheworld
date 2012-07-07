@@ -533,14 +533,6 @@ class JobsAdminHandler(SuperuserBaseHandler):
         self.render('admin/errors.html', **data)
 
 
-@route('/admin/stats/hits/', name='admin_stats_hits')
-class StatsHitsAdminHandler(SuperuserBaseHandler):
-
-    def get(self):
-        data = {}
-        data['hits'] = self.redis.zrevrange('hits', 0, 100, withscores=True)
-        self.render('admin/stats/hits.html', **data)
-
 
 @route('/admin/awards/?', name='admin_awards')
 class AwardsAdminHandler(AuthenticatedBaseHandler):
