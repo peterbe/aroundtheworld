@@ -88,8 +88,6 @@ class BaseHandler(tornado.web.RequestHandler):
       'login': ['css/plugins/login.css',
                 'plugins/login.js'],
       'quizzing': ['css/plugins/quizzing.css',
-                   #'lib/jwerty.min.js',
-                   #'lib/raty/jquery.raty.min.js',
                    'plugins/quizzing.js'],
       'picturedetective': ['css/plugins/picturedetective.css',
                            'plugins/picturedetective.js'],
@@ -117,7 +115,6 @@ class BaseHandler(tornado.web.RequestHandler):
                          'plugins/questionwriter.js'],
       'awards': ['css/plugins/awards.css',
                  '//fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Tangerine|Homemade+Apple|UnifrakturMaguntia',
-                 #'lib/jwerty.min.js',
                  'plugins/awards.js'],
 
     }

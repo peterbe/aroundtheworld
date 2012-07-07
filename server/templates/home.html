@@ -13,7 +13,7 @@
 {% include "_divs.html" %}
 {% include "_js_templates.html" %}
 {% module ScriptTags('lib/soundplayer.js', 'plugins.js', 'latlngcontrol.js', 'map.js', 'flightzoom.js', 'main.js') %}
-{% module ScriptTags('lib/jwerty.min.js', 'lib/raty/jquery.raty.min.js', 'lib/bootstrap-tab.min.js', 'lib/bootstrap-carousel.min.js', 'lib/bootstrap-tab.min.js', async=True) %}
+{% include "_async_js_templates.html" %}
 <script>window.sounds = new Soundplayer(SOUNDS);</script>
 </body>
 </html>

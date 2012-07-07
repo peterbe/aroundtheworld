@@ -55,14 +55,14 @@ $(function() {
   }
 
   if ($('.next a').size()) {
-    jwerty.key('→', function () {
+    Mousetrap.bind('right', function() {
       // xxx why doesn't $('.next a').click() work?!
       window.location.href = $('.next a').attr('href');
     });
   }
 
   if ($('.prev a').size()) {
-    jwerty.key('←', function () {
+    Mousetrap.bind('left', function() {
       window.location.href = $('.prev a').attr('href');
     });
   }

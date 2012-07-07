@@ -120,8 +120,9 @@ var Awards = (function() {
           }
         });
 
-        if (typeof jwerty !== 'undefined') {
-          jwerty.key('esc', function() {
+        if (typeof Mousetrap !== 'undefined') {
+          // not necessarily loaded in mobile
+          Mousetrap.bind('esc', function() {
             $('.return:visible', container).click();
           });
         }
@@ -130,7 +131,9 @@ var Awards = (function() {
       });
     },
     teardown: function() {
-      // XXX there is unfortunately no way to unbind the ESC key
+      if (typeof Mousetrap !== 'undefined') {
+        Mousetrap.reset();
+      }
     }
   }
 })();

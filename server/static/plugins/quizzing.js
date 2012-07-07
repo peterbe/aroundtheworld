@@ -235,8 +235,8 @@ var Quiz = (function() {
     });
 
     // set up the necessary keyboard shortcuts
-    if (typeof jwerty !== 'undefined') {
-      jwerty.key('n', function() {
+    if (typeof Mousetrap !== 'undefined') {
+      Mousetrap.bind('n', function() {
         $('a.next-question:visible', container).click();
       });
     }
@@ -249,29 +249,26 @@ var Quiz = (function() {
       return src.split('/')[src.split('/').length - 1];
     }
 
-    // sometimes raty isn't loaded
-    if (typeof raty !== 'undefined') {
-      $('.rate', container).raty({
-         path: _dirname($('.face-a', c).attr('src')),
-        iconRange: [
-                    { range: 2, on: _bname('face-a'), off: _bname('face-a-off')},
-                    { range: 3, on: _bname('face-b'), off: _bname('face-b-off')},
-                    { range: 4, on: _bname('face-c'), off: _bname('face-c-off')},
-                    { range: 5, on: _bname('face-d'), off: _bname('face-d-off')}
-                   ],
-        mouseover : function(score, evt) {
-          if (!_has_mousedover_raty) {
-            Quiz.wait_longer(10);
-            _has_mousedover_raty = true;
-          }
-        },
-        click : function(score, evt) {
-          $.post(RATE_URL, {score: score});
-          $('a.next-question:visible', container).click();
-          $('.rate:visible', container).raty('reload');
+    $('.rate', container).raty({
+       path: _dirname($('.face-a', c).attr('src')),
+      iconRange: [
+                  { range: 2, on: _bname('face-a'), off: _bname('face-a-off')},
+                  { range: 3, on: _bname('face-b'), off: _bname('face-b-off')},
+                  { range: 4, on: _bname('face-c'), off: _bname('face-c-off')},
+                  { range: 5, on: _bname('face-d'), off: _bname('face-d-off')}
+                 ],
+      mouseover : function(score, evt) {
+        if (!_has_mousedover_raty) {
+          Quiz.wait_longer(10);
+          _has_mousedover_raty = true;
         }
-      });
-    }
+      },
+      click : function(score, evt) {
+        $.post(RATE_URL, {score: score});
+        $('a.next-question:visible', container).click();
+        $('.rate:visible', container).raty('reload');
+      }
+    });
 
     $('.rating-images', container).hide();
 
@@ -470,8 +467,8 @@ var Quiz = (function() {
                                   .addClass('chunky-alternative')
                                   .appendTo(c)));
 
-         if (typeof jwerty !== 'undefined') {
-           jwerty.key('' + (i + 1), function() {
+         if (typeof Mousetrap !== 'undefined') {
+           Mousetrap.bind('' + (i + 1), function() {
              $('.alt' + i + ':visible', container).click();
            });
          }
@@ -561,6 +558,9 @@ var Quiz = (function() {
       $('.thumbnail-wrapper img', container).remove();
       $('.results', container).hide();
       $('.award', container).hide();
+      if (typeof Mousetrap !== 'undefined') {
+        Mousetrap.reset();
+      }
       $.post(URL, {teardown: true});
     }
   }
