@@ -6,17 +6,37 @@
     Settings saved!
   </p>
 
-  <form class="form-horizontal">
-      <div class="control-group">
-        <label class="control-label" for="id_disable_sound">Disable sound?</label>
-        <div class="controls">
-          <label class="checkbox">
-            <input type="checkbox" id="id_disable_sound" name="disable_sound" value="yes">
-            <!--Option one is this and that—be sure to include why it's great-->
-          </label>
-        </div>
+<form class="form-horizontal">
+  <fieldset>
+
+    <div class="control-group">
+      <label class="control-label" for="id-username">Username:</label>
+      <div class="controls">
+        <input type="text" name="username" class="input-xlarge" id="id-username">
+        <p class="help-text username-error-text" style="display:none"></p>
       </div>
-  </form>
+    </div>
+
+    <div class="control-group">
+      <label class="control-label" for="id-disable-sound">Disable sound:</label>
+      <div class="controls">
+        <label class="checkbox">
+          <input type="checkbox" name="disable_sound" id="id-disable-sound" value="yes">
+          <!--Option one is this and that—be sure to include why it's great-->
+        </label>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <div class="controls">
+      <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </div>
+
+
+  </fieldset>
+</form>
+
 
   <p class="exit">
   Ok. <a href="#city" class="overlay-changer">Go back to the city</a>

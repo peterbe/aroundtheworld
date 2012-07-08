@@ -709,6 +709,31 @@ class HandlersTestCase(BaseHTTPTestCase):
         r = self.get_struct(url)
         self.assertEqual(r['disable_sound'], False)
 
+    def test_settings_check_username(self):
+        user = self._login()
+        url = self.reverse_url('settings')
+        r = self.get_struct(url, {'check-username': 'x' * 51})
+        self.assertEqual(r['wrong'], 'Too long')
+
+        r = self.get_struct(url, {'check-username': 'x y x'})
+        self.assertEqual(r['wrong'], "Can't contain spaces")
+
+        other = self.db.User()
+        other['username'] = u"Tom"
+        other.save()
+
+        r = self.get_struct(url, {'check-username': 'tom '})
+        self.assertEqual(r['wrong'], "Taken")
+
+        r = self.get_struct(url, {'check-username': 'Something'})
+        self.assertEqual(r['wrong'], None)
+
+        r = self.get_struct(url, {'check-username': user['username']})
+        self.assertEqual(r['wrong'], None)
+
+        r = self.get_struct(url, {'check-username': user['username'].upper()})
+        self.assertEqual(r['wrong'], None)
+
     def test_miles(self):
         user = self._login()
         url = self.reverse_url('miles')

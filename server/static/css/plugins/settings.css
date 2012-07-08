@@ -1,9 +1,14 @@
 #settings .saved-notification {
-  float:right;
-  margin-right:200px;
-  font-weight: bold;
+    float:right;
+    margin-right:200px;
+    font-weight: bold;
 }
 
 #settings .setting {
-  margin-left:25px;
+    margin-left:25px;
+}
+
+#settings .username-error-text {
+    color: red;
+    font-weight: bold;
 }

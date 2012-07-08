@@ -1083,14 +1083,37 @@ class SettingsHandler(AuthenticatedBaseHandler):
 
     def get(self):
         user = self.get_current_user()
+
+        if self.get_argument('check-username', None):
+            username = self.get_argument('check-username').strip()
+            wrong = self._check_username(username, user)
+            self.write({'wrong': wrong})
+            return
+
         user_settings = self.get_user_settings(user)
         assert user_settings
         data = {}
         data['disable_sound'] = user_settings['disable_sound']
+        data['username'] = user['username']
         self.write(data)
+
+    def _check_username(self, username, user):
+        if re.findall('[^\w\.-_]', username):
+            return "Can't contain spaces"
+        if len(username) > 50:
+            return "Too long"
+        search = {'username': re.compile(re.escape(username), re.I),
+                  '_id': {'$ne': user['_id']}}
+        if self.db.User.find_one(search):
+            return "Taken"
 
     def post(self):
         user = self.get_current_user()
+        username = self.get_argument('username', None)
+        if username:
+            user['username'] = username
+            user.save()
+
         user_settings = self.get_user_settings(user)
         disable_sound = bool(self.get_argument('disable_sound', False))
         user_settings['disable_sound'] = disable_sound
