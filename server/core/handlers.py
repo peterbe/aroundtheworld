@@ -116,9 +116,8 @@ class BaseHandler(tornado.web.RequestHandler):
       'awards': ['css/plugins/awards.css',
                  '//fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Tangerine|Homemade+Apple|UnifrakturMaguntia',
                  'plugins/awards.js'],
-
+      'about': [],
     }
-
 
 #    def write(self, *a, **k):
 #        from time import sleep
@@ -3206,7 +3205,9 @@ class AwardsHandler(BaseHandler):
     def _get_award(self, _id, user):
         try:
             award = self.db.Award.find_one({'_id': ObjectId(_id)})
+            assert award
         except:
+            logging.error("Unable to find reward %r" % _id, exc_info=True)
             return
         if award['user'] != user['_id']:
             return
