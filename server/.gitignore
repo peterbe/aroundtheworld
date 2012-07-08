@@ -3,3 +3,4 @@
 static/sounds/*.wav
 static/sounds/*.m4a
 cdn_prefix.conf
+processed-users.pickle

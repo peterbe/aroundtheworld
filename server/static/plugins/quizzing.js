@@ -184,8 +184,17 @@ var Quiz = (function() {
         } else {
           $('<td>')
             .addClass('answer')
-              .text(each.correct_answer)
+              .append($('<span>').text(each.correct_answer))
                 .appendTo(tr);
+        }
+        if (each.first_time_correct) {
+          $('<td>')
+            .append($('<span class="label label-success">First time correct!</span>'))
+              .appendTo(tr);
+        } else {
+          $('<td>')
+            .html('&nbsp;')
+              .appendTo(tr);
         }
         if (each.timedout) {
           $('<td>')
@@ -233,22 +242,19 @@ var Quiz = (function() {
       }
       return false;
     });
-
     // set up the necessary keyboard shortcuts
     if (typeof Mousetrap !== 'undefined') {
       Mousetrap.bind('n', function() {
         $('a.next-question:visible', container).click();
       });
     }
-
     // no need to preload the images because they're already in the DOM
-    var c = $('.rating-images', c);
+    var c = $('.rating-images', container);
 
     function _bname(cls) {
       var src = $('.' + cls, c).attr('src');
       return src.split('/')[src.split('/').length - 1];
     }
-
     $('.rate', container).raty({
        path: _dirname($('.face-a', c).attr('src')),
       iconRange: [
@@ -317,6 +323,11 @@ var Quiz = (function() {
            $('.didyouknow', container).hide();
            if (response.correct) {
              $('.correct', container).show();
+             if (response.first_time_correct) {
+               $('.correct .first-time', container).hide().fadeIn(300);
+             } else {
+               $('.correct .first-time', container).hide();
+             }
              $('a.clicked', container)
                .parents('.chunky-alternative')
                  .addClass('chunky-right')

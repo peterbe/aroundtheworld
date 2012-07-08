@@ -16,6 +16,9 @@
     border-radius:4px;
 
 }
+#quizzing .question-attention .first-time {
+    float:right;
+}
 #quizzing .short-summary {
     text-align:center;
     font-size:130%;

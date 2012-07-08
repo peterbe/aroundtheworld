@@ -27,7 +27,7 @@
 			return this.each(function() {
 				var self	= this,
 					$this	= $(self).empty();
-	
+
 				self.opt = $.extend(true, {}, $.fn.raty.defaults, settings);
 
 				$this.data('settings', self.opt);
@@ -43,7 +43,7 @@
 				}
 
 				if (self.opt.score) {
-					self.opt.score = methods.between(self.opt.score, 0, self.opt.number);					
+					self.opt.score = methods.between(self.opt.score, 0, self.opt.number);
 				}
 
 				for (var i = 1; i <= self.opt.number; i++) {
@@ -67,7 +67,7 @@
 				}
 
 				if (self.opt.iconRange) {
-					methods.fill.call(self, self.opt.score);	
+					methods.fill.call(self, self.opt.score);
 				}
 
 				methods.setTarget.call(self, self.opt.score, self.opt.targetKeep);
@@ -182,7 +182,7 @@
 			});
 		}, cancel: function(isClick) {
 			return $(this).each(function() {
-				var self	= this, 
+				var self	= this,
 					$this	= $(self);
 
 				if ($this.data('readonly') === true) {
@@ -420,7 +420,7 @@
 			return methods.init.apply(this, arguments);
 		} else {
 			$.error('Method ' + method + ' does not exist!');
-		} 
+		}
 	};
 
 	$.fn.raty.defaults = {

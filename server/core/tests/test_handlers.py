@@ -86,7 +86,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert self.db.UserSettings.find_one({'user': user['_id']})
         return user
 
-    def _create_question(self, category, location):
+    def _create_question(self, category, location, published=False):
         q = self.db.Question()
         q['text'] = (u'(%s) What number question is this?' %
                      (self.db.Question.find().count() + 1,))
@@ -98,6 +98,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         if not isinstance(location, ObjectId):
             location = location['_id']
         q['location'] = location
+        q['published'] = published
         q['seconds'] = 10
         q.save()
         return q
@@ -233,6 +234,104 @@ class HandlersTestCase(BaseHTTPTestCase):
         })
         self.assertTrue(r['correct'])
 
+    def test_quizzing_first_times(self):
+        user = self._login(location=self.newyork)
+        assert not self.db.QuestionSession.find().count()
+        url = self.reverse_url('quizzing')
+
+        def _get():
+            return self.get_struct(url, {'category': self.tour_guide['name']})
+
+        for i in range(QuizzingHandler.NO_QUESTIONS):
+            self._create_question(self.tour_guide, self.newyork, published=True)
+        assert (QuizzingHandler.NO_QUESTIONS ==
+                self.db.Question.find({'category': self.tour_guide['_id'],
+                                       'location': self.newyork['_id']})
+                                .count())
+        r = _get()
+        assert 'error' not in r
+        assert r['question']
+        assert r['no_questions']
+        q = r['question']
+
+        question_right = self.db.Question.find_one({'text': r['question']['text']})
+
+        qs, = self.db.QuestionSession.find()  # assert there is only 1
+        r = self.post_struct(url, {
+          'answer': 'one',
+          'time': 5.0
+        })
+        self.assertTrue(r['correct'])
+        assert r['points']
+        r = _get()
+        question_wrong = self.db.Question.find_one({'text': r['question']['text']})
+        assert question_wrong
+        r = self.post_struct(url, {
+          'answer': 'two',
+          'time': 5.0
+        })
+        self.assertTrue(not r['correct'])
+        assert not r['points']
+        while not _get()['no_questions']['last']:
+            self.post_struct(url, {
+              'answer': 'one',
+              'time': 5.0
+            })
+        # one last time for the last question
+        r = self.post_struct(url, {
+          'answer': 'one',
+          'time': 5.0
+        })
+
+        r = self.post_struct(url, {'finish': True})
+        assert r['results']
+        qs, = self.db.QuestionSession.find()  # assert there is only 1
+        assert qs['finish_date']
+        sa1 = self.db.SessionAnswer.find_one({'question': question_right['_id']})
+        self.assertTrue(sa1['first_time'])
+        self.assertTrue(sa1['first_time_correct'])
+
+        sa2 = self.db.SessionAnswer.find_one({'question': question_wrong['_id']})
+        self.assertTrue(sa2['first_time'])
+        self.assertTrue(not sa2['first_time_correct'])
+        first_times = [x['first_time'] for x in r['summary']]
+        self.assertTrue(False not in first_times)
+
+        first_times_correct = [x['first_time_correct'] for x in r['summary']]
+        self.assertTrue(False in first_times_correct)
+
+        # now let's start over and get everything right and
+        # for the question you got wrong the last time, you now get double points
+        while not _get()['no_questions']['last']:
+            self.post_struct(url, {
+              'answer': 'one',
+              'time': 5.0
+            })
+        self.post_struct(url, {
+              'answer': 'one',
+              'time': 5.0
+        })
+        r = self.post_struct(url, {'finish': True})
+        assert r['results']
+        assert r['summary']
+        for s in self.db.QuestionSession.find():
+            for a in self.db.SessionAnswer.find({'session':s['_id']}):
+                assert a['first_time'] is not None
+                assert a['first_time_correct'] is not None
+
+        corrects = [x['correct'] for x in r['summary']]
+        assert None not in corrects
+        first_times = [x['first_time'] for x in r['summary']]
+        self.assertTrue(True not in first_times)
+        first_times_correct = [x['first_time_correct'] for x in r['summary']]
+        self.assertTrue(True in first_times_correct)
+        self.assertTrue(False in first_times_correct)
+        points = [x['points'] for x in r['summary']]
+        # expect that one of them is double the others
+        most = sorted(points, reverse=True)[0]
+        average = sum(points) / len(points)
+        self.assertTrue(most > average)
+
     def test_quizzing_finish(self):
         assert not self.db.QuestionSession.find().count()
         url = self.reverse_url('quizzing')
@@ -261,9 +360,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert r['results']
         self.assertTrue(r['results']['coins'])
         self.assertTrue(r['results']['total_points'])
-
-
-
 
     def test_flying(self):
         url = self.reverse_url('fly')

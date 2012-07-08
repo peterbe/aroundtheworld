@@ -917,6 +917,8 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                            or None),
                   'points': answer['points'],
                   'timedout': answer['timedout'],
+                  'first_time': answer['first_time'],
+                  'first_time_correct': answer['first_time_correct'],
                 })
             data['summary'] = summary
             tutorial = self.db.Category.find_one({'name': u'Tutorial'})
@@ -944,7 +946,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             if percentage >= 100.0 and tutorial['_id'] != session['category']:
                 category = self.db.Category.find_one({'_id': session['category']})
                 if not self.has_job_award(user, location, category):
-                    data = {
+                    data_ = {
                       'perfect': percentage == 100.0,
                       'percentage': percentage,
                       'coins': coins,
@@ -955,7 +957,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                       location,
                       category,
                       reward,
-                      data
+                      data_
                     )
                     user_settings['coins_total'] += reward
                     user_settings.save()
@@ -966,13 +968,11 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                     }
             # XXX should make it so that an award is given for completing the
             # tutorial (when you can afford to fly somewhere)
-
             data['results'] = {
               'total_points': total_points,
               'coins': coins,
               'percentage_right': percentage
             }
-
         else:
             question = (self.db.Question
                         .find_one({'_id': answer_obj['question']}))
@@ -1008,6 +1008,16 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['points'] = (data['time_bonus'] *
                               data['points_value'] *
                               data['correct'])
+            # if you got it right and have never got it right before, then
+            # double the points
+            if self._first_time(user, question, session):
+                answer_obj['first_time'] = True
+
+            if data['correct']:
+                if self._first_time_correct(user, question, session):
+                    data['points'] *= 2
+                    answer_obj['first_time_correct'] = True
+                    data['first_time_correct'] = True
             data['points'] = round(data['points'], 1)
             assert isinstance(data['points_value'], int)
 
@@ -1032,7 +1042,34 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
         self.write(data)
 
+    def _first_time(self, user, question, session):
+        for s in (self.db.QuestionSession.collection
+                  .find({'user': user['_id'],
+                         'location': session['location'],
+                         'category': session['category'],
+                         'finish_date': {'$ne': None}},
+                         ('_id',))):
+            if (self.db.SessionAnswer
+                .find({'session': s['_id'],
+                       'question': question['_id']})
+                .count()):
+                return False
+        return True
 
+    def _first_time_correct(self, user, question, session):
+        for s in (self.db.QuestionSession.collection
+                  .find({'user': user['_id'],
+                         'location': session['location'],
+                         'category': session['category'],
+                         'finish_date': {'$ne': None}},
+                         ('_id',))):
+            if (self.db.SessionAnswer
+                .find({'session': s['_id'],
+                       'question': question['_id'],
+                       'first_time_correct': True,})
+                .count()):
+                return False
+        return True
 
 @route('/questionrating.json$', name='question_rating')
 class QuestionRatingHandler(AuthenticatedBaseHandler):
@@ -2258,7 +2295,7 @@ class FlyHandler(AirportHandler):
         if current_location['code'] == self.NOMANSLAND['code']:
             # you have left the tutorial
             if not self.has_tutorial_award(user):
-                data = {
+                data_ = {
                   #'perfect': percentage == 100.0,
                   #'percentage': percentage,
                   #'coins': coins,
@@ -2267,7 +2304,7 @@ class FlyHandler(AirportHandler):
                 award = self.create_tutorial_award(
                   user,
                   reward,
-                  data
+                  data_
                 )
                 user_settings['coins_total'] += reward
                 user_settings.save()
@@ -2275,27 +2312,30 @@ class FlyHandler(AirportHandler):
             if miles_total_after > 10000 and miles_total_before < 10000:
                 if not self.has_10k_award(user):
                     reward = 75
-                    data = {
+                    data_ = {
                       'from': unicode(current_location),
                       'to': unicode(location)
                     }
-                    self.create_10k_award(user, current_location, reward, data)
+                    self.create_10k_award(user, current_location,
+                                          reward, data_)
             elif miles_total_after > 50000 and miles_total_before < 50000:
                 if not self.has_50k_award(user):
                     reward = 150
-                    data = {
+                    data_ = {
                       'from': unicode(current_location),
                       'to': unicode(location)
                     }
-                    self.create_50k_award(user, current_location, reward, data)
+                    self.create_50k_award(user, current_location,
+                                          reward, data_)
             elif miles_total_after > 100000 and miles_total_before < 100000:
                 if not self.has_100k_award(user):
                     reward = 500
-                    data = {
+                    data_ = {
                       'from': unicode(current_location),
                       'to': unicode(location)
                     }
-                    self.create_100k_award(user, current_location, reward, data)
+                    self.create_100k_award(user, current_location,
+                                           reward, data_)
 ################################################################################
 
         data = {

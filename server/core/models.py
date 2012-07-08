@@ -480,12 +480,19 @@ class SessionAnswer(BaseDocument):
       'time': float,
       'points': float,
       'timedout': bool,
+      'first_time': bool,
+      'first_time_correct': bool,
     }
 
     required_fields = [
       'question',
       'session',
     ]
+
+    default_values = {
+      'first_time': False,
+      'first_time_correct': False,
+    }
 
 
 @register
