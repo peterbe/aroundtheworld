@@ -247,7 +247,6 @@ var QuestionWriter = (function() {
           $('.ratings', c).show();
           var tbody = $('.ratings tbody');
           $('tr', tbody).remove();
-          L(response.ratings);
           $('<tr>')
             .append($('<td>').text('Average:').addClass('row-label'))
               .append($('<td>').text(response.ratings.average.all).addClass('all-average'))

@@ -207,6 +207,8 @@ class QuestionsInProgressAdminHandler(AuthenticatedBaseHandler):
                         continue
                     if cat not in _categories:
                         _categories[cat] = self.db.Category.find_one({'_id': cat})
+                    if _categories[cat]['name'] == 'Picture Detective':
+                        continue
                     question_statuses[location].append(dict(
                       category=_categories[cat]['name'],
                       count=count,

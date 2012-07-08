@@ -304,7 +304,7 @@ var ErrorCatcher = (function() {
        if (line == 0 && (
            message == "TypeError: 'null' is not an object" ||
            message == "TypeError: 'undefined' is not an object")) {
-         L('Swallowing error', message);
+         console.warn('Swallowing error', message);
          // some strange Safari errors I'm getting that always gets in the way
          return;
        }

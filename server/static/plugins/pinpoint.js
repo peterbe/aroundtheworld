@@ -148,7 +148,6 @@ var Pinpoint = (function() {
      place_marker: function (latlng, time_taken) {
        Pinpoint.stop_timer(false);
        if (!countdown) {
-         //L('sorry too late!');
          Pinpoint.prepare_next(3);
          return;
        }
@@ -243,9 +242,6 @@ var Pinpoint = (function() {
                                          response.center.ne.lng);
          var bounds = new google.maps.LatLngBounds(sw, ne);
          map.fitBounds(bounds);
-         /*if (map.getZoom() >
-         L("AFTER", map.getZoom());*/
-
          /*
          new google.maps.Rectangle({
             bounds: new google.maps.LatLngBounds(sw, ne),

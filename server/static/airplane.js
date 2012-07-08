@@ -14,7 +14,6 @@ function AirplaneMarker(map, image_radius) {
 AirplaneMarker.prototype = new google.maps.OverlayView();
 
 AirplaneMarker.prototype.scale = function(p) {
-//  L('scale', p);
   this.div_jelement.css({
     "-moz-transform" : 'scale(' + p + ') rotate(' + this.rotation_angle + 'deg)',
     "-webkit-transform" : 'scale(' + p + ') rotate(' + this.rotation_angle + 'deg)'
@@ -25,9 +24,7 @@ AirplaneMarker.prototype.draw = function() {};
 AirplaneMarker.prototype.init = function(map) {
   this.setMap(map);
 
-  L('draw()!!');
   if (!this.div_jelement) {
-    //L('creating this.div_jelement');
     var me = this;
 
     // Check if the div has been created.
@@ -61,7 +58,6 @@ AirplaneMarker.prototype.init = function(map) {
 };
 
 AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
-  L('fly()!');
   if (!this.div_jelement) {
     this.draw();
   }
@@ -74,7 +70,6 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   var point2 = this.getProjection().fromLatLngToDivPixel(this.destination);
 
   this.rotation_angle = calculate_angle(point, point2);
-  //L('ROTATION_ANGLE', this.rotation_angle);
   this.scale(MIN_SCALING);
 
   var d = distance(point.x, point.y, point2.x, point2.y);
@@ -86,10 +81,6 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   this._place_point(point2);
   var d_left = point.x - point2.x;// + this.left_radius;
   var d_top = point.y - point2.y;// + this.top_radius;
-  //L('d_left', d_left);
-  //L('point.x', point.x);
-  //L('point2.x', point2.x);
-  //L('image_radius', this.image_radius);
 
   var animation = {};
 
@@ -164,7 +155,6 @@ AirplaneMarker.prototype._place_point = function(p) {
 };
 
 AirplaneMarker.prototype.remove = function() {
-  L('remove()');
   // Check if the overlay was on the map and needs to be removed.
   if (this.div_) {
     this.div_.parentNode.removeChild(this.div_);
