@@ -2152,7 +2152,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler):
 
-    BASE_PRICE = 50  # coins
+    BASE_PRICE = 100  # coins
 
     def get(self):
         user = self.get_current_user()
@@ -2205,7 +2205,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         self.write(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .04))
+        return self.BASE_PRICE + int(round(miles * .05))
 
 
 @route('/fly.json$', name='fly')
