@@ -62,10 +62,18 @@ var Settings = (function() {
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          _set_form_data(response);
+         if (STATE.user.anonymous) {
+           $('.still-anonymous', container).hide().fadeIn(400);
+         } else {
+           $('.still-anonymous', container).hide();
+         }
        });
 
        Utils.update_title();
-     }
+     },
+    teardown: function() {
+      $('.still-anonymous', container).hide();
+    }
   };
 })();
 
@@ -93,5 +101,5 @@ Plugins.start('settings', function() {
 });
 
 Plugins.stop('settings', function() {
-  //
+  Settings.teardown();
 });
