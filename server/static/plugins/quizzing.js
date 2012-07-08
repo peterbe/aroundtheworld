@@ -242,12 +242,7 @@ var Quiz = (function() {
       }
       return false;
     });
-    // set up the necessary keyboard shortcuts
-    if (typeof Mousetrap !== 'undefined') {
-      Mousetrap.bind('n', function() {
-        $('a.next-question:visible', container).click();
-      });
-    }
+
     // no need to preload the images because they're already in the DOM
     var c = $('.rating-images', container);
 
@@ -286,6 +281,15 @@ var Quiz = (function() {
          setup_once();
          _once = true;
        }
+
+       // set up the necessary keyboard shortcuts
+       if (typeof Mousetrap !== 'undefined') {
+         Mousetrap.reset();
+         Mousetrap.bind('n', function() {
+           $('a.next-question:visible', container).click();
+         });
+       }
+
        _has_finished = false;
        Utils.update_title();
        $('.question-attention', container).hide();
