@@ -58,3 +58,11 @@ class FourPicturesTable(tornado.web.UIModule):
           'height': settings.FOUR_PICTURES_WIDTH_HEIGHT[1],
         }
         return self.render_string("admin/_four-pictures.html", **data)
+
+
+class TimeAgo(tornado.web.UIModule):
+
+    def render(self, date):
+        return ('<abbr class="timeago" title="%s">%s</abbr>' %
+              (date.isoformat(), date.strftime('%d %b %Y %H:%M'))
+        )

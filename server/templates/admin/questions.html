@@ -127,7 +127,7 @@ tfoot th select[name="published"] { width:100px; }
                 &nbsp;
               {% end %}
             </td>
-            <td>{{ question['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(question['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

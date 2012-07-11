@@ -4,6 +4,8 @@ function L() {
 }
 
 $(function() {
+  $("abbr.timeago").timeago();
+
   $('.dropdown-toggle').dropdown();
 
   $('.alert a.close').click(function() {

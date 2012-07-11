@@ -29,7 +29,7 @@
     <dt>Location:</dt>
     <dd>{{ location }}</dd>
     <dt>Date:</dt>
-    <dd>{{ feedback['add_date'].strftime('%d %b %Y %H:%M') }}</dd>
+    <dd>{% module TimeAgo(feedback['add_date']) %}</dd>
   </dl>
 
   {% for i, (reply, reply_user) in enumerate(replies, 1) %}
@@ -38,7 +38,7 @@
     <dt>Comment:</dt>
     <dd>{% module ShowComment(reply['comment']) %}</dd>
     <dt>When:</dt>
-    <dd>{{ reply['add_date'].strftime('%d %b %Y %H:%M') }}</dd>
+    <dd>{% module TimeAgo(reply['add_date']) %}</dd>
     <dt>By:</dt>
     <dd>{{ reply_user }}</dd>
   </dl>

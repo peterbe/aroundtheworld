@@ -27,7 +27,7 @@ tfoot th select[name="countries"] { width:150px; }
           </tr>
         </thead>
         <tbody>
-          {% for date, description, location, event_type, date_diff in events %}
+          {% for date, description, location, event_type in events %}
           <tr>
             <td>
               {% if event_type == 'flight' %}
@@ -49,8 +49,7 @@ tfoot th select[name="countries"] { width:150px; }
               {{ description }}
             </td>
             <td>{{ location }}</td>
-            <td>{{ date.strftime('%d %b %Y %H:%M') }}</td>
-            <td>{{ date_diff }}</td>
+            <td>{% module TimeAgo(date) %}</td>
           </tr>
           {% end %}
         </tbody>

@@ -66,7 +66,7 @@ tfoot th select[name="authors"] { width:100px; }
                   {{ user['email'] }}
                 {% end %}</a>
             </td>
-            <td>{{ rating['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(rating['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

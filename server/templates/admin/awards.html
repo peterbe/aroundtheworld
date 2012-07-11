@@ -89,7 +89,7 @@ tfoot th select[name="categories"] { width:130px; }
               --
               {% end %}
             </td>
-            <td>{{ award['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(award['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

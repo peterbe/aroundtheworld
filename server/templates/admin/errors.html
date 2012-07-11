@@ -59,7 +59,7 @@ td pre { font-size: 70%; padding: 3px; }
             </td>
             <td><pre>{% for key in error['data'] %}{{ key }}: {{ error['data'][key] }}
             {% end %}</pre></td>
-            <td>{{ error['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(error['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

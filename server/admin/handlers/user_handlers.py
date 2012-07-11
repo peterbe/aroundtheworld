@@ -222,15 +222,6 @@ class UserJourneyAdminHandler(UserAdminHandler):
             ))
 
         events.sort()
-        _prev = None
-        for i, each in enumerate(events):
-            if _prev is None:
-                each += ('',)
-            else:
-                each += (timesince.smartertimesince(_prev, each[0]),)
-            _prev = each[0]
-            events[i] = each
-
 
         data['events'] = events
         data['user'] = user

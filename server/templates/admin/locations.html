@@ -71,7 +71,7 @@ tfoot th select[name="countries"] { width:150px; }
             </td>
             <td>{{ location['code'] or '-' }}</td>
             <!--<td>{{ location['airport_name'] or '-' }}</td>-->
-            <td>{{ location['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(location['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

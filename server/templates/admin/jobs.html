@@ -65,7 +65,7 @@ tfoot th select[name="categories"] { width:130px; }
             <td>{{ job['coins'] }}</td>
             <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
             <td>{{ category['name'] }}</td>
-            <td>{{ job['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(job['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

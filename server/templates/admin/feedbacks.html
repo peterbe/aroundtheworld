@@ -65,7 +65,7 @@ tfoot th select[name="whats"] { width:120px; }
             <td>{{ feedback['what'] }}</td>
             <td>{% module ShowComment(feedback['comment']) %}</td>
             <td><a href="{{ reverse_url('admin_feedback_reply', feedback['_id']) }}" title="Reply"><img src="{{ static_url('images/reply.png') }}" alt="Reply"></a></td>
-            <td>{{ feedback['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(feedback['add_date']) %}</td>
           </tr>
           {% for reply in replies %}
           <tr>
@@ -73,7 +73,7 @@ tfoot th select[name="whats"] { width:120px; }
              <strong>Reply:</strong>
             </td>
             <td colspan="2">{% module ShowComment(reply['comment']) %}</td>
-            <td>{{ reply['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(reply['add_date']) %}</td>
           </tr>
           {% end %}
           {% end %}

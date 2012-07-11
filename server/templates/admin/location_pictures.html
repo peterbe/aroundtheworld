@@ -90,7 +90,7 @@ tfoot th select[name="authors"] { width:100px; }
                 &nbsp;
               {% end %}
             </td>
-            <td>{{ picture['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(picture['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

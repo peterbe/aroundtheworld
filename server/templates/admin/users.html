@@ -55,7 +55,7 @@ tfoot th select[name="countries"] { width:150px; }
             <td>{% module Thousands(user_settings['coins_total']) %}</td>
             <td>{% module Thousands(int(user_settings['miles_total'])) %}</td>
             <td>{{ location }}</td>
-            <td>{{ user['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(user['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>

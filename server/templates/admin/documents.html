@@ -75,7 +75,7 @@ tfoot th select[name="countries"] { width:150px; }
             <td>
               <span class="label">{{ document['type'] }}</span>
             </td>
-            <td>{{ document['add_date'].strftime('%d %b %Y') }}</td>
+            <td>{% module TimeAgo(document['add_date']) %}</td>
           </tr>
           {% end %}
         </tbody>
