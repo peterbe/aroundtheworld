@@ -116,7 +116,7 @@ class BaseHandler(tornado.web.RequestHandler):
       'awards': ['css/plugins/awards.css',
                  '//fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Tangerine|Homemade+Apple|UnifrakturMaguntia',
                  'plugins/awards.js'],
-      'about': [],
+      'about': ['plugins/about.js'],
     }
 
 #    def write(self, *a, **k):
@@ -344,6 +344,7 @@ class BaseHandler(tornado.web.RequestHandler):
     def render(self, template, **options):
         if not options.get('page_title'):
             options['page_title'] = settings.PROJECT_TITLE
+        options['debug'] = self.application.settings['debug']
         return super(BaseHandler, self).render(template, **options)
 
     def static_url(self, path, **kwargs):

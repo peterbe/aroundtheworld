@@ -37,6 +37,8 @@
 {% module ScriptTags('lib/raty/jquery.raty.min.js', 'lib/bootstrap-tab.min.js', 'lib/bootstrap-carousel.min.js', 'lib/bootstrap-tab.min.js', async=True) %}
 <script>window.sounds = new Soundplayer(SOUNDS);</script>
 
+{% if not debug %}
 {% include "_google_analytics.html" %}
+{% end %}
 </body>
 </html>
