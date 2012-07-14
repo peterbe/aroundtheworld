@@ -3363,10 +3363,14 @@ class PageNotFoundHandler(BaseHandler):
             page = page[:-1]
         page = page.split('/')[-1]
         if page.split(',')[0] in self.PLUGINS:
-            self.redirect('%s#%s' % (
+            ua = self.request.headers.get('User-Agent')
+            if ua and MOBILE_USER_AGENTS.search(ua) and not self.get_cookie('no-mobile'):
+                path = '/mobile%s' % path
+            new_url = '%s#%s' % (
               path.replace(page, '').replace('//', '/'),
               page
-            ))
+            )
+            self.redirect(new_url)
             return
         if not path.endswith('/'):
             new_url = '%s/' % path
