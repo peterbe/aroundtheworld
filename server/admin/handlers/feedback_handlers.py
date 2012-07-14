@@ -131,7 +131,6 @@ class FeedbackReplyAdminHandler(SuperuserBaseHandler):
 
             if email:
                 subject = "Reply to your feedback on %s" % settings.PROJECT_TITLE
-                body = None
                 send_email(self.application.settings['email_backend'],
                    subject,
                    body,
