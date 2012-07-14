@@ -3235,6 +3235,7 @@ class AwardsHandler(BaseHandler):
             ambassador = ambassador.strip()
             info['ambassador'] = ambassador
             info['long_description'] = self.get_long_description(award)
+            info['uniqueness'] = self.get_uniqueness(award)
             data['award'] = info
         else:
             awards = []
@@ -3245,6 +3246,18 @@ class AwardsHandler(BaseHandler):
             data['awards'] = awards
 
         self.write(data)
+
+    def get_uniqueness(self, award):
+        users = self.db.User.find().count()
+        filter_ = {
+          'type': award['type']
+        }
+        if award.get('category'):
+            filter_['category'] = award['category']
+        if award['type'] == 'job' and award.get('location'):
+            filter_['location'] = award['location']
+        awards = self.db.Award.find(filter_).count()
+        return 100. * awards / users
 
     def get_long_description(self, award):
         data = award['data']

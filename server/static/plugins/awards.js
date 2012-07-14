@@ -53,6 +53,20 @@ var Awards = (function() {
     } else {
       $('.long-description', container).hide();
     }
+    if (award.uniqueness) {
+      // use Math.ceil so that 0.2314 becomes 1% at least
+      $('.uniqueness-percentage', container).text(Math.ceil(award.uniqueness) + '%');
+      if (award.uniqueness < 25) {
+        $('.uniqueness-great', container).show();
+        $('.uniqueness-ok', container).hide();
+      } else {
+        $('.uniqueness-great', container).hide();
+        $('.uniqueness-ok', container).show();
+      }
+      $('.uniqueness', container).show();
+    } else {
+      $('.uniqueness', container).hide();
+    }
     if (STATE.user.anonymous) {
       $('.login-push', container).show();
     } else {
