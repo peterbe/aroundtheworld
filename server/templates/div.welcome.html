@@ -5,7 +5,8 @@
   <!--[if IE 7]> {% include "_no-ie.html" %} <![endif]-->
   <!--[if IE 8]> {% include "_no-ie.html" %} <![endif]-->
 
-  <div class="not-logged-in alternative">
+  <div class="not-logged-in alternative"
+    {% if state.get('user') %}style="display:none"{% end %}>
     <img class="image-left deferred" src="." data-src="{{ static_url('images/airplane-and-bag.png') }}" alt="Airplane">
     <a href="#login" class="overlay-changer"><img class="image-right deferred" src="." data-src="{{ static_url('images/passport.png') }}" alt="Passport"></a>
     <h3>A game where you try to reach every destination around the world.</h3>
@@ -43,7 +44,8 @@
     </form>
   </div>
 
-  <div class="welcome-back alternative" style="display:none">
+  <div class="welcome-back alternative"
+  {% if not state.get('user') %}style="display:none"{% end %}>
     <h3>Welcome back!</h3>
 
     <p>Your current location is <strong class="current-location"></strong>.<br>

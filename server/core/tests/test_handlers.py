@@ -86,7 +86,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         assert self.db.UserSettings.find_one({'user': user['_id']})
         return user
 
-    def _create_question(self, category, location, published=False):
+    def _create_question(self, category, location, published=True):
         q = self.db.Question()
         q['text'] = (u'(%s) What number question is this?' %
                      (self.db.Question.find().count() + 1,))
@@ -243,7 +243,7 @@ class HandlersTestCase(BaseHTTPTestCase):
             return self.get_struct(url, {'category': self.tour_guide['name']})
 
         for i in range(QuizzingHandler.NO_QUESTIONS):
-            self._create_question(self.tour_guide, self.newyork, published=True)
+            self._create_question(self.tour_guide, self.newyork)
         assert (QuizzingHandler.NO_QUESTIONS ==
                 self.db.Question.find({'category': self.tour_guide['_id'],
                                        'location': self.newyork['_id']})
@@ -1463,7 +1463,7 @@ class HandlersTestCase(BaseHTTPTestCase):
     def test_quizzing_with_pictures(self):
 
         for __ in range(QuizzingHandler.NO_QUESTIONS):
-            q = self._create_question(self.tour_guide, self.newyork)
+            q = self._create_question(self.tour_guide, self.newyork, published=True)
             self._create_question_pictures(q)
 
         self._login(location=self.newyork)
@@ -1495,3 +1495,32 @@ class HandlersTestCase(BaseHTTPTestCase):
         # number of questions
         self.assertEqual(sorted(r1['pictures']),
                          sorted(r2['pictures']))
+
+    def test_plugin_redirect_basic(self):
+        r = self.client.get('/about')
+        self.assertEqual(r.headers['location'], '/#about')
+
+        r = self.client.get('/about/')
+        self.assertEqual(r.headers['location'], '/#about')
+
+        r = self.client.get('/mobile/about/')
+        self.assertEqual(r.headers['location'], '/mobile/#about')
+
+        r = self.client.get('/mobile/about')
+        self.assertEqual(r.headers['location'], '/mobile/#about')
+
+    def test_plugin_redirect_with_arg(self):
+        r = self.client.get('/awards,abc123')
+        self.assertEqual(r.headers['location'], '/#awards,abc123')
+
+        r = self.client.get('/awards,abc123/')
+        self.assertEqual(r.headers['location'], '/#awards,abc123')
+
+        r = self.client.get('/mobile/awards,abc123/')
+        self.assertEqual(r.headers['location'], '/mobile/#awards,abc123')
+
+        r = self.client.get('/mobile/awards,abc123')
+        self.assertEqual(r.headers['location'], '/mobile/#awards,abc123')
+
+        r = self.client.get('/quizzing,Tour+Guide')
+        self.assertEqual(r.headers['location'], '/#quizzing,Tour+Guide')

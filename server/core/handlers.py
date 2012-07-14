@@ -124,16 +124,18 @@ class BaseHandler(tornado.web.RequestHandler):
 #        sleep(4)
 #        super(BaseHandler, self).write(*a, **k)
 
-    def initialize(self):
-        key = ('%s %s %s' %
-               (self.request.method, self.request.path, self.request.query)
-               ).strip()
-        if len(key) > 75:
-            key = key[:75 - 3] + '...'
-        try:
-            self.redis.zincrby('hits', key, 1)
-        except:
-            logging.critical("Unable to store %r" % key, exc_info=True)
+#    def initialize(self):
+#        if 'plugins.js' in self.request.path:
+#            return
+#        key = ('%s %s %s' %
+#               (self.request.method, self.request.path, self.request.query)
+#               ).strip()
+#        if len(key) > 75:
+#            key = key[:75 - 3] + '...'
+#        try:
+#            self.redis.zincrby('hits', key, 1)
+#        except:
+#            logging.critical("Unable to store %r" % key, exc_info=True)
 
     def write_json(self, struct, javascript=False):
         import warnings
@@ -493,7 +495,6 @@ _JSON_PLUGINS_PAYLOAD = None
 @route('/plugins.js', name='plugins_js')
 class PluginsJSHandler(BaseHandler):
 
-
     def get(self):
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
         global _JSON_PLUGINS_PAYLOAD
@@ -505,7 +506,7 @@ class PluginsJSHandler(BaseHandler):
                 plugins[k] = urls
             _JSON_PLUGINS_PAYLOAD = tornado.escape.json_encode(plugins)
 
-        self.write('window.PLUGINS=%s;' % _JSON_PLUGINS_PAYLOAD)
+        self.write('window.PLUGINS=%s;\n' % _JSON_PLUGINS_PAYLOAD)
 
 
 class AuthenticatedBaseHandler(BaseHandler):
@@ -3315,6 +3316,16 @@ class PageNotFoundHandler(BaseHandler):
 
     def get(self):
         path = self.request.path
+        page = path[1:]
+        if page.endswith('/'):
+            page = page[:-1]
+        page = page.split('/')[-1]
+        if page.split(',')[0] in self.PLUGINS:
+            self.redirect('%s#%s' % (
+              path.replace(page, '').replace('//', '/'),
+              page
+            ))
+            return
         if not path.endswith('/'):
             new_url = '%s/' % path
             if self.request.query:

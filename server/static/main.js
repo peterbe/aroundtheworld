@@ -15,7 +15,7 @@ var Loader = (function() {
        var arg = hash.split(',')[1] || null;
        hash = hash.split(',')[0];
        if ($(hash + '.overlay').size()) {
-         $('.overlay:visible').hide();
+         $('.overlay').hide();
          $(hash + '.overlay').show();
          $('img.deferred', hash).each(function() {
            var el = $(this);

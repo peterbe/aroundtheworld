@@ -76,7 +76,7 @@ class Application(tornado.web.Application):
         )
         if 1:#0 or not options.debug:
             routed_handlers.append(
-              tornado.web.url('/admin/.*?',
+              tornado.web.url('/.*?',
                               core.handlers.PageNotFoundHandler,
                               name='page_not_found')
             )
