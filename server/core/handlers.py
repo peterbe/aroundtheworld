@@ -487,17 +487,25 @@ class BaseHandler(tornado.web.RequestHandler):
         award.save()
 
 
+# Optimization trick so that we can keep this for consecutive loads
+_JSON_PLUGINS_PAYLOAD = None
+
 @route('/plugins.js', name='plugins_js')
 class PluginsJSHandler(BaseHandler):
 
+
     def get(self):
         self.set_header("Content-Type", "text/javascript; charset=UTF-8")
-        plugins = {}
-        for k, urls in self.PLUGINS.items():
-            urls = [x.startswith('//') and x or self.static_url(x)
-                    for x in urls]
-            plugins[k] = urls
-        self.write('window.PLUGINS=%s;' % tornado.escape.json_encode(plugins))
+        global _JSON_PLUGINS_PAYLOAD
+        if not _JSON_PLUGINS_PAYLOAD:
+            plugins = {}
+            for k, urls in self.PLUGINS.items():
+                urls = [x.startswith('//') and x or self.static_url(x)
+                        for x in urls]
+                plugins[k] = urls
+            _JSON_PLUGINS_PAYLOAD = tornado.escape.json_encode(plugins)
+
+        self.write('window.PLUGINS=%s;' % _JSON_PLUGINS_PAYLOAD)
 
 
 class AuthenticatedBaseHandler(BaseHandler):
