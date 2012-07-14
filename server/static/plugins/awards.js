@@ -67,7 +67,7 @@ var Awards = (function() {
     } else {
       $('.uniqueness', container).hide();
     }
-    if (STATE.user.anonymous) {
+    if (STATE.user && STATE.user.anonymous) {
       $('.login-push', container).show();
     } else {
       $('.login-push', container).hide();
@@ -107,7 +107,9 @@ var Awards = (function() {
            $('.index-outer .explanation-' + award.type).addClass('done');
          });
          if (!response.awards.length) {
-           $('.none', container).show();
+           if (STATE.user) {
+             $('.none', container).show();
+           }
          } else {
            $('.none', container).hide();
          }
@@ -127,6 +129,13 @@ var Awards = (function() {
         _display_modal_award(response.award);
         $('.wrapper-outer', container).show();
         $('.index-outer', container).hide();
+        if (STATE.user) {
+          $('a.yours', container).show();
+          $('a.not-yours', container).hide();
+        } else {
+          $('a.yours', container).hide();
+          $('a.not-yours', container).show();
+        }
 
         $('.new-award', container).each(function() {
           if ($(this).data('id') == response.award.id) {
@@ -134,7 +143,7 @@ var Awards = (function() {
           }
         });
 
-        if (typeof Mousetrap !== 'undefined') {
+        if (typeof Mousetrap !== 'undefined' && STATE.user) {
           // not necessarily loaded in mobile
           Mousetrap.bind('esc', function() {
             $('.return:visible', container).click();
@@ -155,6 +164,8 @@ var Awards = (function() {
 Plugins.start('awards', function(id) {
   if (id) {
     Awards.load_award(id);
+  } else if (!STATE.user) {
+    return State.redirect_login();
   }
   Awards.load();
 });

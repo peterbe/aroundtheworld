@@ -3205,24 +3205,26 @@ class AwardsHandler(BaseHandler):
             return info
 
         if self.get_argument('id', None):
-            award = self._get_award(self.get_argument('id'), user)
+            award = self._get_award(self.get_argument('id'))
             if not award:
                 self.write({'error': 'INVALIDAWARD'})
                 return
             was_unread = False
-            if award['user'] == user['_id'] and not award['read']:
+            if user and award['user'] == user['_id'] and not award['read']:
                 award['read'] = True
                 award.save()
                 was_unread = True
             info = describe_award(award)
             info['was_unread'] = was_unread
-            if user['first_name']:
-                name = u'%s %s' % (user['first_name'], user['last_name'])
+            award_user = self.db.User.find_one({'_id': award['user']})
+            if award_user['first_name']:
+                name = u'%s %s' % (award_user['first_name'],
+                                   award_user['last_name'])
                 name = name.strip()
-            elif user['anonymous']:
+            elif award_user['anonymous'] and user:
                 name = u"You"
             else:
-                name = user['username']
+                name = award_user['username']
             info['name'] = name
             if award['ambassador']:
                 ambassador = self.db.User.find_one({'_id': award['ambassador']})
@@ -3234,15 +3236,20 @@ class AwardsHandler(BaseHandler):
                                      ambassador['last_name'])
             ambassador = ambassador.strip()
             info['ambassador'] = ambassador
-            info['long_description'] = self.get_long_description(award)
+
+            info['long_description'] = self.get_long_description(
+                award,
+                award_user == user,
+                name
+            )
             info['uniqueness'] = self.get_uniqueness(award)
             data['award'] = info
         else:
             awards = []
-            for each in (self.db.Award.find({'user': user['_id']})
-                          .sort('add_date', -1)):
-                awards.append(describe_award(each))
-
+            if user:
+                for each in (self.db.Award.find({'user': user['_id']})
+                              .sort('add_date', -1)):
+                    awards.append(describe_award(each))
             data['awards'] = awards
 
         self.write(data)
@@ -3259,34 +3266,38 @@ class AwardsHandler(BaseHandler):
         awards = self.db.Award.find(filter_).count()
         return 100. * awards / users
 
-    def get_long_description(self, award):
+    def get_long_description(self, award, yours, name):
         data = award['data']
-        desc = ("You earned this award %s ago. "
-          % smartertimesince(award['add_date'], datetime.datetime.utcnow())
+        if yours:
+            name = 'You'
+        desc = (
+          "%s earned this award %s ago. "
+          % (name,
+             smartertimesince(award['add_date'], datetime.datetime.utcnow()))
         )
         if award['type'] == 'job':
             category = self.db.Category.find_one({'_id': award['category']})
             if category.name == u'Tutorial':
-                desc += "You completed the tutorial. "
+                desc += "%s completed the tutorial. " % name
             else:
-                desc += "You completed the award as %s" % category.name
+                desc += "%s completed the award as %s" % (name, category.name)
                 if data.get('percentage') == 100:
                     desc += " with perfect results. "
                 else:
                     desc += ". "
         if award['reward']:
-            desc += "As a reward you earned an extra %s coins" % award['reward']
-
+            if name == 'You':
+                name = 'you'
+            desc += ("As a reward %s earned an extra %s coins."
+                      % (name, award['reward']))
         return desc
 
-    def _get_award(self, _id, user):
+    def _get_award(self, _id):
         try:
             award = self.db.Award.find_one({'_id': ObjectId(_id)})
             assert award
         except:
             logging.error("Unable to find reward %r" % _id, exc_info=True)
-            return
-        if award['user'] != user['_id']:
             return
         return award
 
