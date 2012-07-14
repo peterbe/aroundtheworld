@@ -90,6 +90,9 @@
     float: right;
     width: 50%;
 }
+#awards .bragging-rights {
+    margin-top: 30px;
+}
 #awards li.done {
     text-decoration: line-through;
 }

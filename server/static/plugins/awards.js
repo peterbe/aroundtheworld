@@ -1,6 +1,7 @@
 var Awards = (function() {
   var container = $('#awards');
   var URL = '/awards.json';
+  var TWEET_URL = '/awards-tweet.json';
   var loaded = {};
   var thumbnail = $('img.thumbnail-template', container);
   var _once = false;
@@ -72,6 +73,32 @@ var Awards = (function() {
     } else {
       $('.login-push', container).hide();
     }
+
+    $('.bragging-rights', container).hide();
+    if (STATE.user && STATE.user.name == award.name) {
+      // it's your award
+      $.getJSON(TWEET_URL, {id: award.id}, function(response) {
+        if (response.text) {
+          var twitter_url = 'http://twitter.com/home?status='+ encodeURI(response.text);
+          $('a.twitter', container)
+            .attr('href', twitter_url)
+              .click(function() {
+                window.open(twitter_url);
+                return false;
+              });
+          var title = award.description + ' on Around The World';
+          var facebook_url = 'https://www.facebook.com/sharer.php?s=100&p[title]=' + encodeURI(title) + '&p[url]=' + encodeURI(response.url) + '&p[summary]=' + encodeURI(response.text);
+          $('a.facebook', container)
+            .attr('href', facebook_url)
+              .click(function() {
+                window.open(facebook_url);
+                return false;
+              });
+          $('.bragging-rights textarea', container).val(response.text);
+          $('.bragging-rights', container).fadeIn(500);
+        }
+      });
+    }
   }
 
   function setup_once() {
@@ -83,6 +110,9 @@ var Awards = (function() {
         location.hash = '#awards';
       }
       return false;
+    });
+    $('.bragging-rights textarea', container).on('focus', function() {
+      $(this).off('focus').select();
     });
   }
 

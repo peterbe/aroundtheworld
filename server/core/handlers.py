@@ -3224,6 +3224,7 @@ class AwardsHandler(BaseHandler):
                 award.save()
                 was_unread = True
             info = describe_award(award)
+
             info['was_unread'] = was_unread
             award_user = self.db.User.find_one({'_id': award['user']})
             if award_user['first_name']:
@@ -3253,6 +3254,7 @@ class AwardsHandler(BaseHandler):
             )
             info['uniqueness'] = self.get_uniqueness(award)
             data['award'] = info
+
         else:
             awards = []
             if user:
@@ -3309,6 +3311,46 @@ class AwardsHandler(BaseHandler):
             logging.error("Unable to find reward %r" % _id, exc_info=True)
             return
         return award
+
+
+@route('/awards-tweet.json', name='awards_tweet')
+class AwardsTweetHandler(AwardsHandler):
+
+
+    @tornado.web.asynchronous
+    @tornado.gen.engine
+    def get(self):
+        award = self._get_award(self.get_argument('id'))
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        url = base_url + '/awards,%s' % award['_id']
+
+        short_url = award['data'].get('short_url')
+        if not short_url:
+            URL = 'https://www.googleapis.com/urlshortener/v1/url'
+            http_client = tornado.httpclient.AsyncHTTPClient()
+            body = tornado.escape.json_encode({'longUrl': url})
+            response = yield tornado.gen.Task(http_client.fetch,
+                URL,
+                method="POST",
+                headers={'Content-Type': 'application/json'},
+                body=body
+            )
+            if response.code == 200:
+                short_url = tornado.escape.json_decode(response.body)['id']
+                award['data']['short_url'] = short_url
+                award.save()
+            else:
+                logging.warning("Unable to short %s (%s, %r)" % (
+                  url,
+                  response.code,
+                  response.body
+                ))
+                short_url = url
+
+        self.write({'text': 'I was awarded the "%s" award on Around The World\n%s' %
+                     (award['description'], short_url),
+                    'url': short_url})
+        self.finish()
 
 
 # this handler gets automatically appended last to all handlers inside app.py
