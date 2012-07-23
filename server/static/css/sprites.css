@@ -1,0 +1,32 @@
+  /* I generated these by using
+    http://spritegen.website-performance.org/
+    Next, time consider using
+    http://glue.readthedocs.org/en/latest/index.html
+   */
+  #usernav .sprite {
+    background: url(../images/sprite-20120629.png) no-repeat top left;
+  }
+  #usernav .sprite-feedback{ /* mini-feedback.png */
+    background-position: 0 -198px; 
+    /*width: 16px; height: 16px;*/
+  }
+  #usernav .sprite-coins{ /* mini-coins.png */
+    background-position: 0 -132px; 
+    /*width: 16px; height: 16px;*/
+  }
+  #usernav .sprite-miles{ /* mini-airplane.png */
+    background-position: 0 0; 
+    /*width: 16px; height: 16px;*/
+  }
+  #usernav .sprite-settings{ /* mini-settings.png */
+    background-position: 0 -264px; 
+    /*width: 16px; height: 16px;*/
+  }
+  #usernav .sprite-signout{ /* mini-signout.png */
+    background-position: 0 -330px; 
+    /*width: 16px; height: 16px;*/
+  }
+  #usernav .sprite-awards{ /* mini-awards.png */
+    background-position: 0 -66px; 
+    /*width: 16px; height: 16px;*/
+  }

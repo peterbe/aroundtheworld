@@ -120,13 +120,13 @@ var State = (function() {
           $('.user-awards a', container)
           .text('Awards (' + state.user.awards.count + ')');
         } else {
-          $('.user-awards a', container).text('Awards')
+          $('.user-awards a', container).text('Awards');
         }
         if (state.user.awards.unread) {
           $('.user-awards a', container)
             .attr('title', state.user.awards.unread + ' unread')
               .addClass('unread');
-
+          $('.user-awards', container).show();
         } else {
           if (state.user.awards.count == 1) {
             $('.user-awards a', container)

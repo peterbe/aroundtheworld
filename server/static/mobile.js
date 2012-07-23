@@ -5,7 +5,7 @@ var Mobile = (function() {
   var _nav_expansion = true;
   return {
      expand_usernav: function() {
-       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile', usernav).show();
+       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile,li.user-awards', usernav).show();
        $('.menu-toggle', usernav).text('Close');
        if (STATE.user.anonymous) {
          $('li.user-un-anonymous', usernav).show();
@@ -14,7 +14,7 @@ var Mobile = (function() {
        }
      },
      collapse_usernav: function() {
-       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile', usernav).hide();
+       $('li.user-miles,li.user-coins,li.user-name,li.feedback,li.exit-mobile,li.user-awards', usernav).hide();
        $('.menu-toggle', usernav).text('Menu');
        if (STATE.user.anonymous) {
          $('li.user-un-anonymous', usernav).hide();

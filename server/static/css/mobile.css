@@ -62,38 +62,42 @@ body {
 
   }
   #usernav li {
-    margin-right:5px;
+    margin-right: 5px;
+    display: block;
     }
   #usernav .login {
     font-size:1.2em;
     padding:10px;
     margin:10px;
   }
+  #usernav .user-location a {
+    font-weight: bold;
+  }
+
   #usernav .user-name a {
     padding-left: 16px;
-    background: url(../images/mini-settings.png) 0 -2px no-repeat;
-   /* font-weight: bold;*/
   }
   #usernav .user-location a {
     font-weight: bold;
   }
   #usernav .user-miles a {
     padding-left: 16px;
-    background: url(../images/mini-airplane.png) 0 -2px no-repeat;
   }
   #usernav .user-coins a {
     padding-left: 17px;
-    background: url(../images/coins/gold-1.png) 0 0 no-repeat;
   }
   #usernav .feedback a {
     padding-left: 17px;
-    background: url(../images/feedback.png) 0 0 no-repeat;
   }
   #usernav .signout a {
     padding-left: 17px;
-    background: url(../images/signout.png) 0 0 no-repeat;
   }
-
+  #usernav .user-awards a {
+    padding-left: 17px;
+  }
+  #usernav .user-awards a.unread {
+    font-weight: bold;
+  }
 
 .overlay {
   display:none;
