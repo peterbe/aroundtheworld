@@ -238,6 +238,7 @@ var Quiz = (function() {
     $('a.next-question', container).click(function() {
       if (!_loading) {
         $('.question-attention:visible', container).hide();
+        Quiz.restart_timer(0);
         Quiz.rush_next_question();
       }
       return false;
@@ -260,7 +261,7 @@ var Quiz = (function() {
                  ],
       mouseover : function(score, evt) {
         if (!_has_mousedover_raty) {
-          Quiz.wait_longer(10);
+          //Quiz.wait_longer(10);
           _has_mousedover_raty = true;
         }
       },
@@ -299,7 +300,7 @@ var Quiz = (function() {
      },
      reset: function() {
        $('a.next-question', container)
-         .text('Next question');
+         .html('Next question &rarr;');
        if (timer) {
          clearTimeout(timer);
        }
@@ -359,14 +360,18 @@ var Quiz = (function() {
              $('.wrong', container).show();//fadeIn(200);
            }
 
+           if (last_question) {
+             $('a.next-question', container).html('Finish job &rarr;');
+           }
+
            if (response.didyouknow) {
              $('.didyouknow p', container).remove();
              $('.didyouknow', container)
                .append(response.didyouknow)
                  .fadeIn(300);
-             Quiz.restart_timer(last_question && 3 || 10);
+             //Quiz.restart_timer(last_question && 3 || 10);
            } else {
-             Quiz.restart_timer(3);
+             //Quiz.restart_timer(3);
            }
            if (response.enable_rating) {
              $('.rate', container).show();
@@ -384,9 +389,6 @@ var Quiz = (function() {
        });
      },
     restart_timer: function(seconds) {
-      if (last_question) {
-        $('a.next-question', container).text('Finish job');
-      }
       seconds = seconds || 4;  // 4 is the default
       Quiz.start_timer(seconds);
       in_pause = true;
@@ -434,8 +436,11 @@ var Quiz = (function() {
        } else {
          if (timedout) {
            $('.tooslow', container).fadeIn(200);
+           if (last_question) {
+             $('a.next-question', container).html('Finish job &rarr;');
+           }
            if ($('.question:visible', container).size()) {
-             Quiz.restart_timer();
+             //Quiz.restart_timer();
            }
          }
        }
