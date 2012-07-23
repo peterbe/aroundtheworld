@@ -37,3 +37,34 @@
 #city ul.jobs .experience {
     font-size: 90%;
 }
+
+#city .affordable-tickets {
+    width: 40%;
+}
+#city .affordable-tickets a {
+    font-weight: bold;
+}
+#city .affordable-tickets .ticket-info {
+    float: right;
+}
+#city .affordable-tickets p {
+    margin-bottom: 1px;
+}
+#city .affordable-tickets .progress {
+    margin-bottom: 8px;
+}
+
+#city .affordable-tickets .bar {
+    text-align: left;
+}
+#city .affordable-tickets .bar a {
+    text-shadow: none;
+    color: white;
+    margin-left: 3px;
+}
+#city .affordable-tickets .bar a.cant-afford {
+    text-decoration: none;
+}
+#city .affordable-tickets .bar span {
+    margin-right: 3px;
+}

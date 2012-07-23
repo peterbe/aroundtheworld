@@ -228,10 +228,55 @@ var City = (function() {
                $('li.ambassadors-link', container).hide();
              }
              $('.home', container).hide().fadeIn(300);
+             $.getJSON(AIRPORT_URL, {ticket_progress: true}, function(response) {
+               if (!response.destinations.length) {
+                 $('.affordable-tickets:visible', container).hide();
+                 return;
+               } else {
+                 $('.affordable-tickets:hidden', container).show();
+               }
+               var c = $('.affordable-tickets', container);
+
+               if (c.data('for_amount') === response.for_amount) {
+                 // for_amount hasn't changed
+                 return;
+               }
+               c.data('for_amount', response.for_amount);
+               $('.destination', c).remove();
+               $.each(response.destinations, function(i, destination) {
+                 var d = $('<div>').addClass('destination');
+
+                 var dd = $('<div>')
+                   .addClass('progress').addClass('progress-striped');
+                 if (destination.canafford) {
+                   dd.addClass('progress-success')
+                     .append($('<div>').addClass('bar').css('width', '100%'));
+                 } else {
+                   dd.append($('<div>').addClass('bar').css('width', destination.percentage + '%'));
+                 }
+                 $('<p>')
+                   .append($('<a href=""></a>')
+                           .addClass('overlay-changer')
+                           .addClass(destination.canafford ? 'can-afford' : 'cant-afford')
+                           .attr('href', '#airport,' + destination.code)
+                           .click(function() {
+                             Loader.load_hash('#airport,' + destination.code);
+                           })
+                           .text(destination.name))
+                   .append($('<span>')
+                           .addClass('ticket-info')
+                           .text(Utils.formatCost(destination.cost, true)))
+                   .appendTo($('.bar', dd));
+
+                 d.append(dd);
+                 c.append(d);
+               });
+               c.show();
+
+             });
            }
            Utils.update_title();
          }
-         //State.update();
        });
      },
     setup_message_post: function() {

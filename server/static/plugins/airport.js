@@ -84,7 +84,7 @@ var Airport = (function() {
          return false;
        });
      },
-     load: function() {
+     load: function(callback) {
        $('.confirm:visible', container).hide();
        $('.choices:hidden', container).show();
        $.getJSON('/airport.json', function(response) {
@@ -106,6 +106,7 @@ var Airport = (function() {
              a_title = "You can not yet afford to fly to " + each.name;
            }
            $('<a href="#">')
+               .attr('id', 'code-' + each.code)
                .text(each.name).attr('title', a_title)
                  .click(function() {
                    Airport.confirm(each.name, each.id, each.cost);
@@ -130,7 +131,7 @@ var Airport = (function() {
            }
          }
          Utils.update_title();
-
+         callback();
        });
      },
     show_on_map: function() {
@@ -177,6 +178,9 @@ var Airport = (function() {
       });
       $('#airport-tucked').show();
     },
+    click_on: function(code) {
+      $('a#code-' + code, container).click();
+    },
     teardown: function() {
       if (open_infowindows.length) {
         $.each(open_infowindows, function() {
@@ -194,12 +198,16 @@ var Airport = (function() {
   };
 })();
 
-Plugins.start('airport', function(map) {
+Plugins.start('airport', function(map_or_code) {
   Airport.setup();
-  if (map) {
+  if (map_or_code && map_or_code.search(/[A-Z][A-Z][A-Z]/) == -1) {
     Airport.show_on_map();
   } else {
-    Airport.load();
+    Airport.load(function() {
+      if (map_or_code && map_or_code.search(/[A-Z][A-Z][A-Z]/) > -1) {
+        Airport.click_on(map_or_code);
+      }
+    });
   }
 });
 

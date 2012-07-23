@@ -122,7 +122,7 @@ class BaseHandler(tornado.web.RequestHandler):
 
 #    def write(self, *a, **k):
 #        from time import sleep
-#        sleep(4)
+#        sleep(1)
 #        super(BaseHandler, self).write(*a, **k)
 
 #    def initialize(self):
@@ -2173,6 +2173,8 @@ class AirportHandler(AuthenticatedBaseHandler):
           'airport_name': current_location['airport_name'],
         }
         only_affordable = self.get_argument('only_affordable', False)
+        ticket_progress = self.get_argument('ticket_progress', False)
+        ticket_progress_min = float(self.get_argument('ticket_progress_min', 50.0))
 
         destinations = []
         for location in (self.db.Location
@@ -2199,9 +2201,16 @@ class AirportHandler(AuthenticatedBaseHandler):
               'lat': location['lat'],
               'lng': location['lng'],
             }
+            if ticket_progress:
+                destination['ticket_info'] = 'bla coins'
+                percentage = 100.0 * user_settings['coins_total'] / cost
+                if percentage < ticket_progress_min:
+                    continue
+                destination['percentage'] = min(100, int(percentage))
+
             destinations.append(destination)
 
-        if not only_affordable:
+        if not only_affordable and not ticket_progress:
             destinations.append({
               'id': 'moon',
               'code': '',
@@ -2212,11 +2221,22 @@ class AirportHandler(AuthenticatedBaseHandler):
               'cost': 1000000,
               'miles': 238857,
             })
+
+        if ticket_progress:
+            def sorter(x, y):
+                c = cmp(x['percentage'], y['percentage'])
+                if not c:
+                    # cheapest first
+                    c = cmp(y['cost'], x['cost'])
+                return c
+            destinations.sort(sorter,
+                              reverse=True)
+        data['for_amount'] = user_settings['coins_total']
         data['destinations'] = destinations
         self.write(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .05))
+        return self.BASE_PRICE + int(round(miles * .07))
 
 
 @route('/fly.json$', name='fly')
