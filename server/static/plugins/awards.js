@@ -79,6 +79,8 @@ var Awards = (function() {
       // it's your award
       $.getJSON(TWEET_URL, {id: award.id}, function(response) {
         if (response.text) {
+          // Nick: ardthewrld
+          // https://twitter.com/intent/tweet?original_referer=https%3A%2F%2Fwww.filepicker.io%2Fdemos%2F&source=tweetbutton&text=Filepicker.io%20%7C%20Demos&url=https%3A%2F%2Fwww.filepicker.io&via=filepicker
           var twitter_url = 'http://twitter.com/home?status='+ encodeURI(response.text);
           $('a.twitter', container)
             .attr('href', twitter_url)

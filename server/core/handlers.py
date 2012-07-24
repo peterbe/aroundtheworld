@@ -2933,7 +2933,7 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
               'label': category['name']
             })
         data['categories'] = categories
-        data['filepicker_key'] = 'KqEkAS7kSbWDbB_lUozq'
+        data['filepicker_key'] = settings.FILEPICKER_API_KEY
         data['questions'] = self._get_questions(user, current_location)
         self.write(data)
 
