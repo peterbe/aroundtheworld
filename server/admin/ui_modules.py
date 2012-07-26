@@ -66,3 +66,9 @@ class TimeAgo(tornado.web.UIModule):
         return ('<abbr class="timeago" title="%s">%s</abbr>' %
               (date.isoformat(), date.strftime('%d %b %Y %H:%M'))
         )
+
+
+class JSONEncode(tornado.web.UIModule):
+
+    def render(self, data):
+        return tornado.escape.json_encode(data)

@@ -84,8 +84,8 @@
                 <li {% if '/errors/' in current_url %}class="active"{% end %}
                   ><a href="{{ reverse_url('admin_errors') }}">Errors</a></li>
                 <li class="divider"></li>
-                <li {% if '/stats/hits/' in current_url %}class="active"{% end %}
-                  ><a href="{{ reverse_url('admin_stats_hits') }}">Stats Hits</a></li>
+                <li {% if '/stats/numbers/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_stats_numbers') }}">Stats Numbers</a></li>
                 <li {% if '/stats/spread/' in current_url %}class="active"{% end %}
                   ><a href="{{ reverse_url('admin_stats_spread') }}">Stats Spread</a></li>
 	     </ul>
