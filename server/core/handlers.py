@@ -116,7 +116,8 @@ class BaseHandler(tornado.web.RequestHandler):
       'awards': ['css/plugins/awards.css',
                  '//fonts.googleapis.com/css?family=Monsieur+La+Doulaise|Tangerine|Homemade+Apple|UnifrakturMaguntia',
                  'plugins/awards.js'],
-      'about': ['plugins/about.js'],
+      'about': ['css/plugins/about.css',
+                'plugins/about.js'],
     }
 
 #    def write(self, *a, **k):
