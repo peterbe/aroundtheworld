@@ -85,6 +85,8 @@ class BaseHandler(tornado.web.RequestHandler):
     }
 
     PLUGINS = {
+      'banks': ['css/plugins/banks.css',
+                'plugins/banks.js'],
       'login': ['css/plugins/login.css',
                 'plugins/login.js'],
       'quizzing': ['css/plugins/quizzing.css',
@@ -1227,12 +1229,15 @@ class CoinsHandler(AuthenticatedBaseHandler):
         if self.get_argument('jobs-page', None) is not None:
             data['jobs'], count = self.get_jobs(user)
             data['count_jobs'] = count
+        if self.get_argument('earnings-page', None) is not None:
+            data['earnings'], count = self.get_earnings(user)
+            data['count_earnings'] = count
         self.write(data)
 
     def get_jobs(self, user, limit=10):
         jobs = []
         filter_ = {'user': user['_id']}
-        records = self.db.Job.find(filter_)
+        records = self.db.Job.collection.find(filter_)
         count = records.count()
         skip = limit * int(self.get_argument('jobs-page', 0))
 
@@ -1267,7 +1272,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
     def get_transactions(self, user, limit=10):
         transactions = []
         filter_ = {'user': user['_id']}
-        records = self.db.Transaction.find(filter_)
+        records = self.db.Transaction.collection.find(filter_)
         count = records.count()
         skip = limit * int(self.get_argument('transactions-page', 0))
         for each in (records
@@ -1291,6 +1296,68 @@ class CoinsHandler(AuthenticatedBaseHandler):
             transaction['type'] = type_
             transactions.append(transaction)
         return transactions, count
+
+    def get_earnings(self, user, limit=30):
+        earnings = []
+        filter_ = {'user': user['_id']}
+        records_questions = self.db.QuestionAnswerEarning.collection.find(filter_)
+        records_interests = self.db.InterestEarning.collection.find(filter_)
+
+        # don't add the questions answered yet, since that's lumped
+        count = records_interests.count()
+
+        earnings_by_question = defaultdict(int)
+        _questions = {}
+        for each in records_questions.sort('add_date', -1):
+            if each['question'] not in _questions:
+                _questions[each['question']] = (
+                  self.db.Question.collection
+                  .find_one({'_id': each['question']},
+                                  ('text', 'correct'))
+                )
+            question = _questions[each['question']]
+            earning = {
+              'type': 'question',
+              'coins': each['coins'],
+              'date': each['add_date'].strftime(FULL_DATE_FMT),
+              'description': question['text'],
+            }
+            group_key = '%s%s' % (question['_id'], each['add_date'].strftime('%m%Y'))
+            if group_key not in earnings_by_question:
+                earnings_by_question[group_key] = {
+                  'type': 'Written question',
+                  'description': ('<em>"%s"</em> (%s)' %
+                                  (question['text'], question['correct'])),
+                  'coins': each['coins'],
+                  'date_description': each['add_date'].strftime('%B, %Y'),
+                  'date': each['add_date'],
+                }
+            else:
+                earnings_by_question[group_key]['coins'] += each['coins']
+
+        for each in records_interests.sort('add_date', -1):
+            bank = (self.db.Bank.collection
+                    .find_one({'_id': each['bank']}, ('name', 'location')))
+            location = (self.db.Location
+                        .find_one({'_id': bank['location']}))
+            earning = {
+              'type': 'Bank interest',
+              'coins': each['coins'],
+              'date_description': each['add_date'].strftime(FULL_DATE_FMT),
+              'date': each['add_date'],
+              'description': '%s in %s' % (bank['name'], location)
+            }
+            earnings.append(earning)
+
+        count += len(earnings_by_question)
+        earnings.extend(earnings_by_question.values())
+
+        earnings.sort(key=lambda x: x['date'], reverse=True)
+        earnings = earnings[:limit]
+        for each in earnings:
+            each['date'] = each.pop('date_description')
+
+        return earnings, count
 
 
 @route('/location.json$', name='location')
@@ -1407,7 +1474,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['lng'] = location['lng']
             data['count_pictures'] = self.get_pictures_count(location)
             data['count_messages'] = self.get_messages_count(location)
-
+            data['count_banks'] = self.get_banks_count(location)
             data['has_introduction'] = bool(self.get_intro_html(location))
             data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
             data['state'] = self.get_state()
@@ -1424,6 +1491,10 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 break
             day += 1
         return day
+
+    def get_banks_count(self, location):
+        search = {'location': location['_id']}
+        return self.db.Bank.find(search).count()
 
     def get_pictures_count(self, location):
         search = {'location': location['_id'], 'published': True}
@@ -2526,6 +2597,8 @@ class BaseAuthHandler(BaseHandler):
           self.db.LocationMessage,
           self.db.QuestionRating,
           self.db.Award,
+          self.db.Deposit,
+          self.db.InterestEarning,
         )
 
         for each in models:
@@ -2652,6 +2725,8 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             #raise HTTPError(500, "Google auth failed")
         if not user.get('email'):
             raise HTTPError(500, "No email provided")
+
+#        user={u'username': u'martin', u'superuser': False, u'first_name': u'Martin', u'last_name': u'Seehuusen', u'anonymous': False, u'add_date': datetime.datetime(2012, 6, 11, 0, 51, 4, 40000), u'password': u'5c0a5392-063d-433c-842d-43d01a148f47', u'modify_date': datetime.datetime(2012, 6, 11, 2, 7, 24, 226000), u'current_location': ObjectId('4f3d6fc974a1f83646000001'), u'_id': ObjectId('4fd540f874a1f866e7000079'), u'email': u'martin@msdesigns.com.au'}
 
         user_struct = user
         #locale = user.get('locale')  # not sure what to do with this yet
@@ -3369,10 +3444,179 @@ class AwardsTweetHandler(AwardsHandler):
                 ))
                 short_url = url
 
-        self.write({'text': 'I was awarded the "%s" award on Around The World\n%s' %
-                     (award['description'], short_url),
-                    'url': short_url})
+        self.write({
+          'text': 'I was awarded the "%s" award on Around The World\n%s @ardthewrld' %
+            (award['description'], short_url),
+          'url': short_url,
+        })
         self.finish()
+
+
+@route('/banks.json', name='banks')
+class BanksHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        data = {}
+
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        data['location_name'] = current_location['city']
+
+        def describe_bank(bank):
+            other_cities = []
+            for each in (self.db.Bank.collection
+                         .find({'name': bank['name']}, ('location',))):
+                if each['location'] == bank['location']:
+                    continue
+                other_cities.append(
+                  unicode(self.db.Location.find_one({'_id': each['location']}))
+                )
+            deposits = (self.db.Deposit.collection
+                        .find({'bank': bank['_id'], 'user': user['_id']}))
+            info = {
+              'id': str(bank['_id']),
+              'name': bank['name'],
+              'open': bank['open'],
+              'default_interest_rate': bank['default_interest_rate'],
+              'withdrawal_fee': bank['withdrawal_fee'],
+              'deposit_fee': bank['deposit_fee'],
+              'other_cities': other_cities,
+              'has_account': deposits.count() > 0,
+              'sum': sum(x['amount'] for x in deposits),
+              'interest': self.calculate_compound_interest(deposits),
+            }
+            return info
+
+        if self.get_argument('id', None):
+            bank = self._get_bank(self.get_argument('id'))
+            if not bank:
+                self.write({'error': 'INVALIDAWARD'})
+                return
+            data['bank'] = describe_bank(bank)
+        else:
+            available = (self.db.Bank
+                     .find({'location': current_location['_id']})
+                     .sort('name'))
+            banks = []
+            for bank in available:
+                banks.append(describe_bank(bank))
+            data['banks'] = banks
+        self.write(data)
+
+    def _get_bank(self, _id):
+        try:
+            bank = self.db.Bank.find_one({'_id': ObjectId(_id)})
+            assert bank
+        except:
+            logging.error("Unable to find bank %r" % _id, exc_info=True)
+            return
+        return bank
+
+    def calculate_compound_interest(self, deposits):
+        total = 0
+        today = datetime.datetime.utcnow()
+        deposits.rewind()
+        for deposit in deposits:
+            days = (today - deposit['add_date']).days
+            if not days:
+                continue
+            rate = deposit['interest_rate'] / 100.0 + 1.0
+            #print days
+            #print rate
+            #print deposit['amount']
+            total += deposit['amount'] * rate ** days - deposit['amount']
+            #print
+        return int(round(total))
+
+
+    def post(self):
+        amount = self.get_argument('amount')
+        action = self.get_argument('action')
+
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        user_settings = self.get_user_settings(user)
+
+        try:
+            _id = self.get_argument('id')
+            bank = self.db.Bank.find_one({'_id': ObjectId(_id)})
+            assert bank
+        except (InvalidId, AssertionError):
+            raise tornado.web.HTTPError(400, 'Invalid bank')
+        if bank['location'] != current_location['_id']:
+            raise tornado.web.HTTPError(400, 'Invalid bank location')
+
+        data = {}
+        errors = {}
+        try:
+            amount = int(amount.replace(',', ''))
+            assert amount > 0
+        except:
+            errors['amount'] = "Must be a number greater than zero"
+        # check that you have enough money to deposit
+        if action in ('open', 'deposit'):
+            if bank['deposit_fee'] > user_settings['coins_total']:
+                errors['deposit_fee'] = "Not enough coins to deposit"
+
+            if 'amount' not in errors:
+                # check the amount
+                if amount > user_settings['coins_total']:
+                    errors['amount'] = "You only have %s coins" % user_settings['coins_total']
+        elif action == 'withdraw':
+            deposits = (self.db.Deposit.collection
+                        .find({'bank': bank['_id'], 'user': user['_id']}))
+            balance = sum(x['amount'] for x in deposits)
+            interest = self.calculate_compound_interest(deposits)
+            total = balance + interest
+            if amount > total:
+                errors['amount'] = 'Not enough coins to make this withdrawal'
+        else:
+            raise tornado.web.HTTPError(400, 'Invalid bank action')
+
+        if not errors:
+            # go ahead and do it
+            if action == 'withdraw':
+                user_settings['coins_total'] += amount
+                user_settings['coins_total'] -= bank['withdrawal_fee']
+                user_settings.save()
+                left = total - amount
+                if interest:
+                    interest_earning = self.db.InterestEarning()
+                    interest_earning['user'] = user['_id']
+                    interest_earning['bank'] = bank['_id']
+                    interest_earning['coins'] = interest
+                    interest_earning.save()
+
+                for each in (self.db.Deposit
+                             .find({'bank': bank['_id'], 'user': user['_id']})):
+                    each.delete()
+                if left:
+                    deposit = self.db.Deposit()
+                    deposit['bank'] = bank['_id']
+                    deposit['user'] = user['_id']
+                    deposit['amount'] = left
+                    deposit['interest_rate'] = bank['default_interest_rate']
+                    deposit.save()
+                data['amount'] = amount - bank['withdrawal_fee']
+
+            else:
+                if user_settings['coins_total'] < (amount + bank['deposit_fee']):
+                    amount -= amount + bank['deposit_fee'] - user_settings['coins_total']
+
+                deposit = self.db.Deposit()
+                deposit['user'] = user['_id']
+                deposit['bank'] = bank['_id']
+                deposit['amount'] = amount
+                deposit['interest_rate'] = bank['default_interest_rate']
+                deposit.save()
+
+                user_settings['coins_total'] -= amount
+                user_settings['coins_total'] -= bank['deposit_fee']
+                user_settings.save()
+                data['amount'] = amount + bank['deposit_fee']
+        else:
+            data['errors'] = errors
+        self.write(data)
 
 
 # this handler gets automatically appended last to all handlers inside app.py

@@ -75,6 +75,16 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'user')
 
+    collection = db.Bank.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'location')
+
+    collection = db.Deposit.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+
     test()
 
 

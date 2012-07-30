@@ -3,6 +3,7 @@ import mimetypes
 import re
 import urllib
 from pymongo.objectid import ObjectId
+from tornado.web import HTTPError
 from tornado_utils.routes import route
 from .forms import LocationForm, LocationPictureForm
 from geopy import geocoders

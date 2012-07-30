@@ -49,9 +49,12 @@ var State = (function() {
     var b_float = parseFloat(e.text().replace(/[^\d]/g, ''));
     var b = parseInt(b_float);
     if (animated) {
-      var c = 0, incr = 1;
+      var c = 0;
+      var incr;
+      if (delta > 0) incr = 1;
+      else incr = -1;
       var deltainterval = setInterval(function() {
-        if (c >= delta) {
+        if ((delta > 0 && c >= delta) || (delta < 0 && c <= delta)) {
           clearInterval(deltainterval);
           // make sure it really is right
           e.text(Utils.formatCost(parseInt(b_float + delta)) + ' ' + suffix);
@@ -62,7 +65,11 @@ var State = (function() {
           e.text(Utils.formatCost(b + c) + ' ' + suffix);
         }
         c += incr;
-        incr++;
+        if (delta > 0) {
+          incr++;
+        } else {
+          incr--;
+        }
       }, 35);
     } else {
       e.text(Utils.formatCost(b + delta) + ' ' + suffix);

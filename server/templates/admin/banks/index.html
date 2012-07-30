@@ -1,0 +1,49 @@
+{% extends "../base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q_city"],
+tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="available"] { width:50px; }
+tfoot th select[name="countries"] { width:150px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>{{ count }} banks {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="table condensed-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Rates/Fees</th>
+            <th>Assets</th>
+            <th>Added</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bank, location, sum_deposits in banks %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_bank', bank['_id']) }}">{{ bank['name'] }}</a>
+              {% if not bank['open'] %}
+                <span class="label warning">Closed</span>
+              {% end %}
+            </td>
+            <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
+            <td>{{ bank['default_interest_rate'] }}%
+            </td>
+            <td>{% module Thousands(sum_deposits) %} coins</td>
+            <td>{% module TimeAgo(bank['add_date']) %}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      {% include "../_pagination.html" %}
+    </form>
+{% end %}

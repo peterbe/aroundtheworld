@@ -1,0 +1,35 @@
+{% extends "../base.html" %}
+
+{% block extrahead %}
+<style>
+#search-results {
+  float:right;
+  width:40%;
+}
+</style>
+{% end %}
+
+{% block extrajs %}
+<script src="{{ static_url('admin/location.js') }}"></script>
+<script>
+$(function() {
+});
+</script>
+{% end %}
+
+{% block content %}
+
+  <h2>Add Bank</h2>
+
+  {% include "../_show_form_errors.html" %}
+
+  <div id="search-results" style="display:none">
+    <h3>Do you mean?</h3>
+    <ul>
+    </ul>
+  </div>
+
+  <form action="." method="post">{% module xsrf_form_html() %}
+  {% include "../_show_fieldset.html" %}
+  </form>
+{% end %}

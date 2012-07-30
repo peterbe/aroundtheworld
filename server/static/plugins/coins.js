@@ -4,6 +4,8 @@ var Coins = (function() {
   var transactions_shown = 0;
   var jobs_page = 0;
   var jobs_shown = 0;
+  var earnings_page = 0;
+  var earnings_shown = 0;
 
   function remove_previous_count(text) {
     return $.trim(text.replace(/\(\d+\)/g, ''));
@@ -92,6 +94,48 @@ var Coins = (function() {
     }
   }
 
+  function _show_earnings(earnings, count, clear) {
+    if (clear) {
+      $('div.earnings tbody tr', container).remove();
+    }
+    $.each(earnings, function(i, each) {
+      var c = $('<tr>');
+      $('<td>')
+        .addClass('earning-type')
+        .text(each.type)
+          .appendTo(c);
+      $('<td>')
+        .addClass('earning-description')
+        .html(each.description)
+          .appendTo(c);
+      $('<td>')
+        .addClass('earning-coins')
+        .text(Utils.formatCost(each.coins))
+          .appendTo(c);
+      $('<td>')
+        .addClass('earning-when')
+        .text(each.date)
+          .appendTo(c);
+      c.appendTo($('div.earnings tbody', container));
+      jobs_shown++;
+    });
+    if (count > earnings_shown) {
+      $('div.earnings .load-more:hidden', container).show();
+      $('div.earnings .load-more', container)
+        .off('click').click(function() {
+          $.getJSON('/coins.json', {'earnings-page': earnings_page + 1}, function(response) {
+            if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
+            earnings_page++;
+            _show_jobs(response.earnings, response.count_earnings, false);
+          });
+          return false;
+        });
+    } else {
+      $('div.earnings .load-more:visible', container).hide();
+    }
+  }
+
+
   return {
      load: function(table) {
        // NB: parameter table is currently not being used
@@ -103,18 +147,29 @@ var Coins = (function() {
 
          $.getJSON('/coins.json', {'transactions-page': 0}, function(response) {
            $('.loading:visible', container).hide();
+
            $('a[href="#tab-purchases"]', container).text(
               remove_previous_count($('a[href="#tab-purchases"]', container).text())
                  + ' (' + response.count_transactions + ')');
            _show_transactions(response.transactions, response.count_transactions, true);
+
            $('.purchases table:hidden', container).show();
            $.getJSON('/coins.json', {'jobs-page': 0}, function(response) {
              $('a[href="#tab-jobs"]', container).text(
                 remove_previous_count($('a[href="#tab-jobs"]', container).text())
                     + ' (' + response.count_jobs + ')');
              _show_jobs(response.jobs, response.count_jobs, true);
-             Utils.update_title();
            });
+
+           $('.purchases table:hidden', container).show();
+           $.getJSON('/coins.json', {'earnings-page': 0}, function(response) {
+             $('a[href="#tab-earnings"]', container).text(
+                remove_previous_count($('a[href="#tab-earnings"]', container).text())
+                    + ' (' + response.count_earnings + ')');
+             _show_earnings(response.earnings, response.count_earnings, true);
+           });
+
+           Utils.update_title();
          });
        });
 

@@ -62,6 +62,18 @@
               </ul>
             </li>
 
+            <!-- Banks -->
+            <li class="dropdown{% if '/banks/' in current_url %} active{% end %}">
+              <a class="dropdown-toggle" data-toggle="dropdown"
+  	         href="#location-menu">Banks <b class="caret"></b>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="{{ reverse_url('admin_banks') }}">All banks</a></li>
+                <li><a href="{{ reverse_url('admin_add_bank') }}">Add a new bank</a></li>
+              </ul>
+            </li>
+
+
             {% if is_superuser or is_ambassador %}
             <li {% if '/documents/' in current_url %}class="active"{% end %}
               ><a href="{{ reverse_url('admin_documents') }}">Documents</a></li>

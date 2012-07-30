@@ -170,6 +170,12 @@ var City = (function() {
          } else {
            $('.pictures-link', container).hide();
          }
+         if (response.count_banks) {
+           $('.banks-link', container).show();
+           $('.banks-link .count', container).text('(' + response.count_banks + ')');
+         } else {
+           $('.banks-link', container).hide();
+         }
          if (page == 'embassy') {
            _load_embassy(function() {
              $('.embassy .none', container).hide();

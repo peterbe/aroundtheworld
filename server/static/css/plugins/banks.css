@@ -1,0 +1,28 @@
+#banks .bank, #banks .deposit-money {
+  width: 50%;
+  margin-bottom: 30px;
+}
+#banks .bank-head {
+  padding: 5px 10px;
+  background-color: #efefef;
+  border-top: 1px solid #ccc;
+}
+#banks .bank-head .bank-name {
+  font-size:23px
+}
+
+#banks .current-balance {
+    font-size: 140%;
+}
+
+#banks .current-interest {
+    font-size: 120%;
+}
+
+#banks .amount-error-text {
+    font-weight: bold;
+    color: red;
+}
+#banks .bank-branches {
+    float: right;
+}

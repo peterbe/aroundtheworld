@@ -1,0 +1,91 @@
+<div id="banks" class="overlay" style="display:none">
+  <img src="." data-src="{{ static_url('images/bank-icon.png') }}" alt="Banks" class="overlay-image deferred">
+  <h2>Banks in <span class="location-name"></span></h2>
+
+  <form class="transact " style="display:none">
+    <div class="bank-head">
+    <h3><span class="bank-name">Handelsbanken</span> -
+        <span class="deposit-action">Open a new account</span></h3>
+    </div>
+    <div class="control-group">
+      <label class="control-label" for="id-amount">Amount:</label>
+      <div class="controls">
+        <input style="width:100px" type="text" name="amount" class="input-xlarge" id="id-amount"> coins
+        <p class="help-text amount-error-text" style="display:none"></p>
+      </div>
+    </div>
+
+    <p class="balance" style="display:none">Your current balance: <strong>0,000 coins</strong>.</p>
+
+    <div>
+      <button type="submit" class="btn btn-primary">Confirm</button>
+      <button class="btn" name="cancel">Cancel</button>
+    </div>
+
+  </form>
+
+  <div class="available-banks" style="display:none">
+    <p>Banks are a great way to save and earn coins whilst you're away.<br>
+    You earn interest on your savings which is a great way of investing your coins.</p>
+
+      <div class="sample-bank" style="display:none">
+        <div class="bank-head">
+          <h3><span class="bank-name">Sample name</span>
+          <span class="label label-important">Closed!</span>
+          </h3>
+        </div>
+        <div class="bank-branches branches-none">
+          <p>There are <strong>NO</strong> other <span class="bank-name">Sample Name</span>
+          outside <span class="location-name"></span>.
+          </p>
+        </div>
+        <div class="bank-branches branches-some">
+          <p>Sample Bank has branches in:</p>
+          <ul>
+            <li>London, United Kingdom</li>
+            <li>Atlanta, Georgia</li>
+          </ul>
+        </div>
+
+        <dl class="dl-horizontal">
+          <dt>Interest rate:</dt>
+          <dd><strong class="default-interest-rate">99.5%</strong> <small>per day</small></dd>
+          <dt>Deposit fee:</dt>
+          <dd class="deposit-fee">13 coins</dd>
+          <dt>Withdrawal fee:</dt>
+          <dd class="withdrawal-fee">FREE</dd>
+        </dl>
+
+        <div class="balance">
+          <p>You currently have <strong class="current-balance">0,000 coins</strong> here.
+          <strong class="total-deposited">00 coins</strong> deposited +
+          <strong class="total-interest">00 coins</strong> interest earned.
+          </p>
+        </div>
+
+        <button class="btn btn-large open">Open an account today</button>
+        <button class="btn deposit">Deposit more coins</button>
+        <button class="btn withdraw">Withdraw some of your savings</button>
+      </div>
+
+
+    <div class="index">
+
+    </div>
+  </div>
+
+  <div class="still-anonymous" style="display:none">
+  <p>Banks are a great way to save and earn coins whilst you're away.<br>
+  This is something you can only do if you're signed in properly.</p>
+  <p>
+    <a href="#login" class="overlay-changer"><strong>Sign in to start using banks</strong></a>
+  </p>
+
+  </div>
+
+
+  <p class="exit">
+  <a href="#city" class="overlay-changer">Go back to the city</a>
+  </p>
+
+</div>

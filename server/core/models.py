@@ -666,3 +666,46 @@ class Award(BaseDocument):
     default_values = {
       'read': False,
     }
+
+
+@register
+class Bank(BaseDocument):
+    __collection__ = 'banks'
+    structure = {
+      'location': ObjectId,
+      'name': unicode,
+      'default_interest_rate': float,
+      'deposit_fee': int,
+      'withdrawal_fee': int,
+      'open': bool,
+    }
+
+    default_interest_rate = {
+      'deposit_fee': 0,
+      'withdrawal_fee': 0,
+      'open': True,
+    }
+
+    def __unicode__(self):
+        return self['name']
+
+
+@register
+class Deposit(BaseDocument):
+    __collection__ = 'bank-deposits'
+    structure = {
+      'user': ObjectId,
+      'bank': ObjectId,
+      'amount': int,
+      'interest_rate': float,
+    }
+
+
+@register
+class InterestEarning(BaseDocument):
+    __collection__ = 'interestearnings'
+    structure = {
+      'user': ObjectId,
+      'bank': ObjectId,
+      'coins': int,
+    }

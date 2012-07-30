@@ -1,5 +1,5 @@
 from wtforms import (Form, BooleanField, TextField, TextAreaField, validators,
-                     SelectField, SelectMultipleField, FileField)
+                     SelectField, SelectMultipleField, FileField, IntegerField)
 from wtforms.widgets import html_params, TextInput, TextArea as WTTextArea
 from wtforms.validators import ValidationError
 
@@ -251,6 +251,25 @@ class LocationForm(BaseForm):
     available = BooleanField("Available", [],
                              description="Decides if you can fly to it")
 
+
+class BankForm(BaseForm):
+    location = SelectField("Location",
+                      [validators.Required()])
+    name = TextField("Name", [validators.Required()])
+    default_interest_rate = TextField("Default interest rate",
+                                      [validators.Required(), Floatable()])
+    open = BooleanField("Open", [], default=True)
+    deposit_fee = IntegerField("Deposit fee", [], default=0)
+    withdrawal_fee = IntegerField("Withdrawal fee", [], default=0)
+
+    def __init__(self, *args, **kwargs):
+        super(BankForm, self).__init__(*args, **kwargs)
+        self.location.choices = [
+          (str(x['_id']), '%s (%s)' % (x['code'], x['country']))
+          for x in kwargs['locations']
+        ]
+        if kwargs.get('location'):
+            self.location.data = kwargs['location']
 
 class DocumentForm(BaseForm):
     source = TextAreaField("Source", [validators.Required()])
