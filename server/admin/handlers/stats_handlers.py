@@ -64,6 +64,8 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
             self.write({'data': self._get_jobs_data()})
         elif self.get_argument('get', None) == 'awards_data':
             self.write({'data': self._get_awards_data()})
+        elif self.get_argument('get', None) == 'miles_travelled_data':
+            self.write({'data': self._get_miles_travelled_data()})
         elif self.get_argument('get', None):
             raise NotImplementedError(self.get_argument('get'))
         else:
@@ -173,4 +175,36 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
               'data': [{'x': int(time.mktime(a.timetuple())), 'y': b} for (a, b) in data]
             })
 
+        return series
+
+    def _get_miles_travelled_data(self, intervals=10):
+        min_ = 0.0
+        peter = self.db.User.find_one({'username': 'peterbe'})  # exceptional
+        max_, = (self.db.UserSettings
+                 .find({'user': {'$ne': peter['_id']}}, ('miles_total',))
+                 .sort('miles_total', -1)
+                 .limit(1))
+        max_ = max_['miles_total']
+        bands = defaultdict(int)
+        chunk = (max_ - min_) / intervals
+        data = []
+
+        colors = ColorPump()
+
+        series = []
+        for i in range(intervals):
+            a, b = i * chunk, (i + 1) * chunk
+            a = int(round(a / 1000.0) * 1000)
+            b = int(round(b / 1000.0) * 1000)
+            c = (self.db.UserSettings
+                 .find({'miles_total': {'$gte': a, '$lt': b}})
+                 .count())
+            data = []
+            for j in range(intervals):
+                data.append({'x': j, 'y': c if i == j else 0})
+            series.append({
+              'name': '%d to %d' % (a, b),
+              'color': colors.next(),
+              'data': data
+            })
         return series
