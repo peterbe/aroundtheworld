@@ -1048,6 +1048,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 earning = self.db.QuestionAnswerEarning()
                 earning['question'] = question['_id']
                 earning['answer'] = answer_obj['_id']
+                earning['user'] = question['author']
                 earning['coins'] = QuestionWriterHandler.COINS_EARNING_VALUE
                 earning.save()
 
