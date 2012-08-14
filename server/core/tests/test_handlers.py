@@ -14,7 +14,8 @@ import settings
 import tornado_utils.send_mail as mail
 from core.handlers import (
   PinpointHandler, GoogleAuthHandler, QuizzingHandler, CityHandler,
-  PictureDetectiveHandler
+  PictureDetectiveHandler,
+  FULL_DATE_FMT
 )
 
 
@@ -1458,7 +1459,6 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(r['question_answers'], 0)
         self.assertEqual(r['question_answers_right'], 0)
         self.assertEqual(r['question_answered_unique_questions'], 0)
-        #print r
 
     def test_quizzing_with_pictures(self):
 
@@ -1524,3 +1524,340 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         r = self.client.get('/quizzing,Tour+Guide')
         self.assertEqual(r.headers['location'], '/#quizzing,Tour+Guide')
+
+    def test_coins_transactions_page(self):
+        url = self.reverse_url('coins')
+        user = self._login(location=self.newyork)
+
+        r = self.get_struct(url, {'transactions-page': 0})
+        self.assertEqual(r['count_transactions'], 0)
+        self.assertEqual(r['transactions'], [])
+
+        hongkong = self.db.Location()
+        hongkong['city'] = u'Hong Kong'
+        hongkong['country'] = u'China'
+        hongkong['lat'] = 100.0
+        hongkong['lng'] = -100.0
+        hongkong.save()
+
+        flight = self.db.Flight()
+        flight['user'] = user['_id']
+        flight['from'] = self.newyork['_id']
+        flight['to'] = hongkong['_id']
+        flight['miles'] = 1000.0
+        flight.save()
+
+        transaction = self.db.Transaction()
+        transaction['user'] = user['_id']
+        transaction['cost'] = 100
+        transaction['flight'] = flight['_id']
+        transaction.save()
+
+        r = self.get_struct(url, {'transactions-page': 0})
+        self.assertEqual(r['count_transactions'], 1)
+        assert len(r['transactions']) == 1
+        res, = r['transactions']
+        self.assertEqual(res['date'],
+                         transaction['add_date'].strftime(FULL_DATE_FMT))
+        self.assertEqual(res['cost'], 100)
+        self.assertEqual(res['type'], 'flight')
+        self.assertTrue(unicode(self.newyork) in res['description'])
+        self.assertTrue(unicode(hongkong) in res['description'])
+
+    def test_coins_jobs_page(self):
+        url = self.reverse_url('coins')
+        user = self._login(location=self.newyork)
+
+        r = self.get_struct(url, {'jobs-page': 0})
+        self.assertEqual(r['count_jobs'], 0)
+        self.assertEqual(r['jobs'], [])
+
+        job = self.db.Job()
+        job['user'] = user['_id']
+        job['coins'] = 100
+        job['category'] = self.tour_guide['_id']
+        job['location'] = self.newyork['_id']
+        job.save()
+
+        r = self.get_struct(url, {'jobs-page': 0})
+        self.assertEqual(r['count_jobs'], 1)
+        res, = r['jobs']
+        self.assertEqual(res['date'],
+                         job['add_date'].strftime(FULL_DATE_FMT))
+
+        self.assertEqual(res['coins'], 100)
+        self.assertEqual(res['location'], unicode(self.newyork))
+        self.assertTrue(self.tour_guide['name'] in res['description'])
+
+    def test_coins_earnings_questions_page(self):
+        url = self.reverse_url('coins')
+        user = self._login(location=self.newyork)
+
+        r = self.get_struct(url, {'earnings-page': 0})
+        self.assertEqual(r['earnings_total'], 0)
+        self.assertEqual(r['earnings'], [])
+
+        q1 = self._create_question(self.tour_guide, self.newyork, published=True)
+        q2 = self._create_question(self.tour_guide, self.newyork, published=True)
+        q3 = self._create_question(self.tour_guide, self.newyork, published=True)
+
+        for q in q1, q2, q3:
+            q['author'] = user['_id']
+            q.save()
+
+        martin = self.db.User()
+        martin['username'] = u'martin'
+        martin.save()
+
+        s1 = self.db.QuestionSession()
+        s1['user'] = martin['_id']
+        s1['location'] = self.newyork['_id']
+        s1['category'] = self.tour_guide['_id']
+        s1['finish_date'] = datetime.datetime.utcnow()
+        s1['start_date'] = datetime.datetime.utcnow() - datetime.timedelta(minutes=1)
+        s1['questions'] = [q1['_id'], q2['_id']]
+        s1.save()
+
+        sa1 = self.db.SessionAnswer()
+        sa1['session'] = s1['_id']
+        sa1['question'] = q1['_id']
+        sa1['answer'] = u'yes'
+        sa1['correct'] = True
+        sa1['time'] = 3.0
+        sa1['points'] = 5.0
+        sa1['timedout'] = False
+        sa1['first_time'] = True
+        sa1['first_time_correct'] = True
+        sa1.save()
+
+        sa2 = self.db.SessionAnswer()
+        sa2['session'] = s1['_id']
+        sa2['question'] = q2['_id']
+        sa2['answer'] = u'yes'
+        sa2['correct'] = True
+        sa2['time'] = 3.0
+        sa2['points'] = 5.0
+        sa2['timedout'] = False
+        sa2['first_time'] = True
+        sa2['first_time_correct'] = True
+        sa2.save()
+
+        s2 = self.db.QuestionSession()
+        s2['user'] = martin['_id']
+        s2['location'] = self.newyork['_id']
+        s2['category'] = self.tour_guide['_id']
+        s2['finish_date'] = datetime.datetime.utcnow()
+        s2['start_date'] = datetime.datetime.utcnow() - datetime.timedelta(minutes=1)
+        s2['questions'] = [q2['_id'], q3['_id']]
+        s2.save()
+
+        sa3 = self.db.SessionAnswer()
+        sa3['session'] = s2['_id']
+        sa3['question'] = q2['_id']
+        sa3['answer'] = u'not'
+        sa3['correct'] = False
+        sa3['time'] = 3.0
+        sa3['points'] = 5.0
+        sa3['timedout'] = False
+        sa3['first_time'] = False
+        sa3['first_time_correct'] = False
+        sa3.save()
+
+        sa4 = self.db.SessionAnswer()
+        sa4['session'] = s2['_id']
+        sa4['question'] = q3['_id']
+        sa4['answer'] = u'yes'
+        sa4['correct'] = True
+        sa4['time'] = 3.0
+        sa4['points'] = 5.0
+        sa4['timedout'] = False
+        sa4['first_time'] = True
+        sa4['first_time_correct'] = True
+        sa4.save()
+
+        qae1 = self.db.QuestionAnswerEarning()
+        qae1['user'] = user['_id']
+        qae1['question'] = q1['_id']
+        qae1['answer'] = sa1['_id']
+        qae1['coins'] = 1
+        qae1.save()
+
+        qae2 = self.db.QuestionAnswerEarning()
+        qae2['user'] = user['_id']
+        qae2['question'] = q2['_id']
+        qae2['answer'] = sa2['_id']
+        qae2['coins'] = 1
+        qae2.save()
+
+        qae3 = self.db.QuestionAnswerEarning()
+        qae3['user'] = user['_id']
+        qae3['question'] = q2['_id']
+        qae3['answer'] = sa3['_id']
+        qae3['coins'] = 1
+        qae3.save()
+
+        qae4 = self.db.QuestionAnswerEarning()
+        qae4['user'] = user['_id']
+        qae4['question'] = q3['_id']
+        qae4['answer'] = sa3['_id']
+        qae4['coins'] = 1
+        qae4.save()
+
+        r = self.get_struct(url, {'earnings-page': 0})
+        self.assertEqual(r['earnings_total'], 4)
+        # earnings on 4 questions but two answers to the same question
+        assert len(r['earnings']) == 3
+        groups = {}
+        for each in r['earnings']:
+            if q2['text'] in each['description']:
+                self.assertEqual(each['coins'], 2)
+            else:
+                self.assertEqual(each['coins'], 1)
+
+    def test_coins_earnings_interests_page(self):
+        url = self.reverse_url('coins')
+        user = self._login(location=self.newyork)
+
+        r = self.get_struct(url, {'earnings-page': 0})
+        self.assertEqual(r['earnings_total'], 0)
+        self.assertEqual(r['earnings'], [])
+
+        bank = self.db.Bank()
+        bank['name'] = u"Handelsbanken"
+        bank['location'] = self.newyork['_id']
+        bank['default_interest_rate'] = 1.0
+        bank['deposit_fee'] = 0
+        bank['withdrawal_fee'] = 0
+        bank['open'] = True
+        bank.save()
+
+        i1 = self.db.InterestEarning()
+        i1['user'] = user['_id']
+        i1['bank'] = bank['_id']
+        i1['coins'] = 3
+        i1.save()
+
+        i2 = self.db.InterestEarning()
+        i2['user'] = user['_id']
+        i2['bank'] = bank['_id']
+        i2['coins'] = 2
+        i2.save()
+        i2['add_date'] -= datetime.timedelta(days=1)
+        i2.save()
+
+        r = self.get_struct(url, {'earnings-page': 0})
+        self.assertEqual(r['earnings_total'], 3 + 2)
+        first, second = r['earnings']
+        self.assertEqual(first['date'],
+                         i1['add_date'].strftime(FULL_DATE_FMT))
+        self.assertEqual(second['date'],
+                         i2['add_date'].strftime(FULL_DATE_FMT))
+        self.assertEqual(first['coins'], 3)
+        self.assertEqual(second['coins'], 2)
+
+    def test_coins_banks_page(self):
+        url = self.reverse_url('coins')
+        user = self._login(location=self.newyork)
+
+        r = self.get_struct(url, {'banks-page': 0})
+        self.assertEqual(r['banks_total'], 0)
+        self.assertEqual(r['banks'], [])
+
+        bank = self.db.Bank()
+        bank['name'] = u"Handelsbanken"
+        bank['location'] = self.newyork['_id']
+        bank['default_interest_rate'] = 1.5
+        bank['deposit_fee'] = 0
+        bank['withdrawal_fee'] = 0
+        bank['open'] = True
+        bank.save()
+
+        hongkong = self.db.Location()
+        hongkong['city'] = u'Hong Kong'
+        hongkong['country'] = u'China'
+        hongkong['lat'] = 100.0
+        hongkong['lng'] = -100.0
+        hongkong.save()
+
+        d1 = self.db.Deposit()
+        d1['user'] = user['_id']
+        d1['bank'] = bank['_id']
+        d1['amount'] = 1000
+        d1['interest_rate'] = 1.5
+        d1.save()
+
+        d1['add_date'] -= datetime.timedelta(days=10)
+        d1.save()
+
+        d2 = self.db.Deposit()
+        d2['user'] = user['_id']
+        d2['bank'] = bank['_id']
+        d2['amount'] = 500
+        d2['interest_rate'] = 1.0
+        d2.save()
+        # note, 0 days deposit so 0 coins interest
+
+        # add a second bank with the same name but in a different location
+        bank1 = self.db.Bank()
+        bank1['name'] = bank['name']
+        bank1['location'] = hongkong['_id']
+        bank1['default_interest_rate'] = 0.5
+        bank1['deposit_fee'] = 0
+        bank1['withdrawal_fee'] = 0
+        bank1['open'] = True
+        bank1.save()
+
+        bank2 = self.db.Bank()
+        bank2['name'] = u"New York Mellon"
+        bank2['location'] = self.newyork['_id']
+        bank2['default_interest_rate'] = 2.0
+        bank2['deposit_fee'] = 0
+        bank2['withdrawal_fee'] = 0
+        bank2['open'] = True
+        bank2.save()
+
+        d1 = self.db.Deposit()
+        d1['user'] = user['_id']
+        d1['bank'] = bank2['_id']
+        d1['amount'] = 2000
+        d1['interest_rate'] = 2.0
+        d1.save()
+
+        d1['add_date'] -= datetime.timedelta(days=2)
+        d1.save()
+
+        # we have 2 deposits at bank 1
+
+        expected_bank1 = 1000 + 500
+        # compound interest for 10 days on the 1000 deposit
+
+        rate1 = 1.5 / 100.0 + 1.0
+        assert rate1 == 1.015
+        expected_bank1_interest = 1000 * rate1 ** 10 - 1000
+
+        expected_bank2 = 2000
+        rate2 = 2.0 / 100.0 + 1.0
+        assert rate2 == 1.02
+        expected_bank2_interest = 2000 * rate2 ** 2 - 2000
+
+        expected_total = (
+            expected_bank1 +
+            expected_bank1_interest +
+            expected_bank2 +
+            expected_bank2_interest
+        )
+        expected_total = int(expected_total)
+
+        r = self.get_struct(url, {'banks-page': 0})
+        self.assertEqual(r['banks_total'], expected_total)
+        groups = {}
+        for each in r['banks']:
+            groups[each['name']] = each
+        first = groups[bank['name']]
+        second = groups[bank2['name']]
+        self.assertEqual(first['total'],
+                         int(expected_bank1 + expected_bank1_interest))
+        self.assertEqual(first['interest'], expected_bank1_interest)
+        self.assertEqual(second['total'],
+                         int(expected_bank2 + expected_bank2_interest))
+        self.assertEqual(second['interest'], expected_bank2_interest)

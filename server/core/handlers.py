@@ -1217,8 +1217,22 @@ class MilesHandler(AuthenticatedBaseHandler):
         return flights
 
 
+class BankingMixin(object):
+
+    def calculate_compound_interest(self, deposits):
+        total = 0
+        today = datetime.datetime.utcnow()
+        for deposit in deposits:
+            days = (today - deposit['add_date']).days
+            if not days:
+                continue
+            rate = deposit['interest_rate'] / 100.0 + 1.0
+            total += deposit['amount'] * rate ** days - deposit['amount']
+        return total
+
+
 @route('/coins.json$', name='coins')
-class CoinsHandler(AuthenticatedBaseHandler):
+class CoinsHandler(AuthenticatedBaseHandler, BankingMixin):
 
     def get(self):
         user = self.get_current_user()
@@ -1230,8 +1244,11 @@ class CoinsHandler(AuthenticatedBaseHandler):
             data['jobs'], count = self.get_jobs(user)
             data['count_jobs'] = count
         if self.get_argument('earnings-page', None) is not None:
-            data['earnings'], count = self.get_earnings(user)
-            data['count_earnings'] = count
+            data['earnings'], total = self.get_earnings(user)
+            data['earnings_total'] = total
+        if self.get_argument('banks-page', None) is not None:
+            data['banks'], total = self.get_banks(user)
+            data['banks_total'] = total
         self.write(data)
 
     def get_jobs(self, user, limit=10):
@@ -1297,24 +1314,20 @@ class CoinsHandler(AuthenticatedBaseHandler):
             transactions.append(transaction)
         return transactions, count
 
-    def get_earnings(self, user, limit=30):
+    def get_earnings(self, user, limit=20):
         earnings = []
+        total = 0
         filter_ = {'user': user['_id']}
         records_questions = self.db.QuestionAnswerEarning.collection.find(filter_)
         records_interests = self.db.InterestEarning.collection.find(filter_)
 
-        # don't add the questions answered yet, since that's lumped
-        count = records_interests.count()
-
         earnings_by_question = defaultdict(int)
         _questions = {}
-        for each in records_questions.sort('add_date', -1):
-            if each['question'] not in _questions:
-                _questions[each['question']] = (
-                  self.db.Question.collection
-                  .find_one({'_id': each['question']},
-                                  ('text', 'correct'))
-                )
+        for question in (self.db.Question.collection
+                         .find({'author': user['_id']},
+                               ('text', 'correct'))):
+            _questions[question['_id']] = question
+        for each in records_questions:
             question = _questions[each['question']]
             earning = {
               'type': 'question',
@@ -1334,7 +1347,7 @@ class CoinsHandler(AuthenticatedBaseHandler):
                 }
             else:
                 earnings_by_question[group_key]['coins'] += each['coins']
-
+            total += each['coins']
         for each in records_interests.sort('add_date', -1):
             bank = (self.db.Bank.collection
                     .find_one({'_id': each['bank']}, ('name', 'location')))
@@ -1348,8 +1361,8 @@ class CoinsHandler(AuthenticatedBaseHandler):
               'description': '%s in %s' % (bank['name'], location)
             }
             earnings.append(earning)
+            total += each['coins']
 
-        count += len(earnings_by_question)
         earnings.extend(earnings_by_question.values())
 
         earnings.sort(key=lambda x: x['date'], reverse=True)
@@ -1357,7 +1370,48 @@ class CoinsHandler(AuthenticatedBaseHandler):
         for each in earnings:
             each['date'] = each.pop('date_description')
 
-        return earnings, count
+        return earnings, total
+
+    def get_banks(self, user):
+        banks = {}
+
+        current_location = self.get_current_location(user)
+
+        filter_ = {'user': user['_id']}
+        bank_ids = (self.db.Deposit.collection
+                    .find(filter_)
+                    .distinct('bank'))
+        banks = []
+        total_total = 0
+        for bank_id in bank_ids:
+            bank = self.db.Bank.collection.find_one({'_id': bank_id})
+            cities = []
+            in_current_location = False
+            for each in (self.db.Bank.collection
+                         .find({'name': bank['name']}, ('location',))):
+                location = self.db.Location.find_one({'_id': each['location']})
+                if location == current_location:
+                    in_current_location = True
+                else:
+                    cities.append(unicode(location))
+
+            deposits = (self.db.Deposit.collection
+                        .find(dict(filter_, bank=bank_id)))
+            deposited = sum(x['amount'] for x in deposits)
+            deposits.rewind()
+            interest = self.calculate_compound_interest(deposits)
+            total = deposited + interest
+            banks.append({
+              'name': bank['name'],
+              'deposited': int(deposited),
+              'total': int(total),
+              'interest': interest,
+              'locations': cities,
+              'in_current_location': in_current_location,
+            })
+            total_total += total
+
+        return banks, int(total_total)
 
 
 @route('/location.json$', name='location')
@@ -3453,7 +3507,7 @@ class AwardsTweetHandler(AwardsHandler):
 
 
 @route('/banks.json', name='banks')
-class BanksHandler(AuthenticatedBaseHandler):
+class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
 
     def get(self):
         data = {}
@@ -3473,6 +3527,8 @@ class BanksHandler(AuthenticatedBaseHandler):
                 )
             deposits = (self.db.Deposit.collection
                         .find({'bank': bank['_id'], 'user': user['_id']}))
+            sum_ = sum(x['amount'] for x in deposits)
+            deposits.rewind()
             info = {
               'id': str(bank['_id']),
               'name': bank['name'],
@@ -3482,7 +3538,7 @@ class BanksHandler(AuthenticatedBaseHandler):
               'deposit_fee': bank['deposit_fee'],
               'other_cities': other_cities,
               'has_account': deposits.count() > 0,
-              'sum': sum(x['amount'] for x in deposits),
+              'sum': sum_,
               'interest': self.calculate_compound_interest(deposits),
             }
             return info
@@ -3511,23 +3567,6 @@ class BanksHandler(AuthenticatedBaseHandler):
             logging.error("Unable to find bank %r" % _id, exc_info=True)
             return
         return bank
-
-    def calculate_compound_interest(self, deposits):
-        total = 0
-        today = datetime.datetime.utcnow()
-        deposits.rewind()
-        for deposit in deposits:
-            days = (today - deposit['add_date']).days
-            if not days:
-                continue
-            rate = deposit['interest_rate'] / 100.0 + 1.0
-            #print days
-            #print rate
-            #print deposit['amount']
-            total += deposit['amount'] * rate ** days - deposit['amount']
-            #print
-        return int(round(total))
-
 
     def post(self):
         amount = self.get_argument('amount')
