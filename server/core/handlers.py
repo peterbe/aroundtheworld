@@ -2368,7 +2368,7 @@ class AirportHandler(AuthenticatedBaseHandler):
         self.write(data)
 
     def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .07))
+        return self.BASE_PRICE + int(round(miles * .08))
 
 
 @route('/fly.json$', name='fly')
