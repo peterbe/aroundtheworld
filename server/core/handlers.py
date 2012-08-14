@@ -1054,6 +1054,12 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 earning['coins'] = QuestionWriterHandler.COINS_EARNING_VALUE
                 earning.save()
 
+                # also, add it to the users balance immediately
+                author_settings = (self.db.UserSettings
+                                   .find_one({'user': question['author']}))
+                author_settings['coins_total'] += earning['coins']
+                author_settings.save()
+
         self.write(data)
 
     def _first_time(self, user, question, session):

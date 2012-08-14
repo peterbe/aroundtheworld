@@ -11,6 +11,10 @@ var Coins = (function() {
     return $.trim(text.replace(/\(\d+\)/g, ''));
   }
 
+  function remove_previous_coins(text) {
+    return $.trim(text.replace(/\([\d,]+ coins\)/g, ''));
+  }
+
   function _show_transactions(transactions, count, clear) {
     if (clear) {
       $('div.purchases tbody tr', container).remove();
@@ -191,14 +195,14 @@ var Coins = (function() {
 
            $.getJSON('/coins.json', {'earnings-page': 0}, function(response) {
              $('a[href="#tab-earnings"]', container).text(
-                remove_previous_count($('a[href="#tab-earnings"]', container).text())
+                remove_previous_coins($('a[href="#tab-earnings"]', container).text())
                     + ' (' + Utils.formatCost(response.earnings_total, true) + ')');
              _show_earnings(response.earnings, response.earnings_total, true);
            });
 
            $.getJSON('/coins.json', {'banks-page': 0}, function(response) {
              $('a[href="#tab-banks"]', container).text(
-                remove_previous_count($('a[href="#tab-banks"]', container).text())
+                remove_previous_coins($('a[href="#tab-banks"]', container).text())
                     + ' (' + Utils.formatCost(response.banks_total, true) + ')');
              _show_banks(response.banks, response.banks_total, true);
            });
