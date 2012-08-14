@@ -363,3 +363,5 @@ mapInitialized(function(map) {
   }
 
 });
+
+// small change to trigger new tornado_static build
