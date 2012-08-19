@@ -9,7 +9,11 @@ tfoot th select[name="countries"] { width:150px; }
 {% end %}
 
 {% block content %}
-  <p style="float:right"><a href="..">Go back to Edit user</a></p>
+  <p style="float:right">
+    <a href="..">Go back to Edit user</a>
+        &bull;
+    <a href="../total/">Total Earned</a>
+  </p>
   <h2>User journey for
   {% if user['email'] %}
   {{ user['email'] }}

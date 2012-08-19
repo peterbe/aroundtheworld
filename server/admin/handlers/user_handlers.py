@@ -1,5 +1,6 @@
 import re
 import urllib
+import random
 from pymongo.objectid import ObjectId
 from tornado_utils.routes import route
 from tornado_utils import timesince
@@ -50,10 +51,74 @@ class UsersAdminHandler(SuperuserBaseHandler):
             users.append((
               each,
               self.db.UserSettings.find_one({'user': each['_id']}),
-              _locations[each['current_location']]
+              _locations[each['current_location']],
+              self.get_total_earned(each),
             ))
         data['users'] = users
         self.render('admin/users.html', **data)
+
+@route('/admin/users/totals/', name='admin_users_totals')
+class UsersTotalEarnedAdminHandler(SuperuserBaseHandler):
+    LIMIT = 20
+
+    def get(self):
+        data = {}
+        filter_ = {}
+
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = max(0, data['page'] - 1) * self.LIMIT
+        totals = []
+        data['count'] = self.db.TotalEarned.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+        data['filtering'] = bool(filter_)
+        i = 0
+        for each in (self.db.TotalEarned
+                     .find(filter_)
+                     .sort('coins', -1)
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            i += 1
+            user = self.db.User.collection.find_one({'_id': each['user']})
+            totals.append((
+              i + skip,
+              each,
+              user,
+            ))
+        data['no_users'] = self.db.User.find().count()
+        data['no_totals'] = self.db.TotalEarned.find().count()
+        data['totals'] = totals
+        self.render('admin/users_totals.html', **data)
+
+    def post(self):
+        all_users = set([
+          x['_id'] for x in
+          self.db.User.collection.find(None, ('_id',))
+        ])
+        all_already = set([
+          x['user'] for x in
+          self.db.TotalEarned.collection.find(None, ('user',))
+        ])
+        remaining = list(all_users - all_already)
+        random.shuffle(remaining)
+        c = 0
+        for user in self.db.User.collection.find({'_id': {'$in': remaining[:1000]}}):
+            self.get_total_earned(user)
+            c += 1
+
+        self.push_flash_message(
+            '%s users processed' % c,
+            text='%s remaining' % (len(remaining) - c),
+            type_='success'
+        )
+
+        self.redirect(self.reverse_url('admin_users_totals'))
+
 
 
 @route('/admin/users/(\w{24})/', name='admin_user')
@@ -226,3 +291,18 @@ class UserJourneyAdminHandler(UserAdminHandler):
         data['events'] = events
         data['user'] = user
         self.render('admin/user_journey.html', **data)
+
+
+@route('/admin/users/(\w{24})/total/', name='admin_user_total')
+class UserTotalEarnedAdminHandler(UserAdminHandler):
+
+    def get(self, _id):
+        data = {}
+        user = self.db.User.find_one({'_id': ObjectId(_id)})
+        total = self.get_total_earned(user)
+        data['no_users'] = self.db.User.find().count()
+        data['no_totals'] = self.db.TotalEarned.find().count()
+        data['rank'] = self.db.TotalEarned.find({'coins': {'$gt': total['coins']}}).count() + 1
+        data['total'] = total
+        data['user'] = user
+        self.render('admin/user_total.html', **data)

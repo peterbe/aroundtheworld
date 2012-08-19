@@ -85,8 +85,10 @@
 	         href="#other-menu">Other <b class="caret"></b>
 	     </a>
 	     <ul class="dropdown-menu">
-                <li {% if '/users/' in current_url %}class="active"{% end %}
+                <li {% if '/users/' in current_url and 'total' not in current_url %}class="active"{% end %}
                   ><a href="{{ reverse_url('admin_users') }}">Users</a></li>
+                <li {% if '/users/totals/' in current_url %}class="active"{% end %}
+                  ><a href="{{ reverse_url('admin_users_totals') }}">Users Totals Earned</a></li>
                 <li {% if '/feedback/' in current_url %}class="active"{% end %}
                   ><a href="{{ reverse_url('admin_feedbacks') }}">Feedback</a></li>
                 <li {% if '/jobs/' in current_url %}class="active"{% end %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+th.other, td.other { width: 70px; }
+</style>
+{% end %}
+
+{% block content %}
+  <form action="" method="post" style="float:right">
+    {% if no_totals == no_users %}
+    <p>All users accounted for.</p>
+    {% else %}
+    <p><strong>{% module Thousands(no_totals) %}</strong>
+    accounted for out of {% module Thousands(no_users) %} users.
+    <button class="btn btn-mini">Update all</button>
+    </p>
+    {% end %}
+  </form>
+
+  <h2>{{ count }} Users Total Earned {% if filtering %}found{% end %}</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+
+  <form action=".">
+      <table class="table condensed-table">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>User</th>
+            <th>Coins</th>
+            <th class="other">Jobs</th>
+            <th class="other">Questions</th>
+            <th class="other">Awards</th>
+            <th class="other">Interest</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rank, total, user in totals %}
+          <tr>
+            <td>{{ rank }}</td>
+            <td>
+              <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
+            </td>
+            <td><a href="{{ reverse_url('admin_user_total', user['_id']) }}">{% module Thousands(total['coins']) %}</a></td>
+            <td class="other">{% module Thousands(total['jobs']) %}</td>
+            <td class="other">{% module Thousands(total['questions']) %}</td>
+            <td class="other">{% module Thousands(total['awards']) %}</td>
+            <td class="other">{% module Thousands(total['interest']) %}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      {% include "_pagination.html" %}
+    </form>
+{% end %}

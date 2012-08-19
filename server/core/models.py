@@ -156,6 +156,11 @@ class UserSettings(BaseDocument):
       'was_anonymous': False,
     }
 
+    def save(self, *args, **kwargs):
+        for te in self.db.TotalEarned.find({'user': self['user']}):
+            te.delete()
+        super(UserSettings, self).save(*args, **kwargs)
+
 
 @register
 class Location(BaseDocument):
@@ -391,6 +396,7 @@ class QuestionStats(BaseDocument):
       # calculating these stats.
       'question_points_value': int,
     }
+
 
 @register
 class QuestionPicture(BaseDocument):
@@ -709,3 +715,24 @@ class InterestEarning(BaseDocument):
       'bank': ObjectId,
       'coins': int,
     }
+
+
+@register
+class TotalEarned(BaseDocument):
+    __collection__ = 'total-earned'
+    structure = {
+      'user': ObjectId,
+      'coins': int,
+      'jobs': int,
+      'questions': int,
+      'awards': int,
+      'interest': int,
+    }
+    default_values = {
+      'coins': 0,
+      'jobs': 0,
+      'questions': 0,
+      'awards': 0,
+      'interest': 0,
+    }
+    required_fields = ['user']

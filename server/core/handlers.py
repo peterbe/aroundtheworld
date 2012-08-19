@@ -382,6 +382,34 @@ class BaseHandler(tornado.web.RequestHandler):
 
         return False
 
+    ## Total earned stuff
+
+    def get_total_earned(self, user):
+        te = self.db.TotalEarned.find_one({'user': user['_id']})
+        if not te:
+            te = self._set_total_earned(user)
+        return te
+
+    def _set_total_earned(self, user):
+        te = self.db.TotalEarned()
+        te['user'] = user['_id']
+        filt = {'user': user['_id']}
+        W = ('coins',)
+        for each in self.db.Job.collection.find(filt, W):
+            te['coins'] += each['coins']
+            te['jobs'] += each['coins']
+        for each in self.db.QuestionAnswerEarning.collection.find(filt, W):
+            te['coins'] += each['coins']
+            te['questions'] += each['coins']
+        for each in self.db.Award.collection.find(filt, ('reward',)):
+            te['coins'] += each['reward']
+            te['awards'] += each['reward']
+        for each in self.db.InterestEarning.collection.find(filt, W):
+            te['coins'] += each['coins']
+            te['interest'] += each['coins']
+        te.save()
+        return te
+
     ## Award stuff
 
     def create_job_award(self, user, location, category, reward, data):

@@ -72,3 +72,9 @@ class JSONEncode(tornado.web.UIModule):
 
     def render(self, data):
         return tornado.escape.json_encode(data)
+
+
+class TotalEarned(tornado.web.UIModule):
+
+    def render(self, user):
+        return 1234

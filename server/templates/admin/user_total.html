@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+</style>
+{% end %}
+
+{% block content %}
+  <p style="float:right">
+    <a href="..">Go back to Edit user</a>
+    &bull;
+    <a href="../journey/">User Journey</a>
+  </p>
+  <h2>Total earned for
+  {% if user['email'] %}
+  {{ user['email'] }}
+  {% else %}
+  {{ user['username'] }}
+  {% end %}
+  </h2>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Coins</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>Jobs</th>
+        <td>{% module Thousands(total['jobs']) %}</td>
+      </tr>
+      <tr>
+        <th>Questions</th>
+        <td>{% module Thousands(total['questions']) %}</td>
+      </tr>
+      <tr>
+        <th>Awards</th>
+        <td>{% module Thousands(total['awards']) %}</td>
+      </tr>
+      <tr>
+        <th>Interest</th>
+        <td>{% module Thousands(total['interest']) %}</td>
+      </tr>
+      <tr class="total">
+        <th>TOTAL</th>
+        <td>{% module Thousands(total['coins']) %}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><a href="{{ reverse_url('admin_users_totals') }}"><strong>Rank:
+    {{ rank }}
+    </strong>
+    of {{ no_totals }} totals out of {{ no_users }} users.</a>
+  </p>
+
+  <p>Last updated {% module TimeAgo(total['modify_date']) %}</p>
+{% end %}

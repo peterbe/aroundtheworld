@@ -20,6 +20,7 @@ tfoot th select[name="countries"] { width:150px; }
           <tr>
             <th>Username</th>
             <th>Email</th>
+            <th>Total</th>
             <th>Coins</th>
             <th>Miles</th>
             <th>Current location</th>
@@ -33,13 +34,14 @@ tfoot th select[name="countries"] { width:150px; }
             <th>&nbsp;</th>
             <th>&nbsp;</th>
             <th>&nbsp;</th>
+            <th>&nbsp;</th>
             <th>
               <input type="submit" value="Filter">
             </th>
           </tr>
         </tfoot>
         <tbody>
-          {% for user, user_settings, location in users %}
+          {% for user, user_settings, location, total_earned in users %}
           <tr>
             <td>
               <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
@@ -52,6 +54,7 @@ tfoot th select[name="countries"] { width:150px; }
 
             </td>
             <td>{{ user['email'] }}</td>
+            <td><a href="{{ reverse_url('admin_user_total', user['_id']) }}">{% module Thousands(total_earned['coins']) %}</a></td>
             <td>{% module Thousands(user_settings['coins_total']) %}</td>
             <td>{% module Thousands(int(user_settings['miles_total'])) %}</td>
             <td>{{ location }}</td>
