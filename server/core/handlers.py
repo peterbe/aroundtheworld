@@ -2671,7 +2671,6 @@ class BaseAuthHandler(BaseHandler):
                     user_settings['coins_total'] += reward
                     user_settings.save()
 
-
     def _transferUser(self, old, new):
         models = (
           self.db.Flight,
@@ -2698,6 +2697,9 @@ class BaseAuthHandler(BaseHandler):
             for each in model.find({key: old['_id']}):
                 each[key] = new['_id']
                 each.save()
+
+        new['current_location'] = old['current_location']
+        new.save()
 
         # transfer or merge UserSettings
         new_usersettings, = self.db.UserSettings.find({'user': new['_id']})

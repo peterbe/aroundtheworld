@@ -1185,6 +1185,9 @@ class HandlersTestCase(BaseHTTPTestCase):
         loc['lng'] = -3.0
         loc.save()
 
+        user['current_location'] = loc['_id']
+        user.save()
+
         flight = self.db.Flight()
         flight['user'] = user['_id']
         flight['from'] = self.newyork['_id']
@@ -1283,6 +1286,10 @@ class HandlersTestCase(BaseHTTPTestCase):
         user_settings, = self.db.UserSettings.find()
         self._set_user_in_models(user)
 
+        current_location = (self.db.Location
+                            .find_one({'_id': user['current_location']}))
+        assert current_location['city'] != 'Nomansland'
+
         old_id = user['_id']
         user = self._login()
         new_id = user['_id']
@@ -1315,6 +1322,10 @@ class HandlersTestCase(BaseHTTPTestCase):
         # lastly, there should just be one user left
         self.assertEqual(self.db.User.find().count(), 1)
         self.assertEqual(self.db.UserSettings.find().count(), 1)
+
+        new, = self.db.User.find()
+        new_current_location = self.db.Location.find_one({'_id': new['current_location']})
+        assert new_current_location['city'] != 'Nomansland'
 
     def test_anonymous_to_real_user_with_past(self):
         url = self.reverse_url('auth_anonymous')
@@ -1861,3 +1872,5 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(second['total'],
                          int(expected_bank2 + expected_bank2_interest))
         self.assertEqual(second['interest'], expected_bank2_interest)
+
+#    def test_anonymous_to_signed_in_current_location(self):
