@@ -144,6 +144,7 @@ class UserAdminHandler(SuperuserBaseHandler):
         data['form'] = form
         data['user_settings'] = (self.db.UserSettings
                                  .find_one({'user': user['_id']}))
+        data['total_earned'] = self.get_total_earned(user)
         data['current_location'] = (self.db.Location
                                  .find_one({'_id': user['current_location']}))
         self.render('admin/user.html', **data)

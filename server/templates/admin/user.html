@@ -38,7 +38,10 @@ $(function() {
     <h4>User info</h4>
     <dl>
       <dt>Coins:</dt>
-      <dd>{{ user_settings['coins_total'] }}</dd>
+      <dd>{% module Thousands(user_settings['coins_total']) %}</dd>
+
+      <dt>Total Earned:</dt>
+      <dd>{% module Thousands(total_earned['coins']) %}</dd>
 
       <dt>Miles:</dt>
       <dd>{% module Thousands(int(user_settings['miles_total'])) %}</dd>
