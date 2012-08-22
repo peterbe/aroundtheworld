@@ -1439,7 +1439,7 @@ class CoinsHandler(AuthenticatedBaseHandler, BankingMixin):
               'name': bank['name'],
               'deposited': int(deposited),
               'total': int(total),
-              'interest': interest,
+              'interest': int(round(interest)),
               'locations': cities,
               'in_current_location': in_current_location,
             })
