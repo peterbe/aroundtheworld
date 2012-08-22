@@ -49,8 +49,8 @@ var Quiz = (function() {
       }
       last_question = response.no_questions.last;
 
-      _show_no_questions(response.no_questions['total'],
-                         response.no_questions['number']);
+      _show_no_questions(response.no_questions.total,
+                         response.no_questions.number);
       if (response.pictures) {
         Utils.preload_images(response.pictures, true);
       }
@@ -95,7 +95,7 @@ var Quiz = (function() {
       c.text(rand_pick(['Brilliant!', 'Excellent!', 'Fantastic!']));
     } else if (p >= 50) {
       c.text(rand_pick(['Great!', 'Awesome!', 'Nice!']));
-    } else if (p == 0) {
+    } else if (p === 0) {
       c.text(rand_pick(['Hmm...', 'Not so good', 'Might wanna try again']));
     } else {
       c.text(rand_pick(['Yay!', 'Good!', 'Alright!']));
@@ -338,7 +338,7 @@ var Quiz = (function() {
                  .addClass('chunky-right')
                    .removeClass('chunky-alternative');
              if (response.points) {
-               var v = parseInt($('.points-total', container).text());
+               var v = parseInt($('.points-total', container).text(), 10);
                $('.points-total', container).text(v + response.points);
              }
            } else {
@@ -495,10 +495,10 @@ var Quiz = (function() {
        });
        if (question.pictures && question.pictures.length == 4) {
          $('.alternatives', container).hide();
-         var c = $('.four-pictures', container).show();
+         var c_four = $('.four-pictures', container).show();
          _question_seconds = question.seconds;
          _left_to_load = question.pictures.length;
-         $('td img', c).remove();
+         $('td img', c_four).remove();
 //         $('.four-pictures', container).show();  // safer to have it visible when inserting
          $.each(question.pictures, function(i, picture) {
            var img = $('<img>')
@@ -515,7 +515,7 @@ var Quiz = (function() {
                return false;
              })
                .append(img)
-                 .appendTo($('td.four-pictures-' + (i + 1), c));
+                 .appendTo($('td.four-pictures-' + (i + 1), c_four));
          });
          // the container is shown when all pictures are loaded
 
@@ -583,7 +583,7 @@ var Quiz = (function() {
       }
       $.post(URL, {teardown: true});
     }
-  }
+  };
 })();
 
 Plugins.start('quizzing', function(category) {
@@ -595,4 +595,4 @@ Plugins.start('quizzing', function(category) {
 
 Plugins.stop('quizzing', function() {
   Quiz.teardown();
-})
+});

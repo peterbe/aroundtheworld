@@ -39,7 +39,7 @@ var Loader = (function() {
        if (blank_location_hash) return false;
        return true;
      }
-  }
+  };
 })();
 
 var State = (function() {
@@ -47,7 +47,7 @@ var State = (function() {
   function _show_change(delta, animated, selector, suffix, callback) {
     var e = $('#usernav ' + selector + ' a');
     var b_float = parseFloat(e.text().replace(/[^\d]/g, ''));
-    var b = parseInt(b_float);
+    var b = parseInt(b_float, 10);
     if (animated) {
       var c = 0;
       var incr;
@@ -57,7 +57,7 @@ var State = (function() {
         if ((delta > 0 && c >= delta) || (delta < 0 && c <= delta)) {
           clearInterval(deltainterval);
           // make sure it really is right
-          e.text(Utils.formatCost(parseInt(b_float + delta)) + ' ' + suffix);
+          e.text(Utils.formatCost(parseInt(b_float + delta, 10)) + ' ' + suffix);
           if (callback) {
             callback();
           }
@@ -170,14 +170,14 @@ var State = (function() {
     redirect_to_city: function() {
       Loader.load_hash('#city');
     }
-  }
+  };
 })();
 
 var Utils = (function() {
   var _loading_timer;
 
   function isInt(x) {
-    var y = parseInt(x);
+    var y = parseInt(x, 10);
     if (isNaN(y)) return false;
     return x == y && x.toString() == y.toString();
   }
@@ -230,7 +230,7 @@ var Utils = (function() {
        return tsep(v);
      },
     formatMiles: function(v, include_suffix) {
-      v = parseInt(v);
+      v = parseInt(v, 10);
       if (include_suffix) {
         if (v == 1) return v + ' mile';
         return tsep(v) + ' miles';
@@ -280,7 +280,7 @@ var Utils = (function() {
         document.title = title;
       }
     }
-  }
+  };
 })();
 
 var ErrorCatcher = (function() {
@@ -308,7 +308,7 @@ var ErrorCatcher = (function() {
        if (_prev_onerror) {
          return _prev_onerror(message, file, line);
        }
-       if (line == 0 && (
+       if (line === 0 && (
            message == "TypeError: 'null' is not an object" ||
            message == "TypeError: 'undefined' is not an object")) {
          console.warn('Swallowing error', message);

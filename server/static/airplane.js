@@ -85,20 +85,20 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
   var animation = {};
 
   if (d_left < 0) {
-    animation['left'] = '+=';
+    animation.left = '+=';
     d_left *= -1;
   } else {
-    animation['left'] = '-=';
+    animation.left = '-=';
   }
-  animation['left'] += parseInt(d_left) + 'px';
+  animation.left += parseInt(d_left, 10) + 'px';
 
   if (d_top < 0) {
-    animation['top'] = '+=';
+    animation.top = '+=';
     d_top *= -1;
   } else {
-    animation['top'] = '-=';
+    animation.top = '-=';
   }
-  animation['top'] += parseInt(d_top) + 'px';
+  animation.top += parseInt(d_top, 10) + 'px';
   var h = (point.x + point2.x) / 2;
 
   var FW = this.image_radius * 2;
@@ -116,11 +116,12 @@ AirplaneMarker.prototype.fly = function(latlng, destination, callback) {
       easing: 'easeInOutQuint',//'easeInOutSine',
       step: function(now, fx) {
         if (fx.prop === 'left') {
+          var p;
           if (now > h) {
             // beyond half-way point
-            var p = 1 - (now - h) / h;
+            p = 1 - (now - h) / h;
           } else {
-            var p = now / h;
+            p = now / h;
           }
           p = Math.min(Math.max(MIN_SCALING, p), MAX_SCALING);
           // do this trick so that we don't have to call m.scale() too often

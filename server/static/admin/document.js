@@ -94,7 +94,7 @@ var Lookup = (function() {
          });
        });
      }
-  }
+  };
 })();
 
 $(function() {

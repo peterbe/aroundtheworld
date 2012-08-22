@@ -190,7 +190,7 @@ var Awards = (function() {
         Mousetrap.reset();
       }
     }
-  }
+  };
 })();
 
 Plugins.start('awards', function(id) {

@@ -14,7 +14,7 @@ var City = (function() {
         if (each.category) {
           hash += ',' + each.category.replace(' ','+');
         }
-        var li = $('<li>')
+        var li = $('<li>');
         $('<a>')
           .attr('href', hash)
             .text(each.description)
@@ -28,7 +28,7 @@ var City = (function() {
               .text(each.experience)
                 .appendTo(li);
         }
-        li.appendTo(c)
+        li.appendTo(c);
       });
       callback();
     });

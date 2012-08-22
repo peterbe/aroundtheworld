@@ -85,7 +85,7 @@ var PictureDetective = (function() {
                              PictureDetective.begin();
                            } else {
                              // update the progress bar
-                             var p = parseInt(100 * (1 - _left_to_load / _total_to_load));
+                             var p = parseInt(100 * (1 - _left_to_load / _total_to_load), 10);
                              $('.bar', container)
                                .css('width', p + '%');
                            }
@@ -101,7 +101,6 @@ var PictureDetective = (function() {
       $('.question', container).fadeIn(700);
       $('.timeleft', container).text(_indexes.length - 1);
       _on_index = _indexes.length - 1;
-      //_next_picture_id = _indexes[_indexes.length - 1];
       $('input[name="answer"]', container).val('');
       $('img.playbutton')
         .css('width', $('img.alternative').eq(0).css('width'))
@@ -249,7 +248,7 @@ var PictureDetective = (function() {
       clearTimeout(_timer);
       clearTimeout(_pause_timer);
     }
-  }
+  };
 })();
 
 Plugins.start('picturedetective', function() {

@@ -52,7 +52,7 @@ var Mobile = (function() {
         $(this).attr('href', $(this).attr('href') + '?next=/mobile/');
       });
     }
-  }
+  };
 })();
 
 

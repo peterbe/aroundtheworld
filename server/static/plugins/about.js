@@ -18,7 +18,7 @@ var About = (function() {
        }
        Utils.update_title();
      }
-  }
+  };
 
 })();
 

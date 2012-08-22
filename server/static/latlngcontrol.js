@@ -7,10 +7,11 @@ var IMAGE_RADIUS = 107; // see the airplane image
 function calculateAngle(center, p1) {
   var p0 = {
     x: center.x,
-    y: center.y
-      - Math.sqrt(Math.abs(p1.x - center.x)
-                  * Math.abs(p1.x - center.x)
-                  + Math.abs(p1.y - center.y) * Math.abs(p1.y - center.y))};
+    y: center.y -
+      Math.sqrt(Math.abs(p1.x - center.x) *
+                Math.abs(p1.x - center.x) +
+                Math.abs(p1.y - center.y) *
+                Math.abs(p1.y - center.y))};
   return (2 * Math.atan2(p1.y - p0.y, p1.x - p0.x)) * 180 / Math.PI;
 }
 
@@ -143,20 +144,20 @@ LatLngControl.prototype.draw = function() {
   var animation = {};
 
   if (d_left < 0) {
-    animation['left'] = '+=';
+    animation.left = '+=';
     d_left *= -1;
   } else {
-    animation['left'] = '-=';
+    animation.left = '-=';
   }
-  animation['left'] += parseInt(d_left) + 'px';
+  animation.left += parseInt(d_left, 10) + 'px';
 
   if (d_top < 0) {
-    animation['top'] = '+=';
+    animation.top = '+=';
     d_top *= -1;
   } else {
-    animation['top'] = '-=';
+    animation.top = '-=';
   }
-  animation['top'] += parseInt(d_top) + 'px';
+  animation.top += parseInt(d_top, 10) + 'px';
 
   var left, right, halfway, length;
   if (point1.x > point2.x) {
@@ -191,12 +192,13 @@ LatLngControl.prototype.draw = function() {
       easing: 'easeInOutQuint',
       step: function(now, fx) {
         if (fx.prop === 'left') {
+          var p;
           if (now > halfway) {
             // beyond half-way point
-            var p = 1 - (now - left - length) / length;
+            p = 1 - (now - left - length) / length;
             p = Math.min(Math.max(MIN_SCALING_FINISH, p), MAX_SCALING);
           } else {
-            var p = (now - left) / length;
+            p = (now - left) / length;
             p = Math.min(Math.max(MIN_SCALING_START, p), MAX_SCALING);
           }
 

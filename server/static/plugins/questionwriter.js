@@ -305,7 +305,7 @@ var QuestionWriter = (function() {
         var earned = '-';
         if (question.published) {
           status = 'published';
-          earned = question.earned
+          earned = question.earned;
         }
         $('<td>').text(question.category).appendTo(c);
         $('<td>').text(status).appendTo(c);

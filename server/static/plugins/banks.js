@@ -22,7 +22,7 @@ var Banks = (function() {
   function _prepare_deposit(bank, open_account) {
     var c = $('.transact', container);
     var action;
-    open_account = open_account == undefined && false;
+    open_account = open_account === undefined && false;
     if (open_account) {
       $('.deposit-action', c).text('Open a new account');
       $('.balance', c).hide();

@@ -123,7 +123,7 @@ var Pinpoint = (function() {
      tick: function () {
        countdown--;
        $('#pinpoint-tucked .timer').text(countdown);
-       if (countdown == 0) {
+       if (countdown === 0) {
          Pinpoint.stop_timer(true);
        } else {
          timer = setTimeout(function() {
@@ -224,7 +224,7 @@ var Pinpoint = (function() {
       }
      },
      setup: function (callback) {
-       if (map == null) {
+       if (map === null) {
          throw "Can't run pinpoint plugin without a map";
        }
 

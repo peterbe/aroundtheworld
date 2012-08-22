@@ -135,7 +135,7 @@ var Airport = (function() {
        });
      },
     show_on_map: function() {
-      if (map == null) {
+      if (map === null) {
         throw "Can't run pinpoint plugin without a map";
       }
       container.hide();
@@ -174,7 +174,7 @@ var Airport = (function() {
             open_infowindows.push(infowindow);
             infowindow.open(map, marker);
           });
-        })
+        });
       });
       $('#airport-tucked').show();
     },

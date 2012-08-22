@@ -181,29 +181,29 @@ var Coins = (function() {
            $('.loading:visible', container).hide();
 
            $('a[href="#tab-purchases"]', container).text(
-              remove_previous_count($('a[href="#tab-purchases"]', container).text())
-                 + ' (' + response.count_transactions + ')');
+              remove_previous_count($('a[href="#tab-purchases"]', container).text()) +
+                 ' (' + response.count_transactions + ')');
            _show_transactions(response.transactions, response.count_transactions, true);
            $('.purchases table:hidden', container).show();
 
            $.getJSON('/coins.json', {'jobs-page': 0}, function(response) {
              $('a[href="#tab-jobs"]', container).text(
-                remove_previous_count($('a[href="#tab-jobs"]', container).text())
-                    + ' (' + response.count_jobs + ')');
+                remove_previous_count($('a[href="#tab-jobs"]', container).text()) +
+                    ' (' + response.count_jobs + ')');
              _show_jobs(response.jobs, response.count_jobs, true);
            });
 
            $.getJSON('/coins.json', {'earnings-page': 0}, function(response) {
              $('a[href="#tab-earnings"]', container).text(
-                remove_previous_coins($('a[href="#tab-earnings"]', container).text())
-                    + ' (' + Utils.formatCost(response.earnings_total, true) + ')');
+                remove_previous_coins($('a[href="#tab-earnings"]', container).text()) +
+                    ' (' + Utils.formatCost(response.earnings_total, true) + ')');
              _show_earnings(response.earnings, response.earnings_total, true);
            });
 
            $.getJSON('/coins.json', {'banks-page': 0}, function(response) {
              $('a[href="#tab-banks"]', container).text(
-                remove_previous_coins($('a[href="#tab-banks"]', container).text())
-                    + ' (' + Utils.formatCost(response.banks_total, true) + ')');
+                remove_previous_coins($('a[href="#tab-banks"]', container).text()) +
+                    ' (' + Utils.formatCost(response.banks_total, true) + ')');
              _show_banks(response.banks, response.banks_total, true);
            });
 

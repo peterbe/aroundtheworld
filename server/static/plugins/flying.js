@@ -2,7 +2,7 @@
 var Flying = (function() {
   return {
      animate: function (route) {
-       if (map == null) {
+       if (map === null) {
          throw "Can't run flying plugin without map";
        }
        $.getJSON('/fly.json', {route: route}, function(response) {

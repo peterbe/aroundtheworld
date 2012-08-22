@@ -82,10 +82,11 @@ function distance(x1, y1, x2, y2) {
 function calculate_angle(center, p1) {
   var p0 = {
     x: center.x,
-    y: center.y
-      - Math.sqrt(Math.abs(p1.x - center.x)
-                  * Math.abs(p1.x - center.x)
-                  + Math.abs(p1.y - center.y) * Math.abs(p1.y - center.y))};
+    y: center.y -
+      Math.sqrt(Math.abs(p1.x - center.x) *
+                Math.abs(p1.x - center.x) +
+                Math.abs(p1.y - center.y) *
+                Math.abs(p1.y - center.y))};
   return (2 * Math.atan2(p1.y - p0.y, p1.x - p0.x)) * 180 / Math.PI;
 }
 

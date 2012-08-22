@@ -27,7 +27,7 @@ var LineGraph = function(id, url, options) {
         pixelsPerTick: 35,  // default is 75
         orientation: 'left',
         tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.querySelector('#' + id + ' .y-axis'),
+        element: document.querySelector('#' + id + ' .y-axis')
       } );
       var x_axis = new Rickshaw.Graph.Axis.Time( { graph: graph } );
       var legend = new Rickshaw.Graph.Legend( {
@@ -37,7 +37,7 @@ var LineGraph = function(id, url, options) {
 
       graph.render();
 
-    },
+    }
   });
 
 };
@@ -67,7 +67,7 @@ var BarGraph = function(id, url, options) {
         pixelsPerTick: 35,  // default is 75
         orientation: 'left',
         tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
-        element: document.querySelector('#' + id + ' .y-axis'),
+        element: document.querySelector('#' + id + ' .y-axis')
       } );
 
       var legend = new Rickshaw.Graph.Legend( {
@@ -77,7 +77,7 @@ var BarGraph = function(id, url, options) {
 
       graph.render();
 
-    },
+    }
   });
 };
 

@@ -68,5 +68,5 @@ var Plugins = (function() {
       stop_callbacks[id] = callback;
       last_stop_callback = callback;
     }
-  }
+  };
 })();
