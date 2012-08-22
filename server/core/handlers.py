@@ -3561,8 +3561,12 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                 other_cities.append(
                   unicode(self.db.Location.find_one({'_id': each['location']}))
                 )
+            banks_same_name = [x['_id'] for x in
+                               self.db.Bank.collection
+                                .find({'name': bank['name']}, ('_id',))]
             deposits = (self.db.Deposit.collection
-                        .find({'bank': bank['_id'], 'user': user['_id']}))
+                        .find({'bank': {'$in': banks_same_name},
+                               'user': user['_id']}))
             sum_ = sum(x['amount'] for x in deposits)
             deposits.rewind()
             info = {
@@ -3574,8 +3578,8 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
               'deposit_fee': bank['deposit_fee'],
               'other_cities': other_cities,
               'has_account': deposits.count() > 0,
-              'sum': sum_,
-              'interest': self.calculate_compound_interest(deposits),
+              'sum': int(sum_),
+              'interest': int(round(self.calculate_compound_interest(deposits))),
             }
             return info
 
@@ -3638,8 +3642,12 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                 if amount > user_settings['coins_total']:
                     errors['amount'] = "You only have %s coins" % user_settings['coins_total']
         elif action == 'withdraw':
+            banks_same_name = [x['_id'] for x in
+                               self.db.Bank.collection
+                                .find({'name': bank['name']}, ('_id',))]
             deposits = (self.db.Deposit.collection
-                        .find({'bank': bank['_id'], 'user': user['_id']}))
+                        .find({'bank': {'$in': banks_same_name},
+                               'user': user['_id']}))
             balance = sum(x['amount'] for x in deposits)
             interest = self.calculate_compound_interest(deposits)
             total = balance + interest
@@ -3663,7 +3671,8 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                     interest_earning.save()
 
                 for each in (self.db.Deposit
-                             .find({'bank': bank['_id'], 'user': user['_id']})):
+                             .find({'bank': {'$in': banks_same_name},
+                                    'user': user['_id']})):
                     each.delete()
                 if left:
                     deposit = self.db.Deposit()
