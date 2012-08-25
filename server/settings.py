@@ -29,7 +29,6 @@ COOKIE_SECRET = ""
 PICTURE_QUESTION_WIDTH_HEIGHT = (250, 250)
 FOUR_PICTURES_WIDTH_HEIGHT = (170, 170)
 
-FILEPICKER_API_KEY = 'KqEkAS7kSbWDbB_lUozq'
 
 try:
     from local_settings import *
@@ -37,5 +36,6 @@ except ImportError:
     pass
 assert COOKIE_SECRET, "It must be set in local_settings.py"
 
-#assert TWITTER_CONSUMER_KEY
-#assert TWITTER_CONSUMER_SECRET
+assert FILEPICKER_API_KEY
+assert TWITTER_CONSUMER_KEY
+assert TWITTER_CONSUMER_SECRET

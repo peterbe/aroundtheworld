@@ -143,6 +143,7 @@ class UserSettings(BaseDocument):
       'coins_total': int,
       'miles_total': float,
       'google': dict,
+      'twitter': dict,
       'disable_sound': bool,
       'was_anonymous': bool,
     }

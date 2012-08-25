@@ -11,6 +11,11 @@ var Settings = (function() {
       $('input[name="disable_sound"]', f).removeAttr('checked');
     }
     $('input[name="username"]', f).val(data.username);
+    if (data.anonymous) {
+      $('input[name="username"]', f).attr('disabled', 'disabled');
+    } else {
+      $('input[name="username"]', f).removeAttr('disabled');
+    }
   }
 
   function post_form(f) {

@@ -1180,6 +1180,7 @@ class SettingsHandler(AuthenticatedBaseHandler):
         data = {}
         data['disable_sound'] = user_settings['disable_sound']
         data['username'] = user['username']
+        data['anonymous'] = user['anonymous']
         self.write(data)
 
     def _check_username(self, username, user):
@@ -2623,6 +2624,7 @@ class BaseAuthHandler(BaseHandler):
                           exc_info=True)
 
     def _post_login_successful(self, user, previous_user=None):
+
         if user['email']:
             regex = re.compile(re.escape(user['email']), re.I)
             invitation = (self.db.Invitation
@@ -2653,23 +2655,23 @@ class BaseAuthHandler(BaseHandler):
 
                 self.email_inviter(inviter, invitation, user)
 
-            if previous_user and previous_user['anonymous'] and not user['anonymous']:
-                self._transferUser(previous_user, user)
-                if not self.has_signin_award(user):
-                    data = {
+        if previous_user and previous_user['anonymous'] and not user['anonymous']:
+            self._transferUser(previous_user, user)
+            if not self.has_signin_award(user):
+                data = {
 
-                    }
-                    reward = 100
-                    award = self.create_signin_award(
-                      user,
-                      self.get_current_location(user),
-                      reward,
-                      data
-                    )
-                    user_settings = (self.db.UserSettings
-                                     .find_one({'user': user['_id']}))
-                    user_settings['coins_total'] += reward
-                    user_settings.save()
+                }
+                reward = 100
+                award = self.create_signin_award(
+                  user,
+                  self.get_current_location(user),
+                  reward,
+                  data
+                )
+                user_settings = (self.db.UserSettings
+                                 .find_one({'user': user['_id']}))
+                user_settings['coins_total'] += reward
+                user_settings.save()
 
     def _transferUser(self, old, new):
         models = (
@@ -2827,9 +2829,9 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
         if not username:
             username = email.split('@')[0]
 
-        user = self.db.User.one(dict(username=username))
+        user = self.db.User.one({'username': username})
         if not user:
-            user = self.db.User.one(dict(email=email))
+            user = self.db.User.one({'email': email})
             if user is None:
                 user = (self.db.User.find_one({
                           'email': re.compile(re.escape(email), re.I)}))
@@ -2859,7 +2861,76 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
 
         old_user = self.get_current_user()
         self.post_login_successful(user, previous_user=old_user)
-        self.set_secure_cookie("user", str(user._id), expires_days=100)
+        self.set_secure_cookie("user", str(user._id), expires_days=300)
+        self.redirect(self.get_next_url())
+
+
+@route('/auth/twitter/', name='auth_twitter')
+class TwitterAuthHandler(BaseAuthHandler, tornado.auth.TwitterMixin):
+    @tornado.web.asynchronous
+    def get(self):
+        if self.get_argument("oauth_token", None):
+            self.get_authenticated_user(self.async_callback(self._on_auth))
+            return
+        elif self.get_argument('denied', None):
+            self.redirect('/')
+            return
+        self.authenticate_redirect()
+
+    def _on_auth(self, user_struct):
+        if not user_struct:
+            raise HTTPError(500, "Twitter auth failed")
+        #from pprint import pprint
+        #pprint(user_struct)
+        if not (user_struct.get('email') or user_struct.get('username')):
+            raise HTTPError(500, "No email or username provided")
+        username = user_struct.get('username')
+        if user_struct.get('first_name') or user_struct.get('last_name'):
+            first_name = user_struct.get('first_name', u'')
+            last_name = user_struct.get('last_name', u'')
+        else:
+            first_name = user_struct.get('name').split(None, 1)[0]
+            last_name = user_struct.get('name').split(None, 1)[1]
+        email = user_struct.get('email', u'')
+
+        if not username:
+            username = email.split('@')[0]
+
+        user = self.db.User.one({'username': username})
+        if not user and email:
+            user = self.db.User.one({'email': email})
+            if user is None:
+                user = (self.db.User.find_one({
+                          'email': re.compile(re.escape(email), re.I)}))
+
+        if not user:
+            # create a new account
+            user = self.db.User()
+            user.username = username
+            user.email = email
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            user.set_password(unicode(uuid.uuid4()))
+            user.save()
+            self.notify_about_new_user(user, extra_message="Used Twitter")
+        else:
+            if first_name:
+                user['first_name'] = first_name
+            if last_name:
+                user['last_name'] = last_name
+            user.save()
+
+        user_settings = self.get_user_settings(user)
+        if not user_settings:
+            user_settings = self.create_user_settings(user)
+        user_settings['twitter'] = user_struct
+        user_settings.save()
+
+        old_user = self.get_current_user()
+        self.post_login_successful(user, previous_user=old_user)
+        self.set_secure_cookie("user", str(user._id), expires_days=300)
         self.redirect(self.get_next_url())
 
 
