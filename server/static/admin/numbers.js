@@ -82,24 +82,30 @@ var BarGraph = function(id, url, options) {
 };
 
 
-// USERS
+function render_graphs(since) {
+  if (since === undefined) since = '';
 
-$(function() {
   // Users
-  LineGraph('chart-users', '?get=users_data', {
+  LineGraph('chart-users', '?get=users_data&since=' + since, {
      interpolation: 'linear'  // or 'cardinal'
   });
 
   // Jobs
-  LineGraph('chart-jobs', '?get=jobs_data', {
+  LineGraph('chart-jobs', '?get=jobs_data&since=' + since, {
     interpolation: 'cardinal'
   });
 
   // Awards
-  LineGraph('chart-awards', '?get=awards_data', {
+  LineGraph('chart-awards', '?get=awards_data&since=' + since, {
      interpolation: 'cardinal'
   });
 
   // Miles travelled
-  BarGraph('chart-miles-travelled', '?get=miles_travelled_data');
+  BarGraph('chart-miles-travelled', '?get=miles_travelled_data&since=' + since);
+
+}
+
+$(function() {
+  // globally scoped variable `SINCE` is expected to exist
+  render_graphs(SINCE);
 });

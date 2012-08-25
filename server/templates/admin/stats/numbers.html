@@ -39,11 +39,20 @@
 {% end %}
 
 {% block extrajs %}
+<script>
+var SINCE = '{{ since }}';
+</script>
 {% module ScriptTags('lib/d3.min.js', 'lib/d3.layout.min.js', 'lib/rickshaw.js') %}
 <script src="{{ static_url('admin/numbers.js') }}"></script>
 {% end %}
 
 {% block content %}
+
+  <form class="form-inline" style="float:right" action="">
+    <label>Since:</label>
+    <input name="since" value="{{ since }}" size="12" style="width:90px">
+    <button class="btn btn-small">Update</button>
+  </form>
 
   <h3>Users</h3>
   <div id="chart-users" class="chart-container">

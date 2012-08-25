@@ -69,23 +69,30 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
 
     def get(self):
         data = {}
+        since = datetime.datetime(2012, 6, 1)
+        if self.get_argument('since', None):
+            since = datetime.datetime.strptime(
+                self.get_argument('since'),
+                '%Y-%m-%d'
+            )
+        data['since'] = since.strftime('%Y-%m-%d')
         if self.get_argument('get', None) == 'users_data':
-            self.write({'data': self._get_users_data()})
+            self.write({'data': self._get_users_data(since=since)})
         elif self.get_argument('get', None) == 'jobs_data':
-            self.write({'data': self._get_jobs_data()})
+            self.write({'data': self._get_jobs_data(since=since)})
         elif self.get_argument('get', None) == 'awards_data':
-            self.write({'data': self._get_awards_data()})
+            self.write({'data': self._get_awards_data(since=since)})
         elif self.get_argument('get', None) == 'miles_travelled_data':
-            self.write({'data': self._get_miles_travelled_data()})
+            self.write({'data': self._get_miles_travelled_data(since=since)})
         elif self.get_argument('get', None):
             raise NotImplementedError(self.get_argument('get'))
         else:
             self.render('admin/stats/numbers.html', **data)
 
-    def _get_users_data(self, interval=datetime.timedelta(days=7)):
+    def _get_users_data(self, since=None, interval=datetime.timedelta(days=7)):
         #first, = self.db.User.collection.find().sort('add_date').limit(1)
         #first = first['add_date']
-        first = datetime.datetime(2012, 6, 1)
+        first = since and since or datetime.datetime(2012, 6, 1)
         last, = self.db.User.collection.find().sort('add_date', -1).limit(1)
         last = last['add_date']
         date = first
@@ -122,10 +129,10 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
 
         return series
 
-    def _get_jobs_data(self, interval=datetime.timedelta(days=7)):
+    def _get_jobs_data(self, since=None, interval=datetime.timedelta(days=7)):
         #first, = self.db.Job.collection.find().sort('add_date').limit(1)
         #first = first['add_date']
-        first = datetime.datetime(2012, 6, 1)
+        first = since and since or datetime.datetime(2012, 6, 1)
         last, = self.db.Job.collection.find().sort('add_date', -1).limit(1)
         last = last['add_date']
         date = first
@@ -156,9 +163,13 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
 
         return series
 
-    def _get_awards_data(self, interval=datetime.timedelta(days=7)):
-        first, = self.db.Award.collection.find().sort('add_date').limit(1)
-        first = first['add_date'] - interval
+    def _get_awards_data(self, since=None, interval=datetime.timedelta(days=7)):
+        if since:
+            first = since
+        else:
+            first, = self.db.Award.collection.find().sort('add_date').limit(1)
+            first = first['add_date']
+        first = first - interval
         last, = self.db.Award.collection.find().sort('add_date', -1).limit(1)
         last = last['add_date']
         date = first
@@ -188,11 +199,14 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
 
         return series
 
-    def _get_miles_travelled_data(self, intervals=10):
+    def _get_miles_travelled_data(self, since=None, intervals=10):
         min_ = 0.0
         peter = self.db.User.find_one({'username': 'peterbe'})  # exceptional
+        max_filter = {'user': {'$ne': peter['_id']}}
+        if since:
+            max_filter['add_date'] = {'$gte': since}
         max_, = (self.db.UserSettings
-                 .find({'user': {'$ne': peter['_id']}}, ('miles_total',))
+                 .find(max_filter, ('miles_total',))
                  .sort('miles_total', -1)
                  .limit(1))
         max_ = max_['miles_total']
@@ -207,8 +221,11 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
             a, b = i * chunk, (i + 1) * chunk
             a = int(round(a / 1000.0) * 1000)
             b = int(round(b / 1000.0) * 1000)
+            filter_ = {'miles_total': {'$gte': a, '$lt': b}}
+            if since:
+                filter_['add_date'] = {'$gte': since}
             c = (self.db.UserSettings
-                 .find({'miles_total': {'$gte': a, '$lt': b}})
+                 .find(filter_)
                  .count())
             data = []
             for j in range(intervals):
