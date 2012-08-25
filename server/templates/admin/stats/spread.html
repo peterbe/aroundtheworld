@@ -4,6 +4,28 @@
       <table class="condensed-table table">
         <thead>
           <tr>
+            <th>State of user</th>
+            <th>Count</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Not Anonymous</td>
+            <td>{{ not_anonymous }}</td>
+            <td>{{ not_anonymous_percentage }}%</td>
+          </tr>
+          <tr>
+            <td>Anonymous</td>
+            <td>{{ no_anonymous }}</td>
+            <td>{{ no_anonymous_percentage }}%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="condensed-table table">
+        <thead>
+          <tr>
             <th>Location</th>
             <th>Count</th>
           </tr>
@@ -17,4 +39,5 @@
           {% end %}
         </tbody>
       </table>
+
 {% end %}

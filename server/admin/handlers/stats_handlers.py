@@ -33,6 +33,17 @@ class StatsSpreadAdminHandler(SuperuserBaseHandler):
             locations.append((count, location))
         locations.sort(reverse=True)
         data['locations'] = locations
+
+        data['no_anonymous'] = self.db.User.find({'anonymous': True}).count()
+        data['not_anonymous'] = self.db.User.find({'anonymous': False}).count()
+        total = data['no_anonymous'] + data['not_anonymous']
+        data['no_anonymous_percentage'] = round(
+            100.0 * data['no_anonymous'] / total
+        )
+        data['not_anonymous_percentage'] = round(
+            100.0 * data['not_anonymous'] / total
+        )
+
         self.render('admin/stats/spread.html', **data)
 
 
