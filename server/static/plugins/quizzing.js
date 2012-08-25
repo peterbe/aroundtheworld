@@ -375,8 +375,10 @@ var Quiz = (function() {
            }
            if (response.enable_rating) {
              $('.rate', container).show();
+             $('.rate-label', container).show();
            } else {
              $('.rate', container).hide();
+             $('.rate-label', container).hide();
            }
          },
          error: function(xhr, status, error_thrown) {
