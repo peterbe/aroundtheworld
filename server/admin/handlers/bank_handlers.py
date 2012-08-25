@@ -157,3 +157,43 @@ class AddBankAdminHandler(BanksBaseHandler):
             self.redirect(self.reverse_url('admin_banks'))
         else:
             self.get(form=form)
+
+
+
+@route('/admin/banks/earninings/', name='admin_bank_earnings')
+class BankEarningsAdminHandler(BanksBaseHandler):
+
+    def get(self):
+        data = {}
+        filter_ = {}
+        args = dict(self.request.arguments)
+        if 'page' in args:
+            args.pop('page')
+        data['query_string'] = urllib.urlencode(args, True)
+
+        data['page'] = int(self.get_argument('page', 1))
+        skip = max(0, data['page'] - 1) * self.LIMIT
+        earnings = []
+        data['count'] = self.db.InterestEarning.find(filter_).count()
+        data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
+        self.trim_all_pages(data['all_pages'], data['page'])
+        data['filtering'] = bool(filter_)
+        _banks = {}
+        _users = {}
+
+        for each in (self.db.InterestEarning.collection
+                     .find(filter_)
+                     .sort('add_date', -1)  # newest first
+                     .limit(self.LIMIT)
+                     .skip(skip)):
+            if each['bank'] not in _banks:
+                _banks[each['bank']] = \
+                  self.db.Bank.find_one({'_id': each['bank']})
+            if each['user'] not in _users:
+                _users[each['user']] = \
+                  self.db.User.find_one({'_id': each['user']})
+            each['user'] = _users[each['user']]
+            each['bank'] = _banks[each['bank']]
+            earnings.append(each)
+        data['earnings'] = earnings
+        self.render('admin/banks/earnings.html', **data)

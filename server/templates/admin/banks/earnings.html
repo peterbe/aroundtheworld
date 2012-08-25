@@ -1,0 +1,45 @@
+{% extends "../base.html" %}
+
+{% block extrahead %}
+<style>
+tfoot th input[name="q_city"],
+tfoot th input[name="q_locality"] { width:120px; }
+tfoot th select[name="available"] { width:50px; }
+tfoot th select[name="countries"] { width:150px; }
+</style>
+{% end %}
+
+{% block content %}
+  <h2>Earnings ({{ count }})</h2>
+  {% if filtering %}
+  <p><a href=".">Reset filtering</a></p>
+  {% end %}
+
+  <form action=".">
+      <table class="table condensed-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Bank</th>
+            <th>Amount</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for earning in earnings %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_bank', earning['bank']['_id']) }}">{{ earning['bank']['name'] }}</a>
+            </td>
+            <td>
+              <a href="{{ reverse_url('admin_user', earning['user']['_id']) }}">{{ earning['user']['username'] }}</a>
+            </td>
+            <td>{% module Thousands(earning['coins']) %}</td>
+            <td>{% module TimeAgo(earning['add_date']) %}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+      {% include "../_pagination.html" %}
+    </form>
+{% end %}
