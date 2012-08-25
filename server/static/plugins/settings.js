@@ -13,8 +13,15 @@ var Settings = (function() {
     $('input[name="username"]', f).val(data.username);
     if (data.anonymous) {
       $('input[name="username"]', f).attr('disabled', 'disabled');
+      L($('.for-first_name', f));
+      $('.for-first_name', f).hide();
+      $('.for-last_name', f).hide();
     } else {
       $('input[name="username"]', f).removeAttr('disabled');
+      $('input[name="first_name"]', f).val(data.first_name);
+      $('input[name="last_name"]', f).val(data.last_name);
+      $('.for-first_name', f).show();
+      $('.for-last_name', f).show();
     }
   }
 

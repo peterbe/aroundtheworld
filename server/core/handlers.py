@@ -1181,6 +1181,8 @@ class SettingsHandler(AuthenticatedBaseHandler):
         data['disable_sound'] = user_settings['disable_sound']
         data['username'] = user['username']
         data['anonymous'] = user['anonymous']
+        data['first_name'] = user['first_name']
+        data['last_name'] = user['last_name']
         self.write(data)
 
     def _check_username(self, username, user):
@@ -1198,6 +1200,11 @@ class SettingsHandler(AuthenticatedBaseHandler):
         username = self.get_argument('username', None)
         if username:
             user['username'] = username
+            if not user['anonymous']:
+                user['first_name'] = self.get_argument('first_name',
+                                                       user['first_name']).strip()
+                user['last_name'] = self.get_argument('last_name',
+                                                      user['last_name']).strip()
             user.save()
 
         user_settings = self.get_user_settings(user)
