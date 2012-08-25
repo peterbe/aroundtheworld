@@ -49,6 +49,21 @@ $(function() {
       <dt>Current location:</dt>
       <dd>{{ current_location }}</dd>
 
+      <dt>Sign-in:</dt>
+      <dd>
+        {% if user['anonymous'] %}
+	Anonymous
+	{% else %}
+        {{ user_settings }}
+	  {% if user_settings.get('twitter') %}
+	  Twitter
+	  {% end %}
+	  {% if user_settings.get('google') %}
+	  Google
+	  {% end %}
+	{% end %}
+      </dd>
+
     </dl>
 
   </div>
