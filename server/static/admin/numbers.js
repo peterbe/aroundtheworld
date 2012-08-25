@@ -87,7 +87,7 @@ function render_graphs(since) {
 
   // Users
   LineGraph('chart-users', '?get=users_data&since=' + since, {
-     interpolation: 'linear'  // or 'cardinal'
+     interpolation: 'cardinal'  // or 'linear'
   });
 
   // Jobs
