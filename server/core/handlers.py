@@ -3727,6 +3727,7 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                         .find({'bank': {'$in': banks_same_name},
                                'user': user['_id']}))
             balance = sum(x['amount'] for x in deposits)
+            deposits.rewind()
             interest = self.calculate_compound_interest(deposits)
             total = balance + interest
             if amount > total:
@@ -3745,7 +3746,7 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                     interest_earning = self.db.InterestEarning()
                     interest_earning['user'] = user['_id']
                     interest_earning['bank'] = bank['_id']
-                    interest_earning['coins'] = interest
+                    interest_earning['coins'] = int(interest)
                     interest_earning.save()
 
                 for each in (self.db.Deposit
@@ -3756,7 +3757,7 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
                     deposit = self.db.Deposit()
                     deposit['bank'] = bank['_id']
                     deposit['user'] = user['_id']
-                    deposit['amount'] = left
+                    deposit['amount'] = int(left)
                     deposit['interest_rate'] = bank['default_interest_rate']
                     deposit.save()
                 data['amount'] = amount - bank['withdrawal_fee']
