@@ -54,7 +54,6 @@ $(function() {
         {% if user['anonymous'] %}
 	Anonymous
 	{% else %}
-        {{ user_settings }}
 	  {% if user_settings.get('twitter') %}
 	  Twitter
 	  {% end %}
