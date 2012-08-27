@@ -46,4 +46,10 @@ tfoot th select[name="countries"] { width:150px; }
       </table>
       {% include "../_pagination.html" %}
     </form>
+
+    <p>Available cities without banks:<br>
+    {% for location in locations_left %}
+    &nbsp;&nbsp;&nbsp;&nbsp;{{ location }}<br>
+    {% end %}
+    </p>
 {% end %}

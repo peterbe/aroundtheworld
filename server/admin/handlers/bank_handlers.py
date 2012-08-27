@@ -27,7 +27,6 @@ class BanksBaseHandler(SuperuserBaseHandler):
                 .sort('code', 1))
 
 
-
 @route('/admin/banks/', name='admin_banks')
 class BanksAdminHandler(BanksBaseHandler):
 
@@ -38,15 +37,6 @@ class BanksAdminHandler(BanksBaseHandler):
         if data['q_city']:
             filter_['city'] = re.compile(
               '^%s' % re.escape(data['q_city']), re.I)
-
-#        data['available'] = self.get_argument('available', '')
-#        if data['available']:
-#            # temporary legacy fix
-#            for x in self.db.Location.find({'available': {'$exists': False}}):
-#                x['available'] = False
-#                x.save()
-#
-#            filter_['available'] = _bool(data['available'])
 
         args = dict(self.request.arguments)
         if 'page' in args:
@@ -61,6 +51,11 @@ class BanksAdminHandler(BanksBaseHandler):
         self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
         _locations = {}
+
+        available_locations = {}
+        for each in self.db.Location.find({'available': True}):
+            available_locations[each['_id']] = each
+
         for each in (self.db.Bank
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
@@ -69,6 +64,9 @@ class BanksAdminHandler(BanksBaseHandler):
             if each['location'] not in _locations:
                 _locations[each['location']] = \
                   self.db.Location.find_one({'_id': each['location']})
+
+            if each['location'] in available_locations:
+                available_locations.pop(each['location'])
             sum_deposits = sum(x['amount'] for x in
                                self.db.Deposit.collection
                                .find({'bank': each['_id']}, ('amount',)))
@@ -78,6 +76,7 @@ class BanksAdminHandler(BanksBaseHandler):
                 sum_deposits
             ))
         data['banks'] = banks
+        data['locations_left'] = available_locations.values()
         self.render('admin/banks/index.html', **data)
 
 @route('/admin/banks/(\w{24})/', name='admin_bank')
