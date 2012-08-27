@@ -68,3 +68,11 @@
 #city .affordable-tickets .bar span {
     margin-right: 3px;
 }
+
+#city .row-fluid {
+    margin-top: 25px;
+}
+
+#city .affordable-tickets {
+    margin-top: 30px; 
+}
