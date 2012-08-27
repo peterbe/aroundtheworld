@@ -1505,8 +1505,81 @@ class LocationHandler(AuthenticatedBaseHandler):
         self.write({'state': data})
 
 
+class FlightFinderMixin(object):
+
+    BASE_PRICE = 100  # coins
+
+    def get_destinations(self, user, user_settings, current_location,
+                         only_affordable=False,
+                         ticket_progress=False,
+                         ticket_progress_min=None):
+        destinations = []
+        for location in (self.db.Location
+                          .find({'_id': {'$ne': current_location['_id']},
+                                 'available': True})):
+            if not self.enough_questions(location):
+                continue
+            distance = calculate_distance(current_location, location)
+            cost = self.calculate_cost(distance.miles, user)
+            if only_affordable:
+                if cost > user_settings['coins_total']:
+                    continue
+
+            destination = {
+              'id': str(location['_id']),
+              'code': location['code'],
+              'name': unicode(location),
+              'city': location['city'],
+              'locality': location['locality'],
+              'country': location['country'],
+              'cost': cost,
+              'canafford': cost <= user_settings['coins_total'],
+              'miles': distance.miles,
+              'lat': location['lat'],
+              'lng': location['lng'],
+            }
+            if ticket_progress:
+                destination['ticket_info'] = 'bla coins'
+                percentage = 100.0 * user_settings['coins_total'] / cost
+                if percentage < ticket_progress_min:
+                    continue
+                destination['percentage'] = min(100, int(percentage))
+
+            destinations.append(destination)
+
+        if not only_affordable and not ticket_progress:
+            destinations.append({
+              'id': 'moon',
+              'code': '',
+              'city': '',
+              'country': '',
+              'locality': 'space',
+              'name': 'Moon',
+              'cost': 1000000,
+              'miles': 238857,
+            })
+
+        if ticket_progress:
+            def sorter(x, y):
+                c = cmp(x['percentage'], y['percentage'])
+                if not c:
+                    # cheapest first
+                    c = cmp(y['cost'], x['cost'])
+                return c
+            destinations.sort(sorter,
+                              reverse=True)
+
+        return destinations
+
+    def calculate_cost(self, miles, user):
+        return self.BASE_PRICE + int(round(miles * .08))
+
+
 @route('/city.json$', name='city')
-class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
+class CityHandler(AuthenticatedBaseHandler,
+                  PictureThumbnailMixin,
+                  FlightFinderMixin,
+                  BankingMixin):
 
     FLAGS = {
       'Sweden': 'sweden.png',
@@ -1568,11 +1641,17 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             data['country'] = location['country']
             data['lat'] = location['lat']
             data['lng'] = location['lng']
-            data['count_pictures'] = self.get_pictures_count(location)
-            data['count_messages'] = self.get_messages_count(location)
-            data['count_banks'] = self.get_banks_count(location)
-            data['has_introduction'] = bool(self.get_intro_html(location))
-            data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
+            data['about_jobs'] = self.get_about_jobs(location, user)
+            data['about_flights'] = self.get_about_flights(location, user)
+            data['about_writings'] = self.get_about_writings(location, user)
+            data['about_question_writing'] = self.get_about_question_writing(location, user)
+            data['about_pictures'] = self.get_about_pictures(location)
+            data['about_banks'] = self.get_about_banks(location, user)
+            #data['count_pictures'] = self.get_pictures_count(location)
+            #data['count_messages'] = self.get_messages_count(location)
+            #data['count_banks'] = self.get_banks_count(location)
+            #data['has_introduction'] = bool(self.get_intro_html(location))
+            #data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
             data['state'] = self.get_state()
 
         self.write(data)
@@ -1587,6 +1666,183 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 break
             day += 1
         return day
+
+    def get_about_jobs(self, location, user):
+        earning_total = 0
+        unique_categories = []
+        _categories = {}
+        _jobs = (self.db.Job.collection
+                 .find({'user': user['_id'], 'location': location['_id']}))
+        for job in _jobs:
+            earning_total += job['coins']
+            if job['category'] not in _categories:
+                _categories[job['category']] = (self.db.Category.collection
+                                           .find_one({'_id': job['category']}))
+            _category = _categories[job['category']]
+            if _category['name'] not in unique_categories:
+                unique_categories.append(_category['name'])
+
+        text = ""
+        if earning_total:
+            text = ("You have earned <strong>%s coins</strong> working as "
+                    % earning_total)
+            if len(unique_categories) > 2:
+                text += ', '.join(unique_categories[:-1])
+                text += ' and %s' % unique_categories[-1]
+            else:
+                text += ' and '.join(unique_categories)
+            text += '.'
+        else:
+            info = self.get_available_jobs(user, location)
+            categories = [x['description'] for x in info]
+            text = "You can work as "
+            if len(categories) > 2:
+                text += ', '.join(categories[:-1])
+                text += ' and %s' % categories[-1]
+            else:
+                text += ' and '.join(categories)
+            text += '.'
+
+        return text
+
+    def get_about_flights(self, location, user):
+        destinations = self.get_destinations(
+            user,
+            self.get_user_settings(user),
+            location,
+        )
+        cheapest = sorted(destinations, key=lambda x: x['cost'])[0]
+        text = ("The cheapest ticket right now is going to "
+                "<strong>%s</strong> for %s coins "
+                % (cheapest['name'], cheapest['cost']))
+        if cheapest['canafford']:
+            text += "which you <strong>can afford</strong> right now."
+        else:
+            text += "which you can <strong>not afford</strong> yet."
+
+        return text.strip()
+
+    def get_about_writings(self, location, user):
+        your_messages = (self.db.LocationMessage.collection
+                         .find({'user': user['_id'],
+                                'location': location['_id']}))
+        all_messages = (self.db.LocationMessage.collection
+                        .find({'user': {'$ne': user['_id']},
+                               'location': location['_id'],
+                               'censored': False}))
+        your_messages_count = your_messages.count()
+        all_messages_count = all_messages.count()
+        if your_messages_count:
+            text = "You have written "
+            if your_messages_count == 1:
+                text += "<strong>one message</strong>"
+            else:
+                text += "<strong>%s messages</strong>" % your_messages_count
+            text += " on the wall in this city."
+        elif all_messages_count:
+            text = "Travellers have left "
+            if all_messages_count == 1:
+                text += "<strong>one message</strong>"
+            else:
+                text += "<strong>%s messages</strong>" % all_messages_count
+            text += " on the wall in this city. "
+        else:
+            text = "Be the first to write a message on the wall in this city."
+        return text.strip()
+
+    def get_about_question_writing(self, location, user):
+        count_written = (self.db.Question
+                         .find({'author': user['_id'],
+                               'location': location['_id']})
+                         .count())
+        if count_written:
+            count_published = (self.db.Question
+                               .find({'author': user['_id'],
+                                      'location': location['_id'],
+                                      'published': True})
+                               .count())
+            if count_published:
+                text = "You have "
+                if count_published == 1:
+                    text += "<strong>1 question</strong>"
+                else:
+                    text += "<strong>%s questions</strong>" % count_published
+                text += " questions published! "
+                total = 0
+                for q in (self.db.Question
+                          .find({'author': user['_id'],
+                                 'location': location['_id'],
+                                 'published': True},
+                                ('_id',))):
+                    for each in (self.db.QuestionAnswerEarning.collection
+                                 .find({'question': q['_id']}, ('coins',))):
+                        total += each['coins']
+                text += ("Your questions have earned you "
+                         "<strong>%s coins</strong>!"
+                         % (total, )
+                         )
+            else:
+                text = "You have written "
+                if count_written == 1:
+                    text += "<strong>1 question</strong>"
+                else:
+                    text += "<strong>%s questions</strong>" % count_written
+                text += " questions. But not of them are published yet."
+        else:
+            text = ("Writing your own questions is a great way of earning "
+                    "lots of coins. You earn coins every time someone plays "
+                    "your published questions.")
+        return text.strip()
+
+    def get_about_pictures(self, location):
+        count_pictures = (self.db.LocationPicture
+                          .find({'location': location['_id'],
+                                 'published': True})
+                          .count())
+        if count_pictures:
+            if count_pictures == 1:
+                text = "There is currently only "
+                text += "<strong>1 picture</strong>"
+            else:
+                text = "There are currently "
+                text += "<strong>%s pictures</strong>" % count_pictures
+            text += " uploaded."
+        else:
+            text = "Unfortunately, there are no pictures available yet."
+        return text.strip()
+
+    def get_about_banks(self, location, user):
+        banks = self.db.Bank.collection.find({'location': location['_id'],
+                                              'open': True})
+        count_banks = banks.count()
+        if count_banks:
+            if count_banks == 1:
+                text = "There is currently "
+                text += "<strong>1 bank</strong>"
+            else:
+                text = "There are currently "
+                text += "<strong>%s banks</strong>" % count_banks
+            text += " open in this city. "
+
+            bank_ids = [x['_id'] for x in banks]
+            deposits = (self.db.Deposit.collection
+                        .find({'bank': {'$in': bank_ids},
+                               'user': user['_id']}))
+            sum_ = sum(x['amount'] for x in deposits)
+            if sum_:
+                deposits.rewind()
+                interest = self.calculate_compound_interest(deposits)
+                interest = int(round(interest))
+                text += "You have deposited a total of "
+                text += "<strong>%s coins</strong> " % sum_
+                text += "with a potential of "
+                text += "<strong>%s coins</strong> interest!" % interest
+            else:
+                text += "You currently have no coins deposited."
+        else:
+            text = ("There are currently <strong>no open banks</strong> "
+                    "in this city.")
+        return text
 
     def get_banks_count(self, location):
         search = {'location': location['_id']}
@@ -1733,7 +1989,7 @@ class CityHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 experience = "you have not yet completed this"
             _cities = self.db.Location.find(_center_search)
             if _cities.count() > PinpointHandler.NO_QUESTIONS:
-                description = 'Geographer (%d cities)' % _cities.count()
+                description = 'Geographer'
                 jobs.append({
                   'type': 'pinpoint',
                   'description': description,
@@ -2328,10 +2584,10 @@ class PinpointHandler(AuthenticatedBaseHandler):
         self.write(data)
 
 
-@route('/airport.json$', name='airport')
-class AirportHandler(AuthenticatedBaseHandler):
 
-    BASE_PRICE = 100  # coins
+
+@route('/airport.json$', name='airport')
+class AirportHandler(AuthenticatedBaseHandler, FlightFinderMixin):
 
     def get(self):
         user = self.get_current_user()
@@ -2344,67 +2600,18 @@ class AirportHandler(AuthenticatedBaseHandler):
         ticket_progress = self.get_argument('ticket_progress', False)
         ticket_progress_min = float(self.get_argument('ticket_progress_min', 50.0))
 
-        destinations = []
-        for location in (self.db.Location
-                          .find({'_id': {'$ne': current_location['_id']},
-                                 'available': True})):
-            if not self.enough_questions(location):
-                continue
-            distance = calculate_distance(current_location, location)
-            cost = self.calculate_cost(distance.miles, user)
-            if only_affordable:
-                if cost > user_settings['coins_total']:
-                    continue
-
-            destination = {
-              'id': str(location['_id']),
-              'code': location['code'],
-              'name': unicode(location),
-              'city': location['city'],
-              'locality': location['locality'],
-              'country': location['country'],
-              'cost': cost,
-              'canafford': cost <= user_settings['coins_total'],
-              'miles': distance.miles,
-              'lat': location['lat'],
-              'lng': location['lng'],
-            }
-            if ticket_progress:
-                destination['ticket_info'] = 'bla coins'
-                percentage = 100.0 * user_settings['coins_total'] / cost
-                if percentage < ticket_progress_min:
-                    continue
-                destination['percentage'] = min(100, int(percentage))
-
-            destinations.append(destination)
-
-        if not only_affordable and not ticket_progress:
-            destinations.append({
-              'id': 'moon',
-              'code': '',
-              'city': '',
-              'country': '',
-              'locality': 'space',
-              'name': 'Moon',
-              'cost': 1000000,
-              'miles': 238857,
-            })
-
-        if ticket_progress:
-            def sorter(x, y):
-                c = cmp(x['percentage'], y['percentage'])
-                if not c:
-                    # cheapest first
-                    c = cmp(y['cost'], x['cost'])
-                return c
-            destinations.sort(sorter,
-                              reverse=True)
-        data['for_amount'] = user_settings['coins_total']
+        destinations = self.get_destinations(
+            user,
+            user_settings,
+            current_location,
+            only_affordable=only_affordable,
+            ticket_progress=ticket_progress,
+            ticket_progress_min=ticket_progress_min,
+        )
         data['destinations'] = destinations
+        data['for_amount'] = user_settings['coins_total']
         self.write(data)
 
-    def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .08))
 
 
 @route('/fly.json$', name='fly')

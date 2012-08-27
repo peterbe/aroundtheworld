@@ -22,6 +22,63 @@
   <div class="home section" style="display:none">
     <h2>Welcome to <strong class="location-name"></strong></h2>
 
+    <div class="row-fluid">
+
+          <div class="span4">
+	    <img class="overlay-image deferred" src="." data-src="{{ static_url('images/work-small.png') }}" alt="Check out the jobs" >
+ 	    <h4><a href="#city,jobs" class="overlay-changer">Check out the jobs</a></h4>
+	    <p class="about-jobs">You have completed Chef, Tour Guide but not yet worked as a Geographer</p>
+	  </div>
+
+          <div class="span4">
+	    <img class="overlay-image deferred" src="." data-src="{{ static_url('images/airport-small.png') }}" alt="Airport sign" >
+	    <h4><a href="#airport" class="overlay-changer">Go to the airport</a></h4>
+	    <p class="about-flights">Cheapest ticket available is to <strong>Stockholm, Sweden</strong> for 341 coins.</p>
+	  </div>
+
+	  <div class="span4">
+	    <img class="overlay-image deferred" src="." data-src="{{ static_url('images/writings-small.png') }}" alt="Writings on the wall">
+	    <h4><a href="#city,messages" class="overlay-changer">Writings on the wall</a></h4>
+	    <p class="about-writings">Be the first to write something on the wall in this city.</p>
+	  </div>
+
+    </div>
+
+    <div class="row-fluid">
+
+          <div class="span4">
+  	    <h4><a href="#questionwriter" class="overlay-changer">Write your own questions</a></h4>
+	    <p class="about-question-writing">It appears you have not contributed any questions yet.</p>
+	  </div>
+
+	  <div class="span4 intro-link">
+	    <h4><a href="#city,intro" class="overlay-changer">Read about <span class="location-name"></span></a></h4>
+	    <p>Find out about your city can help you work as a Tour Guide later.</p>
+	  </div>
+
+          <div class="span4 pictures-link">
+    	    <h4><a href="#city,pictures" class="overlay-changer">Look at pretty pictures</a></h4>
+	    <p class="about-pictures">There are currently <strong></strong> pictures uploaded.</p>
+	  </div>
+
+    </div>
+
+    <div class="row-fluid">
+
+          <div class="span4 banks-link">
+            <img src="." data-src="{{ static_url('images/bank-icon-small.png') }}" alt="Banks" class="overlay-image deferred">
+	    <h4><a href="#banks" class="overlay-changer">Banks</a></h4>
+	    <p class="about-banks">There are currently <span class="count"></span> banks here in this city.</p>
+	  </div>
+
+          <div class="span4">
+	    <h4><a href="#about" class="overlay-changer">About this game</a></h4>
+	    <p>Find out the story about this game from its creator.</p>
+	  </div>
+
+    </div>
+
+<!--
     <ul>
       <li class="intro-link"><a href="#city,intro" class="overlay-changer">First, an introduction about <span class="location-name"></span></a></li>
       <li style="display:none" class="pictures-link"><a href="#city,pictures" class="overlay-changer">Look at pretty pictures</a></li>
@@ -32,12 +89,14 @@
       <li class="banks-link"><a href="#banks" class="overlay-changer">Banks <span class="count"></span></a></li>
       <li><a href="#city,messages" class="overlay-changer">Writings on the wall</a></li>
       <li><a href="#about" class="overlay-changer">About this game</a></li>
-
     </ul>
+-->
 
+    <!--
     <form class="message-teaser" style="display:none">
     <input name="teaser" placeholder="Write something about your visit...">
     </form>
+    -->
 
     <div class="affordable-tickets" style="display:none">
       <h3>Next affordable tickets</h3>
@@ -68,6 +127,7 @@
   </div>
 
   <div class="messages section" style="display:none">
+    <img src="." data-src="{{ static_url('images/writing.png') }}" alt="Messages" class="overlay-image deferred">
     <h2>Messages from visitors of <strong></strong></h2>
     <div class="messages-outer">
     </div>

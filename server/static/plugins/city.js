@@ -165,17 +165,14 @@ var City = (function() {
          if (response.name) {
            $('.location-name', container).text(response.name);
          }
-         if (response.count_pictures) {
-           $('.pictures-link', container).show();
-         } else {
-           $('.pictures-link', container).hide();
-         }
-         if (response.count_banks) {
-           $('.banks-link', container).show();
-           $('.banks-link .count', container).text('(' + response.count_banks + ')');
-         } else {
-           $('.banks-link', container).hide();
-         }
+
+         $('.about-jobs', container).html(response.about_jobs);
+         $('.about-flights', container).html(response.about_flights);
+         $('.about-writings', container).html(response.about_writings);
+         $('.about-question-writing', container).html(response.about_question_writing);
+         $('.about-pictures', container).html(response.about_pictures);
+         $('.about-banks', container).html(response.about_banks);
+
          if (page == 'embassy') {
            _load_embassy(function() {
              $('.embassy .none', container).hide();
@@ -221,19 +218,25 @@ var City = (function() {
                });
              });
            } else {
+             /*
              // introduction?
              if (response.has_introduction) {
                $('li.intro-link', container).show();
              } else {
                $('li.intro-link', container).hide();
              }
+             */
+             /*
              // ambassadors?
              if (response.has_ambassadors) {
                $('li.ambassadors-link', container).show();
              } else {
                $('li.ambassadors-link', container).hide();
              }
+             */
+
              $('.home', container).hide().fadeIn(300);
+
              $.getJSON(AIRPORT_URL, {ticket_progress: true}, function(response) {
                if (!response.destinations.length) {
                  $('.affordable-tickets:visible', container).hide();
@@ -315,7 +318,7 @@ var City = (function() {
       _message_form_setup = true;
     },
     teardown: function() {
-      $('.pictures-link', container).hide();
+      //$('.pictures-link', container).hide();
     }
   };
 })();
