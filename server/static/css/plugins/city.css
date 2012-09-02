@@ -76,3 +76,10 @@
 #city .affordable-tickets {
     margin-top: 30px; 
 }
+
+@media (max-width: 480px) {
+
+    #city .affordable-tickets {
+        width: 99%;
+    }
+}    
