@@ -1,4 +1,5 @@
 import re
+import uuid
 from pymongo.objectid import ObjectId
 import datetime
 from mongokit import Document
@@ -146,6 +147,7 @@ class UserSettings(BaseDocument):
       'twitter': dict,
       'disable_sound': bool,
       'was_anonymous': bool,
+      'unsubscribe_emails': bool,
     }
 
     required_fields = ['user']
@@ -155,6 +157,7 @@ class UserSettings(BaseDocument):
       'miles_total': 0.0,
       'disable_sound': False,
       'was_anonymous': False,
+      'unsubscribe_emails': False,
     }
 
     def save(self, *args, **kwargs):
@@ -737,3 +740,31 @@ class TotalEarned(BaseDocument):
       'interest': 0,
     }
     required_fields = ['user']
+
+
+@register
+class Friendship(BaseDocument):
+    __collection__ = 'friendships'
+    structure = {
+      'user': ObjectId,
+      'to': ObjectId,
+      'mutual': bool,
+    }
+    default_values = {
+      'mutual': False,
+    }
+
+
+@register
+class FriendshipToken(BaseDocument):
+    __collection__ = 'friendshiptokens'
+    structure = {
+      'user': ObjectId,
+      'to': ObjectId,
+      'token': unicode,
+    }
+
+    required_fields = ['user', 'token']
+
+    def generate_token(self, length):
+        self['token'] = unicode(uuid.uuid4().hex[:length])

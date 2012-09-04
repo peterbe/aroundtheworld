@@ -17,9 +17,19 @@ import settings
 def run():
     db = connection[settings.DATABASE_NAME]
 
+    c = 0
+
     for each in db.UserSettings.find({'was_anonymous': {'$exists': False}}):
         each['was_anonymous'] = False
+        c += 1
         each.save()
+
+    for each in db.UserSettings.find({'unsubscribe_emails': {'$exists': False}}):
+        each['unsubscribe_emails'] = False
+        c += 1
+        each.save()
+
+    print c, "user settings fixed"
 
 
 if __name__ == '__main__':

@@ -172,6 +172,7 @@ var City = (function() {
          $('.about-question-writing', container).html(response.about_question_writing);
          $('.about-pictures', container).html(response.about_pictures);
          $('.about-banks', container).html(response.about_banks);
+         $('.about-league', container).html(response.about_league);
 
          if (page == 'embassy') {
            _load_embassy(function() {

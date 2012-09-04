@@ -120,6 +120,8 @@ class BaseHandler(tornado.web.RequestHandler):
                  'plugins/awards.js'],
       'about': ['css/plugins/about.css',
                 'plugins/about.js'],
+      'league': ['css/plugins/league.css',
+                'plugins/league.js'],
     }
 
 #    def write(self, *a, **k):
@@ -263,7 +265,43 @@ class BaseHandler(tornado.web.RequestHandler):
                 state['location'] = None
         else:
             state['user'] = None
+
+        invites = self.get_pending_friendship_invites()
+        if invites:
+            state['invites_pending'] = []
+            for token in invites:
+                from_user = self.db.User.find_one({
+                    '_id': token['user']
+                })
+                if not from_user:
+                    continue
+                state['invites_pending'].append({
+                    'from': self.get_name(from_user)
+                })
+
         return state
+
+    def get_pending_friendship_invites(self):
+        invites = self.get_secure_cookie('invites')
+        if invites is None:
+            return []
+        tokens = []
+        for token_str in invites.split('|'):
+            token = self.db.FriendshipToken.find_one({'token': token_str})
+            if token:
+                tokens.append(token)
+        return tokens
+
+    def get_name(self, user):
+        name = user['username']
+        if user['first_name'] or user['last_name']:
+            name = ('%s %s' % (
+                user['first_name'] or '',
+                user['last_name'] or ''
+            )).strip()
+        if not name:
+            name = user['email']
+        return name
 
     @property
     def redis(self):
@@ -352,6 +390,11 @@ class BaseHandler(tornado.web.RequestHandler):
         options['debug'] = self.application.settings['debug']
         return super(BaseHandler, self).render(template, **options)
 
+    def render_string(self, template, **options):
+        options['PROJECT_TITLE'] = settings.PROJECT_TITLE
+        options['SIGNATURE'] = settings.SIGNATURE
+        return super(BaseHandler, self).render_string(template, **options)
+
     def static_url(self, path, **kwargs):
         if self.application.settings['embed_static_url_timestamp']:
             ui_module = self.application.ui_modules['StaticURL'](self)
@@ -384,16 +427,28 @@ class BaseHandler(tornado.web.RequestHandler):
 
     ## Total earned stuff
 
-    def get_total_earned(self, user):
-        te = self.db.TotalEarned.find_one({'user': user['_id']})
+    def get_total_earned(self, user_id, only_coins=False):
+        if not isinstance(user_id, ObjectId):
+            user_id = user_id['_id']
+
+        if only_coins:
+            te = (self.db.TotalEarned.collection
+                  .find_one({'user': user_id},
+                            ('coins',)))
+        else:
+            te = self.db.TotalEarned.find_one({'user': user_id})
         if not te:
-            te = self._set_total_earned(user)
+            te = self._set_total_earned(user_id)
+
+        if only_coins:
+            return te['coins']
+
         return te
 
-    def _set_total_earned(self, user):
+    def _set_total_earned(self, user_id):
         te = self.db.TotalEarned()
-        te['user'] = user['_id']
-        filt = {'user': user['_id']}
+        te['user'] = user_id
+        filt = {'user': user_id}
         W = ('coins',)
         for each in self.db.Job.collection.find(filt, W):
             te['coins'] += each['coins']
@@ -1557,6 +1612,7 @@ class FlightFinderMixin(object):
               'name': 'Moon',
               'cost': 1000000,
               'miles': 238857,
+              'canafford': False
             })
 
         if ticket_progress:
@@ -1575,11 +1631,52 @@ class FlightFinderMixin(object):
         return self.BASE_PRICE + int(round(miles * .08))
 
 
+class LeagueMixin(object):
+
+    def get_pending_invites(self, this_user):
+        invites = []
+        # it could either be from invites
+        for each in self.get_pending_friendship_invites():
+            user = self.db.User.find_one({'_id': each['user']})
+            invites.append({
+              'user': self.get_name(user),
+              'total_earned': self.get_total_earned(user)['coins'],
+              'id': str(user['_id'])
+            })
+
+        for each in self.db.Friendship.find({'to': this_user['_id'], 'mutual': False}):
+            user = self.db.User.find_one({'_id': each['user']})
+            invites.append({
+              'user': self.get_name(user),
+              'total_earned': self.get_total_earned(user)['coins'],
+              'id': str(user['_id'])
+            })
+
+        return invites
+
+    def get_highscore_fast(self, user):
+        # return a list of just user ids all sorted by total earning
+        users = []
+        users.append((
+            self.get_total_earned(user, only_coins=True),
+            user['_id']
+        ))
+        for friendship in (self.db.Friendship.collection
+                           .find({'user': user['_id']}, ('to',))):
+            users.append((
+                self.get_total_earned(friendship['to'], only_coins=True),
+                friendship['to'],
+            ))
+        users.sort(reverse=True)
+        return users
+
+
 @route('/city.json$', name='city')
 class CityHandler(AuthenticatedBaseHandler,
                   PictureThumbnailMixin,
                   FlightFinderMixin,
-                  BankingMixin):
+                  BankingMixin,
+                  LeagueMixin):
 
     FLAGS = {
       'Sweden': 'sweden.png',
@@ -1647,6 +1744,7 @@ class CityHandler(AuthenticatedBaseHandler,
             data['about_question_writing'] = self.get_about_question_writing(location, user)
             data['about_pictures'] = self.get_about_pictures(location)
             data['about_banks'] = self.get_about_banks(location, user)
+            data['about_league'] = self.get_about_league(user)
             #data['count_pictures'] = self.get_pictures_count(location)
             #data['count_messages'] = self.get_messages_count(location)
             #data['count_banks'] = self.get_banks_count(location)
@@ -1715,6 +1813,7 @@ class CityHandler(AuthenticatedBaseHandler,
         text = ("The cheapest ticket right now is going to "
                 "<strong>%s</strong> for %s coins "
                 % (cheapest['name'], cheapest['cost']))
+
         if cheapest['canafford']:
             text += "which you <strong>can afford</strong> right now."
         else:
@@ -1842,6 +1941,31 @@ class CityHandler(AuthenticatedBaseHandler,
         else:
             text = ("There are currently <strong>no open banks</strong> "
                     "in this city.")
+        return text
+
+    def get_about_league(self, user):
+        text = ""
+        invites = self.get_pending_invites(user)
+        if invites:
+            if len(invites) == 1:
+                text = ("You have a pending invite from "
+                        "<strong>%s</strong>." % invites[0]['user']
+                        )
+            else:
+                text += "You have %s pending invites." % len(invites)
+            text += "<br>"
+        users_rankings = {}
+        for i, (total, user_id) in enumerate(self.get_highscore_fast(user)):
+            users_rankings[user_id] = (i + 1, total)
+        text = ("You are current number <strong>%s</strong> "
+                "(of %s) "
+                "in your League of Friends."
+                % (
+                   users_rankings[user['_id']][0],
+                   len(users_rankings)
+                   )
+                )
+
         return text
 
     def get_banks_count(self, location):
@@ -2742,7 +2866,6 @@ class FlyHandler(AirportHandler):
                     }
                     self.create_100k_award(user, current_location,
                                            reward, data_)
-################################################################################
 
         data = {
           'from_code': current_location['code'],
@@ -2869,6 +2992,24 @@ class BaseAuthHandler(BaseHandler):
 
                 self.email_inviter(inviter, invitation, user)
 
+        friendship_invites = self.get_pending_friendship_invites()
+        if friendship_invites:
+            for token in friendship_invites:
+                from_user = self.db.User.find_one({'_id': token['user']})
+                friendship1 = self.db.Friendship()
+                friendship1['user'] = from_user['_id']
+                friendship1['to'] = user['_id']
+                friendship1['mutual'] = True
+                friendship1.save()
+
+                friendship2 = self.db.Friendship()
+                friendship2['user'] = user['_id']
+                friendship2['to'] = from_user['_id']
+                friendship2['mutual'] = True
+                friendship2.save()
+
+                token.delete()
+
         if previous_user and previous_user['anonymous'] and not user['anonymous']:
             self._transferUser(previous_user, user)
             if not self.has_signin_award(user):
@@ -2944,35 +3085,21 @@ class BaseAuthHandler(BaseHandler):
         if not from_:
             from_ = 'noreply@%s' % self.request.host
         subject = (u"Congratulations! %s has now joined %s" %
-                   (user['username'], settings.PROJECT_TITLE))
+                   (self.get_name(user), settings.PROJECT_TITLE))
         body = []
-        if inviter['first_name']:
-            body.append('Hi %s' % inviter['first_name'])
-        else:
-            body.append('Hi %s' % inviter['username'])
-        body.append('')
-        body.append("Your invitation sent to %s did work out!" % invitation['email'])
-        if user['first_name']:
-            name = '%s %s' % (user['first_name'], user['last_name'])
-        else:
-            name = user['username']
-        body.append("Welcome %s to %s!" % (name, settings.PROJECT_TITLE))
-        body.append('')
-        body.append("For this recruitment you were awarded %s coins. Congratulations!" %
-                    self.INVITATION_AWARD)
-        inviter_settings = self.get_user_settings(inviter)
-        body.append("Your total coins is now: %s coins." % inviter_settings['coins_total'])
-        body.append('')
-        body.append('--')
-        full_url = '%s://%s' % (self.request.protocol, self.request.host)
-        body.append(full_url)
-        body = '\n'.join(body)
+        body = self.render_string('invitation_complete.txt', **{
+            'inviter_name': inviter['first_name'] and inviter['first_name'] or inviter['username'],
+            'invitation': invitation,
+            'name': self.get_name(user),
+            'coins': self.INVITATION_AWARD,
+            'total_earned': self.get_total_earned(inviter)['coins'],
+        })
         send_email(
-          self.application.settings['email_backend'],
-          subject,
-          body,
-          from_,
-          [to]
+            self.application.settings['email_backend'],
+            subject,
+            body,
+            from_,
+            [to]
         )
 
 
@@ -3094,8 +3221,6 @@ class TwitterAuthHandler(BaseAuthHandler, tornado.auth.TwitterMixin):
     def _on_auth(self, user_struct):
         if not user_struct:
             raise HTTPError(500, "Twitter auth failed")
-        #from pprint import pprint
-        #pprint(user_struct)
         if not (user_struct.get('email') or user_struct.get('username')):
             raise HTTPError(500, "No email or username provided")
         username = user_struct.get('username')
@@ -3321,15 +3446,13 @@ class FeedbackHandler(AuthenticatedBaseHandler):
 
         try:
             admin_url = '%s://%s' % (self.request.protocol,
-                                       self.request.host)
+                                     self.request.host)
             admin_url += self.reverse_url('admin_feedback_reply', feedback['_id'])
             body = self.render_string("feedback_posted.txt", **{
               'feedback': feedback,
               'feedback_location': location,
               'feedback_user': user,
               'admin_url': admin_url,
-              'SIGNATURE': settings.SIGNATURE,
-              'PROJECT_TITLE': settings.PROJECT_TITLE,
             })
             send_email(
               self.application.settings['email_backend'],
@@ -4079,3 +4202,359 @@ class AllImagesHandler(BaseHandler, PictureThumbnailMixin):
         data['pictures'] = pictures
 
         self.render('admin/all-images.html', **data)
+
+
+## thank you django.core.validators
+email_re = re.compile(
+    r"(^[-!#$%&'*+/=?^_`{}|~0-9A-Z]+(\.[-!#$%&'*+/=?^_`{}|~0-9A-Z]+)*"  # dot-atom
+    # quoted-string, see also http://tools.ietf.org/html/rfc2822#section-3.2.5
+    r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"'
+    r')@((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$)'  # domain
+    r'|\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\]$', re.IGNORECASE)  # literal form, ipv4 address (SMTP 4.1.3)
+
+@route('/league.json', name='league')
+class League(AuthenticatedBaseHandler, LeagueMixin):
+
+    LINK_SHIM = '<special link inserted here>'
+
+    def get(self):
+        data = {}
+        if self.get_argument('find', None):
+            self.write(self.find_users(self.get_argument('find')))
+            return
+        if self.get_argument('preview', None):
+            self.write({'text': self.get_preview_text()})
+            return
+        user = self.get_current_user()
+        total_earned = self.get_total_earned(user)
+        rank = (self.db.TotalEarned
+                .find({'coins': {'$gt': total_earned['coins']}})
+                .count() + 1)
+        data['total_earned'] = {
+          'coins': total_earned['coins'],
+          'rank': rank
+        }
+        data['highscore'] = self.get_highscore(user)
+        data['invites'] = self.get_pending_invites(user)
+        self.write(data)
+
+    def get_preview_text(self):
+        user = self.get_current_user()
+        current_location = self.get_current_location(user)
+        total_earned = self.get_total_earned(user)
+        text = self.render_string('invite_text.txt', **{
+            'total_earned_coins': total_earned['coins'],
+            'current_location': current_location['city'],
+            'link_shim': self.LINK_SHIM,
+        })
+        return text
+
+    def find_users(self, search):
+        search1 = re.compile('^%s' % re.escape(search), re.I)
+        current_user = self.get_current_user()
+        result = []
+        _ids = set()
+        def append(user):
+            if user['_id'] in _ids:
+                return
+            _ids.add(user['_id'])
+            connected = self.db.Friendship.find_one({
+                'user': current_user['_id'],
+                'to': user['_id']
+            })
+            if connected:
+                return
+            result.append([
+                str(user['_id']),
+                user['username'],
+                user['email'],
+                ('%s %s' % (user['first_name'], user['last_name'])).strip()
+            ])
+        select = ('username', 'first_name', 'last_name', 'email')
+        # XXX how to OR these?
+        for key in ('username', 'email', 'first_name', 'last_name'):
+            for each in (self.db.User.collection
+                         .find({key: search1}, select)):
+                append(each)
+        data = {
+            'count': len(result),
+            'result': result[:10],
+            'capped': len(result) > 10,
+        }
+        return data
+
+    def get_highscore(self, this_user):
+        list_ = []
+
+        for i, (total, user_id) in enumerate(self.get_highscore_fast(this_user)):
+            user = (self.db.User.collection
+                    .find_one({'_id': user_id},
+                              ('first_name', 'last_name', 'email', 'username')))
+            is_you = user['_id'] == this_user['_id']
+            name = self.get_name(user)
+            if is_you and this_user['anonymous']:
+                name = 'You'
+            list_.append({
+                'total': self.get_total_earned(user)['coins'],
+                'name': name,
+                'you': is_you,
+            })
+
+        list_.sort(key=lambda x: x['total'], reverse=True)
+        return list_
+
+    def post(self):
+        if self.get_argument('email', None) and self.get_argument('text', None):
+            email = self.get_argument('email')
+            text = self.get_argument('text')
+            sent, errors = self.send_invite(email, text)
+            if errors:
+                self.write({'errors': errors})
+            else:
+                self.write({'sent': sent})
+            return
+        data = {}
+        this_user = self.get_current_user()
+        user = self._find_user(self.get_argument('id'))
+        assert user
+        friendship = self.db.Friendship.find_one({
+            'user': this_user['_id'],
+            'to': user['_id']
+        })
+        if friendship:
+            self.write({'error': 'ALREADYFRIENDS'})
+            return
+
+        friendship = self.db.Friendship()
+        friendship['user'] = this_user['_id']
+        friendship['to'] = user['_id']
+        friendship.save()
+
+        inverse = self.db.Friendship.find_one({
+            'user': user['_id'],
+            'to': this_user['_id']
+        })
+        if inverse:
+            inverse['mutual'] = True
+            inverse.save()
+            friendship['mutual'] = True
+            friendship.save()
+
+        if friendship['mutual']:
+            notified = self.notify_accepted_friendship(
+                user,
+                this_user,
+            )
+        else:
+            notified = self.notify_new_friendship(
+                user,
+                this_user,
+            )
+
+        data['notified'] = notified
+
+        self.write(data)
+
+    def send_invite(self, email, text):
+        sent = None
+        errors = []
+
+        if not email_re.match(email):
+            errors.append("Error: Email address appears to not be valid.")
+        if self.LINK_SHIM not in text:
+            errors.append("Error: Special link shim not in text any more.")
+
+        if not errors:
+            try:
+                sent = self._send_invite(email, text)
+            except Exception:
+                logging.error('Unable to send invite', exc_info=True)
+                sent = False
+
+        return sent, errors
+
+    def _send_invite(self, email, text):
+        user = self.get_current_user()
+        token = self.db.FriendshipToken()
+        token['user'] = user['_id']
+        token.generate_token(12)
+        token.save()
+
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        join_url = base_url + self.reverse_url('join_friendship', token['token'])
+        assert self.LINK_SHIM in text
+        text = text.replace(self.LINK_SHIM, join_url)
+        body = text  # XXX maybe HTML some day
+        subject = "Join my League of Friends on %s" % settings.PROJECT_TITLE
+        send_email(
+            self.application.settings['email_backend'],
+            subject,
+            body,
+            self.application.settings['admin_emails'][0],
+            [email],
+            bcc=self.application.settings['admin_emails']
+        )
+        invitation = self.db.Invitation()
+        invitation['user'] = user['_id']
+        invitation['email'] = email
+        invitation['message'] = text
+        invitation.save()
+
+        return True
+
+    def _find_user(self, _id):
+        try:
+            user = self.db.User.find_one({'_id': ObjectId(_id)})
+        except InvalidId:
+            raise HTTPError(400, _id)
+        if not user:
+            raise HTTPError(400, _id)
+        return user
+
+    def notify_accepted_friendship(self, *args, **kwargs):
+        try:
+            return self._notify_accepted_friendship(*args, **kwargs)
+        except Exception:
+            logging.error(
+                'Unable to notify about accepted of friendship',
+                exc_info=True
+            )
+            return False
+
+    def _notify_accepted_friendship(self, user, from_user):
+        user_settings = self.get_user_settings(user)
+        if user_settings.get('unsubscribe_emails'):
+            return False
+
+        users_rankings = {}
+        for i, (total, user_id) in enumerate(self.get_highscore_fast(from_user)):
+            users_rankings[user_id] = (i + 1, total)
+
+        your_total_earned = self.get_total_earned(user)
+        your_rank = users_rankings[user['_id']][0]
+        their_total_earned = self.get_total_earned(from_user)
+        their_rank = users_rankings[from_user['_id']][0]
+
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        league_url = base_url + '/league'
+        body = self.render_string('friendship_accepted.txt', **{
+            'their_total_earned': their_total_earned,
+            'their_rank': their_rank,
+            'their_name': self.get_name(from_user),
+            'your_name': self.get_name(user),
+            'your_total_earned': your_total_earned,
+            'your_rank': your_rank,
+            'league_url': league_url,
+        })
+        subject = ("%s on your League of Friends" %
+                   (self.get_name(from_user),)
+                   )
+        send_email(
+            self.application.settings['email_backend'],
+            subject,
+            body,
+            self.application.settings['admin_emails'][0],
+            [user['email']],
+        )
+        return True
+
+    def notify_new_friendship(self, *args, **kwargs):
+        try:
+            return self._notify_new_friendship(*args, **kwargs)
+        except Exception:
+            logging.error('Unable to notify of friendship', exc_info=True)
+            return False
+
+    def _notify_new_friendship(self, user, from_user):
+        user_settings = self.get_user_settings(user)
+        if user_settings.get('unsubscribe_emails'):
+            return False
+
+        users_rankings = {}
+        for i, (total, user_id) in enumerate(self.get_highscore_fast(from_user)):
+            users_rankings[user_id] = (i + 1, total)
+
+        your_total_earned = self.get_total_earned(user)
+        your_rank = users_rankings[user['_id']][0]
+        their_total_earned = self.get_total_earned(from_user)
+        their_rank = users_rankings[from_user['_id']][0]
+        token = self.db.FriendshipToken()
+        token['user'] = from_user['_id']
+        token['to'] = user['_id']
+        token.generate_token(12)
+        token.save()
+
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        accept_url = base_url + self.reverse_url('accept_friendship', token['token'])
+        body = self.render_string('friendship_created.txt', **{
+            'their_total_earned': their_total_earned,
+            'their_rank': their_rank,
+            'their_name': self.get_name(from_user),
+            'your_name': self.get_name(user),
+            'your_total_earned': your_total_earned,
+            'your_rank': your_rank,
+            'accept_url': accept_url,
+        })
+
+        subject = ("You've been added to %s's League of Friends" %
+                   (self.get_name(from_user),)
+                   )
+
+        send_email(
+            self.application.settings['email_backend'],
+            subject,
+            body,
+            self.application.settings['admin_emails'][0],
+            [user['email']],
+        )
+        return True
+
+
+@route('/accept/(\w{12})', name='accept_friendship')
+class AcceptFriendshipHandler(BaseHandler):
+
+    def get(self, token):
+        friendship_token = self.db.FriendshipToken.find_one({'token': token})
+        if not friendship_token:
+            self.redirect('/league')
+            return
+            #raise HTTPError(404, 'Invalid token')
+        user = self.db.User.find_one({'_id': friendship_token['user']})
+        to = self.db.User.find_one({'_id': friendship_token['to']})
+
+        friendship = self.db.Friendship.find_one({
+            'user': user['_id'],
+            'to': to['_id'],
+        })
+        friendship['mutual'] = True
+        friendship.save()
+
+        new_friendship = self.db.Friendship()
+        new_friendship['user'] = to['_id']
+        new_friendship['to'] = user['_id']
+        new_friendship['mutual'] = True
+        new_friendship.save()
+
+        friendship_token.delete()
+
+        self.redirect('/league')
+
+
+@route('/join/(\w{12})', name='join_friendship')
+class JoinFriendshipHandler(BaseHandler):
+
+    def get(self, token):
+        friendship_token = self.db.FriendshipToken.find_one({'token': token})
+        if not friendship_token:
+            self.redirect('/league')
+            return
+            #raise HTTPError(404, 'Invalid token')
+        invites = self.get_secure_cookie('invites')
+        if invites is None:
+            invites = []
+        else:
+            invites = invites.split('|')
+        invites.append(friendship_token['token'])
+        self.set_secure_cookie('invites', '|'.join(invites))
+
+        self.redirect('/')

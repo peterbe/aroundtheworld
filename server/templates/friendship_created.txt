@@ -1,0 +1,13 @@
+Hi {{ your_name }},
+
+{{ their_name }} has added you to their League of Friends on {{
+PROJECT_TITLE }}. You're currently *#{{ your_rank }}*
+({{your_total_earned['coins'] }} coins) and {{ their_name }} is *#{{ their_rank }}* ({{ their_total_earned['coins'] }} coins).
+
+To add {{ their_name }} to your Legue of Friends follow this link:
+
+{{ accept_url }}
+
+
+--
+{{ SIGNATURE }}

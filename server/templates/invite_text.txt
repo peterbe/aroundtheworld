@@ -1,0 +1,10 @@
+Hi there!
+
+Wanna join my League of Friends on {{PROJECT_TITLE}}?
+I have so far earned {% module Thousands(total_earned_coins) %} coins and I'm currently in {{current_location}}.
+To join, follow this link:
+
+{% raw link_shim %}
+
+--
+{{SIGNATURE}}

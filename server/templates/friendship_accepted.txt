@@ -1,0 +1,10 @@
+Hi {{ your_name }},
+
+{{ their_name }} and you are now on the same League of Friends on {{PROJECT_TITLE }}.
+You're currently *#{{ your_rank }}* ({{your_total_earned['coins'] }} coins) and {{ their_name }} is *#{{ their_rank }}* ({{ their_total_earned['coins'] }} coins).
+
+{{ league_url }}
+
+
+--
+{{ SIGNATURE }}

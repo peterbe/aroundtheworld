@@ -50,6 +50,16 @@ var Welcome = (function() {
        $('.alternative', container).hide();
        if (!STATE.user) {
          $('.not-logged-in', container).show();
+         if (STATE.invites_pending) {
+           var names = [];
+           $.each(STATE.invites_pending, function(i, each) {
+             names.push(each.from + "'s");
+           });
+           $('.pending-invites .names', container).text(names.join(' and '));
+           $('.pending-invites', container).show();
+         } else {
+           $('.pending-invites', container).hide();
+         }
        } else if (STATE.location && STATE.location.nomansland) {
          $('.nomansland', container).show();
 
