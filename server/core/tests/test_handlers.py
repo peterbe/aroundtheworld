@@ -14,7 +14,7 @@ import settings
 import tornado_utils.send_mail as mail
 from core.handlers import (
   PinpointHandler, GoogleAuthHandler, QuizzingHandler, CityHandler,
-  PictureDetectiveHandler,
+  PictureDetectiveHandler, League,
   FULL_DATE_FMT
 )
 
@@ -66,10 +66,10 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         GoogleAuthHandler.get_authenticated_user = \
           make_google_get_authenticated_user({
-            'username': username,
-            'email': email,
-            'first_name': first_name,
-            'last_name': u'Bengtsson',
+            'username': unicode(username),
+            'email': unicode(email),
+            'first_name': unicode(first_name),
+            'last_name': unicode(last_name),
           })
         url = self.reverse_url('auth_google')
         response = client.get(url, {'openid.mode':'xxx'})
@@ -86,6 +86,9 @@ class HandlersTestCase(BaseHTTPTestCase):
             user.save()
         assert self.db.UserSettings.find_one({'user': user['_id']})
         return user
+
+    def _logout(self):
+        assert self.client.get(self.reverse_url('logout')).code == 302
 
     def _create_question(self, category, location, published=True):
         q = self.db.Question()
@@ -962,7 +965,7 @@ class HandlersTestCase(BaseHTTPTestCase):
         email_sent = mail.outbox[-1]
         self.assertTrue(email_sent.from_email.startswith('noreply'))
         self.assertEqual(email_sent.recipients(), [user['email']])
-        self.assertTrue('peter' in email_sent.subject)
+        self.assertTrue('Peter' in email_sent.subject)
         from core.handlers import BaseAuthHandler
         self.assertTrue(str(BaseAuthHandler.INVITATION_AWARD)
                         in email_sent.body)
@@ -980,10 +983,16 @@ class HandlersTestCase(BaseHTTPTestCase):
         self.assertEqual(emails_before, emails_after)
 
     def test_city(self):
+        # must have a picture detective category
+        cat = self.db.Category()
+        cat['name'] = PictureDetectiveHandler.CATEGORY_NAME
+        cat.save()
+
         user = self._login(location=self.newyork)
         url = self.reverse_url('city')
         structure = self.get_struct(url)
-        self.assertEqual(structure['count_messages'], 0)
+        # XXX should assert more of the content of this structure
+
         data = {
           'message': "Hi it's me",
         }
@@ -1868,9 +1877,112 @@ class HandlersTestCase(BaseHTTPTestCase):
         second = groups[bank2['name']]
         self.assertEqual(first['total'],
                          int(expected_bank1 + expected_bank1_interest))
-        self.assertEqual(first['interest'], expected_bank1_interest)
+        self.assertEqual(first['interest'],
+                         int(round(expected_bank1_interest)))
         self.assertEqual(second['total'],
                          int(expected_bank2 + expected_bank2_interest))
-        self.assertEqual(second['interest'], expected_bank2_interest)
+        self.assertEqual(second['interest'],
+                         int(round(expected_bank2_interest)))
 
-#    def test_anonymous_to_signed_in_current_location(self):
+    def test_connect_with_friend(self):
+        self._login(u'bob', email=u'bob@example.com',
+                    first_name=u'Bob', last_name=u'Terminator',
+                    location=self.newyork,
+                    )
+        bob, = self.db.User.find()
+
+        peter = self._login(location=self.newyork)
+        url = self.reverse_url('league')
+        response = self.client.post(url, {'id': str(bob['_id'])})
+        self.assertEqual(response.code, 200)
+        self.assertTrue(json.loads(response.body)['notified'], True)
+        # that should have sent an email with a link
+        email_sent = mail.outbox[-1]
+        self.assertTrue(bob['email'] in email_sent.recipients())
+        self.assertTrue(peter.first_name in email_sent.subject)
+
+        token, = self.db.FriendshipToken.find()
+        accept_link = self.reverse_url('accept_friendship', token['token'])
+        self.assertTrue(accept_link in email_sent.body)
+
+        self._logout()
+
+        self.assertEqual(self.db.Friendship.find().count(), 1)
+        friendship, = self.db.Friendship.find({
+          'user': peter['_id'],
+          'to': bob['_id']
+        })
+        assert not friendship['mutual']
+
+        # anybody can visit this accept link
+        response = self.client.get(accept_link)
+        assert response.code == 302
+        self.assertEqual(self.db.Friendship.find().count(), 2)
+
+        friendship, = self.db.Friendship.find({
+          'user': peter['_id'],
+          'to': bob['_id']
+        })
+        assert friendship['mutual']
+
+        other, = self.db.Friendship.find({
+          'user': bob['_id'],
+          'to': peter['_id']
+        })
+        assert other['mutual']
+
+        assert not self.db.FriendshipToken.find().count()
+
+    def test_connect_from_invite(self):
+        peter = self._login(location=self.newyork)
+        url = self.reverse_url('league')
+
+        response = self.client.post(url, {
+            'email': 'bob@example.com',
+            'text': 'Hi there %s' % League.LINK_SHIM
+        })
+        self.assertEqual(response.code, 200)
+        self.assertTrue(json.loads(response.body)['sent'], True)
+        self._logout()
+
+        email_sent = mail.outbox[-1]
+        token, = self.db.FriendshipToken.find({'user': peter['_id']})
+        join_link = self.reverse_url('join_friendship', token['token'])
+        self.assertTrue(join_link in email_sent.body)
+
+        response = self.client.get(join_link)
+        self.assertEqual(response.code, 302)
+
+        state_link = self.reverse_url('state')
+        response = self.client.get(state_link)
+        load = json.loads(response.body)
+        self.assertTrue(load['state'].get('invites_pending'))
+
+        assert self.db.Friendship.find().count() == 0
+
+        bob = self._login(
+            username='bob',
+            email='bob@example.com',
+            first_name='Bob',
+            last_name='Bull'
+        )
+        assert self.db.Friendship.find().count() == 2
+
+        assert self.db.Friendship.find_one({
+            'user': peter['_id'],
+            'to': bob['_id'],
+            'mutual': True
+        })
+
+        assert self.db.Friendship.find_one({
+            'user': bob['_id'],
+            'to': peter['_id'],
+            'mutual': True
+        })
+
+        assert not self.db.FriendshipToken.find().count()
+
+        # that should have sent out a second email
+        email_sent = mail.outbox[-1]
+        self.assertTrue(peter['email'] in email_sent.recipients())
+        self.assertTrue('Bob Bull has' in email_sent.subject)

@@ -1,0 +1,81 @@
+<div id="league" class="overlay" style="display:none">
+  <img src="." data-src="{{ static_url('images/trophy.png') }}" alt="League of Friends" class="overlay-image deferred">
+  <h2>League of Friends</h2>
+
+  <p class="info">You have earned a total of <strong class="total-earned"></strong> which places you
+  <strong class="total-earned-rank"></strong>
+  on the global list but what matters is how you compare to your friends.
+  </p>
+
+  <div class="highscore">
+    <h3>The List</h3>
+    <table>
+    </table>
+  </div>
+
+  <div class="friends">
+    <h3>More friends</h3>
+
+    <form class="invite">
+    <div class="control-group for-invite_email">
+      <label class="control-label" for="id-invite_email">Find more people to your league:</label>
+      <div class="controls">
+        <input type="text" name="email" class="input-xlarge" placeholder="Email or username"
+          id="id-invite_email">
+        <p class="help-text email-error-text" style="display:none"></p>
+      </div>
+    </div>
+
+    <div class="not-signed-in" style="display:none">
+      <p>As soon as you <a href="#login" class="overlay-changer">sign in</a> you
+      will be able to invite your friends to your league.
+      </p>
+    </div>
+
+    <div class="invite-preview" style="display:none">
+      <p>Something like this...:</p>
+      <textarea class="preview" cols="80" rows="4"></textarea><br>
+      <p class="hint">Hint: You can edit it as much as you link as long as you keep the link.</p>
+      <button class="btn btn-small btn-primary sendit">Send it!</button>
+      <button class="btn btn-mini cancel">Cancel</button>
+    </div>
+
+    <div class="invite-hint" style="display:none">
+      <p>You can invite friends <strong>by email</strong> who are not already here.</p>
+      <button class="btn btn-small preview">Preview email invite</button>
+    </div>
+
+    <div class="invite-sent" style="display:none">
+      <p><strong>Invite sent!</strong></p>
+      <p>Now let's just hope your friend joins your league.</p>
+    </div>
+
+    <div class="invite-not-sent" style="display:none">
+      <p style="color:red"><strong>Invite could not be sent :(</strong></p>
+      <p>For some unknown reason the email could not be sent at the moment.
+      Please try again later.</p>
+    </div>
+
+    <table class="search-results table-condensed" style="display:none">
+      <tr class="head">
+        <td>Username</td>
+        <td>Name</td>
+        <td class="result-count">&nbsp;</td>
+      </tr>
+    </table>
+
+    </form>
+
+    <div class="invites">
+
+    </div>
+
+  </div>
+
+<div style="clear:left">&nbsp;</div>
+
+<p class="exit">
+Ok. <a href="#city" class="overlay-changer">Go back to the city</a>
+</p>
+
+</div>

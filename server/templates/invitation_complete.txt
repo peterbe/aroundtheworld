@@ -1,0 +1,10 @@
+Hi {{ inviter_name }},
+
+Your invitation sent to {{ invitation['email'] }} did work out!
+Welcome {{ name }} to {{ PROJECT_TITLE }}!
+
+For this recruitment you were awarded *{{ coins }} coins*. Congratulations!
+Your total earned is now *{{ total_earned }} coins*.
+
+--
+{{ SIGNATURE }}

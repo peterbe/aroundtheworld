@@ -17,7 +17,7 @@ ADMIN_EMAILS = (
 
 NOREPLY_EMAIL = 'noreply@aroundtheworldgame.com'
 
-SIGNATURE = PROJECT_TITLE
+SIGNATURE = '%s\nhttp://aroundtheworldgame.com' % PROJECT_TITLE
 
 THUMBNAIL_DIRECTORY = path('static/thumbnails')
 QUIZ_MIN_NO_QUESTIONS = 10

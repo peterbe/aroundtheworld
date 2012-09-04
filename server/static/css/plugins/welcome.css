@@ -42,6 +42,11 @@
     float: left;
 }
 
+#welcome .pending-invites {
+    text-align: center;
+    margin-top: 50px;
+}
+
 @media (max-width: 480px) {
 
   #welcome h1 {

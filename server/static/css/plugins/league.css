@@ -1,0 +1,52 @@
+#league .highscore {
+    float: left;
+}
+
+#league .highscore .you {
+    font-weight: bold;
+}
+
+#league .highscore .first {
+    font-size: 130%;
+}
+
+#league .highscore .second {
+    font-size: 120%;
+}
+
+#league .highscore .third {
+    font-size: 110%;
+}
+
+#league td.total {
+    text-align: right;
+}
+
+#league .friends {
+    margin-left: 35%;
+}
+
+#league tr.head td {
+    font-weight: bold;
+}
+
+#league tr.capped td {
+    font-style: italic;
+    text-align: center;
+}
+
+#league tr td {
+    padding: 2px 4px;
+}
+
+#league div.for-invite_email {
+    margin-bottom: 2px;
+}
+
+#league textarea.preview {
+    width: 400px;
+}
+
+#league p.hint {
+    font-size: 0.8em;
+}
