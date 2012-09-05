@@ -3104,7 +3104,10 @@ class TwitterAuthHandler(BaseAuthHandler, tornado.auth.TwitterMixin):
             last_name = user_struct.get('last_name', u'')
         else:
             first_name = user_struct.get('name').split(None, 1)[0]
-            last_name = user_struct.get('name').split(None, 1)[1]
+            try:
+                last_name = user_struct.get('name').split(None, 1)[1]
+            except IndexError:
+                last_name = u''
         email = user_struct.get('email', u'')
 
         if not username:
