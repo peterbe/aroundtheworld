@@ -147,6 +147,13 @@ class UserAdminHandler(SuperuserBaseHandler):
         data['total_earned'] = self.get_total_earned(user)
         data['current_location'] = (self.db.Location
                                  .find_one({'_id': user['current_location']}))
+        data['count_friendships'] = (self.db.Friendship
+                                     .find({'user': user['_id']})
+                                     .count())
+        data['count_mutual_friendships'] = (self.db.Friendship
+                                            .find({'user': user['_id'],
+                                                   'mutual': True})
+                                            .count())
         self.render('admin/user.html', **data)
 
     def post(self, _id):
@@ -285,6 +292,20 @@ class UserJourneyAdminHandler(UserAdminHandler):
               description,
               location,
               'feedback',
+            ))
+
+        for friendship in (self.db.Friendship.collection
+                           .find({'user': user['_id']})
+                           .sort('add_date', -1)):
+            to = self.db.User.collection.find_one({'_id': friendship['to']})
+            description = "Connected to %s" % self.get_name(to)
+            if friendship['mutual']:
+                description += ' (mutual)'
+            events.append((
+              friendship['add_date'],
+              description,
+              None,
+              'friendship',
             ))
 
         events.sort()

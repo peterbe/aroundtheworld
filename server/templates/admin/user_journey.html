@@ -44,6 +44,8 @@ tfoot th select[name="countries"] { width:150px; }
               <img src="{{ static_url('images/sprite-images/mini-feedback.png') }}" alt="Feedback">
               {% elif event_type == 'job' %}
               <img src="{{ static_url('images/coins/gold-1.png') }}" alt="Job">
+              {% elif event_type == 'friendship' %}
+              <img src="{{ static_url('images/mini-friendship.png') }}" alt="Friendship">
               {% else %}
               {{ event_type }}
               {% end %}
