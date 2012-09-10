@@ -50,17 +50,19 @@ class FeedbacksAdminHandler(SuperuserBaseHandler):
                      .skip(skip)):
 
             if each['location'] and each['location'] not in _locations:
-                _locations[each['location']] = \
-                  self.db.Location.find_one({'_id': each['location']})
+                _locations[each['location']] = (
+                    self.db.Location.find_one({'_id': each['location']})
+                )
             if each['user'] and each['user'] not in _users:
-                _users[each['user']] = \
-                  self.db.User.find_one({'_id': each['user']})
+                _users[each['user']] = (
+                    self.db.User.find_one({'_id': each['user']})
+                )
             replies = self.db.Feedback.find({'reply_to': each['_id']})
             documents.append((
-              each,
-              each['location'] and _locations[each['location']] or None,
-              each['user'] and _users[each['user']] or None,
-              replies
+                each,
+                each['location'] and _locations[each['location']] or None,
+                each['user'] and _users[each['user']] or None,
+                replies
             ))
         data['documents'] = documents
         self.render('admin/feedbacks.html', **data)
@@ -75,10 +77,13 @@ class FeedbackReplyAdminHandler(SuperuserBaseHandler):
         if not data['feedback']:
             raise HTTPError(404)
         data['user'] = self.db.User.find_one({'_id': data['feedback']['user']})
-        data['user_settings'] = (self.db.UserSettings
-                                 .find_one({'user': data['user']['_id']}))
-        data['user_location'] = (self.db.Location
-                          .find_one({'_id': data['user']['current_location']}))
+        data['user_settings'] = (
+            self.db.UserSettings.find_one({'user': data['user']['_id']})
+        )
+        data['user_location'] = (
+            self.db.Location
+            .find_one({'_id': data['user']['current_location']})
+        )
         data['location'] = (self.db.Location
                             .find_one({'_id': data['feedback']['location']}))
         if form is None:
@@ -90,8 +95,8 @@ class FeedbackReplyAdminHandler(SuperuserBaseHandler):
                      .find({'reply_to': data['feedback']['_id']})
                      .sort('add_date')):
             replies.append((
-              each,
-              self.db.User.find_one({'_id': each['user']})
+                each,
+                self.db.User.find_one({'_id': each['user']})
             ))
         data['replies'] = replies
 
@@ -114,13 +119,12 @@ class FeedbackReplyAdminHandler(SuperuserBaseHandler):
             self.set_header('Content-Type', 'text/plain')
 
             body = self.render_string("admin/feedback_reply.txt", **{
-              'feedback': feedback,
-              'feedback_location': (self.db.Location
-                                    .find_one({'_id': feedback['location']})),
-              'reply': reply,
-              'reply_user': current_user,
-              'SIGNATURE': settings.SIGNATURE,
-              'PROJECT_TITLE': settings.PROJECT_TITLE,
+                'feedback': feedback,
+                'feedback_location': (
+                    self.db.Location.find_one({'_id': feedback['location']})
+                ),
+                'reply': reply,
+                'reply_user': current_user,
             })
 
             if feedback.get('email'):
@@ -130,16 +134,21 @@ class FeedbackReplyAdminHandler(SuperuserBaseHandler):
                 email = user['email']
 
             if email:
-                subject = "Reply to your feedback on %s" % settings.PROJECT_TITLE
-                send_email(self.application.settings['email_backend'],
-                   subject,
-                   body,
-                   current_user['email'],
-                   [email],
+                subject = ("Reply to your feedback on %s"
+                           % settings.PROJECT_TITLE)
+                send_email(
+                    self.application.settings['email_backend'],
+                    subject,
+                    body,
+                    current_user['email'],
+                    [email],
                 )
 
-                self.push_flash_message("Email sent!", "Sent to %s" % email,
-                                         type_='success')
+                self.push_flash_message(
+                    "Email sent!",
+                    "Sent to %s" % email,
+                    type_='success'
+                )
 
             url = self.reverse_url('admin_feedback_reply', feedback['_id'])
             self.redirect(url)

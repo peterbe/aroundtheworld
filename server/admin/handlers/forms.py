@@ -341,7 +341,6 @@ class LocationPictureForm(BaseForm):
                           description="Any other private notes",
                          widget=TextArea(**{'class': 'span5'}))
 
-
     def __init__(self, *args, **kwargs):
         super(LocationPictureForm, self).__init__(*args, **kwargs)
         self.location.choices = [

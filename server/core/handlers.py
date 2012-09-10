@@ -3795,11 +3795,15 @@ class AwardsHandler(BaseHandler):
 
         def describe_award(award):
             if award['location'] not in _locations:
-                _locations[award['location']] = \
-                  self.db.Location.find_one({'_id': award['location']})['city']
+                _locations[award['location']] = (
+                    self.db.Location
+                    .find_one({'_id': award['location']})['city']
+                )
             if award['category'] and award['category'] not in _categories:
-                _categories[award['category']] = \
-                  unicode(self.db.Category.find_one({'_id': award['category']}))
+                _categories[award['category']] = unicode(
+                    self.db.Category
+                    .find_one({'_id': award['category']})
+                )
             info = {
               'id': str(award['_id']),
               'description': award['description'],
@@ -4097,7 +4101,9 @@ class BanksHandler(AuthenticatedBaseHandler, BankingMixin):
 
             else:
                 if user_settings['coins_total'] < (amount + bank['deposit_fee']):
-                    amount -= amount + bank['deposit_fee'] - user_settings['coins_total']
+                    amount -= (amount +
+                               bank['deposit_fee'] -
+                               user_settings['coins_total'])
 
                 deposit = self.db.Deposit()
                 deposit['user'] = user['_id']
@@ -4162,18 +4168,18 @@ class AllImagesHandler(BaseHandler, PictureThumbnailMixin):
 
         pictures = []
         data['count'] = (
-          self.db.QuestionPicture
-          .find()
-          .count()
+            self.db.QuestionPicture
+            .find()
+            .count()
         )
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
 
         question_pictures = (
-          self.db.QuestionPicture
-          .find()
-          .sort('modify_date', -1)
-          .limit(self.LIMIT)
-          .skip(skip)
+            self.db.QuestionPicture
+            .find()
+            .sort('modify_date', -1)
+            .limit(self.LIMIT)
+            .skip(skip)
         )
         pictures = []
 
@@ -4185,10 +4191,10 @@ class AllImagesHandler(BaseHandler, PictureThumbnailMixin):
             if picture_count[picture['question']] == 4:
                 max_width, max_height = settings.FOUR_PICTURES_WIDTH_HEIGHT
                 sizes = (
-                  # when shown in table
-                  (settings.FOUR_PICTURES_WIDTH_HEIGHT, {'crop': True}),
-                  # when shown in the result
-                  ((40, 40), {}),
+                    # when shown in table
+                    (settings.FOUR_PICTURES_WIDTH_HEIGHT, {'crop': True}),
+                    # when shown in the result
+                    ((40, 40), {}),
                 )
             else:
                 sizes = (
@@ -4196,7 +4202,11 @@ class AllImagesHandler(BaseHandler, PictureThumbnailMixin):
                 )
             for size, kwargs in sizes:
                 # as it appears in a question:
-                uri, (width, height) = self.get_thumbnail(picture, size, **kwargs)
+                uri, (width, height) = self.get_thumbnail(
+                    picture,
+                    size,
+                    **kwargs
+                )
                 url = self.static_url(uri.replace('/static/', ''))
                 pictures.append((url, (width, height)))
         data['pictures'] = pictures
@@ -4210,7 +4220,8 @@ email_re = re.compile(
     # quoted-string, see also http://tools.ietf.org/html/rfc2822#section-3.2.5
     r'|^"([\001-\010\013\014\016-\037!#-\[\]-\177]|\\[\001-\011\013\014\016-\177])*"'
     r')@((?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?$)'  # domain
-    r'|\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\]$', re.IGNORECASE)  # literal form, ipv4 address (SMTP 4.1.3)
+    r'|\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\]$',
+    re.IGNORECASE)  # literal form, ipv4 address (SMTP 4.1.3)
 
 @route('/league.json', name='league')
 class League(AuthenticatedBaseHandler, LeagueMixin):
@@ -4231,8 +4242,8 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
                 .find({'coins': {'$gt': total_earned['coins']}})
                 .count() + 1)
         data['total_earned'] = {
-          'coins': total_earned['coins'],
-          'rank': rank
+            'coins': total_earned['coins'],
+            'rank': rank
         }
         data['highscore'] = self.get_highscore(user)
         data['invites'] = self.get_pending_invites(user)
@@ -4304,7 +4315,8 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         return list_
 
     def post(self):
-        if self.get_argument('email', None) and self.get_argument('text', None):
+        if (self.get_argument('email', None) and
+            self.get_argument('text', None)):
             email = self.get_argument('email')
             text = self.get_argument('text')
             sent, errors = self.send_invite(email, text)
@@ -4381,7 +4393,10 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         token.save()
 
         base_url = '%s://%s' % (self.request.protocol, self.request.host)
-        join_url = base_url + self.reverse_url('join_friendship', token['token'])
+        join_url = base_url + self.reverse_url(
+            'join_friendship',
+            token['token']
+        )
         assert self.LINK_SHIM in text
         text = text.replace(self.LINK_SHIM, join_url)
         body = text  # XXX maybe HTML some day
@@ -4427,7 +4442,8 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
             return False
 
         users_rankings = {}
-        for i, (total, user_id) in enumerate(self.get_highscore_fast(from_user)):
+        highscores = self.get_highscore_fast(from_user)
+        for i, (total, user_id) in enumerate(highscores):
             users_rankings[user_id] = (i + 1, total)
 
         your_total_earned = self.get_total_earned(user)
@@ -4471,7 +4487,8 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
             return False
 
         users_rankings = {}
-        for i, (total, user_id) in enumerate(self.get_highscore_fast(from_user)):
+        highscores = self.get_highscore_fast(from_user)
+        for i, (total, user_id) in enumerate(highscores):
             users_rankings[user_id] = (i + 1, total)
 
         your_total_earned = self.get_total_earned(user)
@@ -4485,7 +4502,10 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         token.save()
 
         base_url = '%s://%s' % (self.request.protocol, self.request.host)
-        accept_url = base_url + self.reverse_url('accept_friendship', token['token'])
+        accept_url = base_url + self.reverse_url(
+            'accept_friendship',
+            token['token']
+        )
         body = self.render_string('friendship_created.txt', **{
             'their_total_earned': their_total_earned,
             'their_rank': their_rank,

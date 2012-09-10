@@ -275,7 +275,7 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
                   'ts': time.mktime(item['add_date'].timetuple()),
                   'date': smartertimesince(item['add_date'], now=now),
                 })
-        items.sort(lambda x,y: cmp(y['ts'], x['ts']))
+        items.sort(lambda x, y: cmp(y['ts'], x['ts']))
         if len(items) > no_items:
             items = items[:no_items]
 
@@ -361,7 +361,8 @@ class NewsAdminHandler(AuthenticatedBaseHandler):
         if model is self.db.Award:
             user = self.db.User.find_one({'_id': item['user']})
             return (
-                "%s earned the <strong>%s award</strong> with %s coins reward! "
+                "%s earned the <strong>%s award</strong> "
+                "with %s coins reward! "
                 % (user['username'], item['type'], item['reward'])
             )
 
@@ -374,12 +375,13 @@ class GitLogHandler(AuthenticatedBaseHandler):
     @tornado.web.asynchronous
     def get(self):
         self.ioloop = tornado.ioloop.IOLoop.instance()
-        cmd = 'git log master --date=iso --pretty=format:"%h%x09%an%x09%ad%x09%s"'
+        cmd = ('git log master --date=iso '
+               '--pretty=format:"%h%x09%an%x09%ad%x09%s"')
         self.pipe = p = os.popen(cmd)
         self.ioloop.add_handler(
-          p.fileno(),
-          self.async_callback(self.on_response),
-          self.ioloop.READ
+            p.fileno(),
+            self.async_callback(self.on_response),
+            self.ioloop.READ
         )
 
     def on_response(self, fd, events):
@@ -400,28 +402,28 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
         data = {}
         filter_ = {}
         data['all_locations'] = list(
-          self.db.Location
-          .find({'airport_name': {'$ne': None}})
-          .sort('code')
+            self.db.Location
+            .find({'airport_name': {'$ne': None}})
+            .sort('code')
         )
         data['all_categories'] = list(
-          self.db.Category
-          .find()
-          .sort('name')
+            self.db.Category
+            .find()
+            .sort('name')
         )
         data['locations'] = self.get_arguments('locations', [])
         if data['locations']:
             filter_['location'] = {
-              '$in': [x['_id'] for x in
-                       self.db.Location
+                '$in': [x['_id'] for x in
+                        self.db.Location
                         .find({'code': {'$in': data['locations']}})]
             }
 
         data['categories'] = self.get_arguments('categories', [])
         if data['categories']:
             filter_['category'] = {
-              '$in': [x['_id'] for x in
-                       self.db.Category
+                '$in': [x['_id'] for x in
+                        self.db.Category
                         .find({'name': {'$in': data['categories']}})]
             }
 
@@ -452,17 +454,19 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
                      .limit(self.LIMIT)
                      .skip(skip)):
             if each['user'] and each['user'] not in _users:
-                _users[each['user']] = \
-                  self.db.User.find_one({'_id': each['user']})
+                _users[each['user']] = (
+                    self.db.User.find_one({'_id': each['user']})
+                )
             if each['location'] not in _locations:
-                _locations[each['location']] = (self.db.Location
-                                          .find_one({'_id': each['location']}))
+                _locations[each['location']] = (
+                    self.db.Location.find_one({'_id': each['location']})
+                )
 
             jobs.append((
-              each,
-              _users[each['user']],
-              _categories[each['category']],
-              _locations[each['location']],
+                each,
+                _users[each['user']],
+                _categories[each['category']],
+                _locations[each['location']],
             ))
 
             category = _categories[each['category']]['name']
@@ -481,7 +485,7 @@ class JobsAdminHandler(AuthenticatedBaseHandler):
         data['coins_categories'] = [(k, median(v), sum(v))
                                     for (k, v) in coins_categories.items()]
         data['coins_locations'] = [(k, median(v), sum(v))
-                                    for (k, v) in coins_locations.items()]
+                                   for (k, v) in coins_locations.items()]
 
         data['jobs'] = jobs
         data['filtering'] = bool(filter_)
@@ -517,21 +521,21 @@ class JobsAdminHandler(SuperuserBaseHandler):
                      .skip(skip)):
             if each['user']:
                 if each['user'] not in _users:
-                    _users[each['user']] = \
-                      self.db.User.find_one({'_id': each['user']})
+                    _users[each['user']] = (
+                        self.db.User.find_one({'_id': each['user']})
+                    )
                 user = _users[each['user']]
             else:
                 user = None
 
             errors.append((
-              each,
-              user,
+                each,
+                user,
             ))
 
         data['errors'] = errors
         data['filtering'] = bool(filter_)
         self.render('admin/errors.html', **data)
-
 
 
 @route('/admin/awards/?', name='admin_awards')
@@ -542,41 +546,41 @@ class AwardsAdminHandler(AuthenticatedBaseHandler):
         data = {}
         filter_ = {}
         data['all_locations'] = list(
-          self.db.Location
-          .find({'airport_name': {'$ne': None}})
-          .sort('code')
+            self.db.Location
+            .find({'airport_name': {'$ne': None}})
+            .sort('code')
         )
         data['all_categories'] = list(
-          self.db.Category
-          .find()
-          .sort('name')
+            self.db.Category
+            .find()
+            .sort('name')
         )
         from core import handlers
         data['all_types'] = (
-          handlers.AWARDTYPE_JOB,
-          handlers.AWARDTYPE_TUTORIAL,
-          handlers.AWARDTYPE_SIGNIN,
-          handlers.AWARDTYPE_10KMILES,
-          handlers.AWARDTYPE_50KMILES,
-          handlers.AWARDTYPE_100KMILES,
+            handlers.AWARDTYPE_JOB,
+            handlers.AWARDTYPE_TUTORIAL,
+            handlers.AWARDTYPE_SIGNIN,
+            handlers.AWARDTYPE_10KMILES,
+            handlers.AWARDTYPE_50KMILES,
+            handlers.AWARDTYPE_100KMILES,
         )
         data['types'] = self.get_arguments('types', [])
         if data['types']:
             filter_['type'] = {
-              '$in': data['types']
+                '$in': data['types']
             }
         data['locations'] = self.get_arguments('locations', [])
         if data['locations']:
             filter_['location'] = {
-              '$in': [x['_id'] for x in
-                       self.db.Location
+                '$in': [x['_id'] for x in
+                        self.db.Location
                         .find({'code': {'$in': data['locations']}})]
             }
         data['categories'] = self.get_arguments('categories', [])
         if data['categories']:
             filter_['category'] = {
-              '$in': [x['_id'] for x in
-                       self.db.Category
+                '$in': [x['_id'] for x in
+                        self.db.Category
                         .find({'name': {'$in': data['categories']}})]
             }
 
@@ -597,34 +601,26 @@ class AwardsAdminHandler(AuthenticatedBaseHandler):
         self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
 
-        #coins_all = []
-        #coins_categories = defaultdict(list)
-        #coins_locations = defaultdict(list)
-
         for each in (self.db.Award
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
                      .limit(self.LIMIT)
                      .skip(skip)):
             if each['user'] and each['user'] not in _users:
-                _users[each['user']] = \
-                  self.db.User.find_one({'_id': each['user']})
+                _users[each['user']] = (
+                    self.db.User.find_one({'_id': each['user']})
+                )
             if each['location'] not in _locations:
-                _locations[each['location']] = (self.db.Location
-                                          .find_one({'_id': each['location']}))
+                _locations[each['location']] = (
+                    self.db.Location.find_one({'_id': each['location']})
+                )
 
             awards.append((
-              each,
-              _users[each['user']],
-              each['category'] and _categories[each['category']] or None,
-              _locations[each['location']],
+                each,
+                _users[each['user']],
+                each['category'] and _categories[each['category']] or None,
+                _locations[each['location']],
             ))
-
-            #category = _categories[each['category']]['name']
-            #coins_all.append(each['coins'])
-            #coins_categories[category].append(each['coins'])
-            #location = _locations[each['location']]['code']
-            #coins_locations[location].append(each['coins'])
 
         data['awards'] = awards
         data['filtering'] = bool(filter_)
