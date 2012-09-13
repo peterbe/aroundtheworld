@@ -9,9 +9,9 @@ var League = (function() {
     $.each(list, function(i, each) {
       $('<tr>')
         .addClass(each.you ? 'you' : '')
-        .addClass(i == 0 ? 'first' : '')
-        .addClass(i == 1 ? 'second' : '')
-        .addClass(i == 2 ? 'third' : '')
+        .addClass(i === 0 ? 'first' : '')
+        .addClass(i === 1 ? 'second' : '')
+        .addClass(i === 2 ? 'third' : '')
         .append($('<td>').text(i + 1))
         .append($('<td>').text(each.name))
         .append($('<td>').addClass('total').text(Utils.formatCost(each.total)))
