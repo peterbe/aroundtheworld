@@ -61,6 +61,25 @@ var SINCE = '{{ since }}';
     <div class="legend"></div>
   </div>
 
+  <table id="table-users" class="table table-condensed">
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th style="text-align:right">Signed-in</th>
+        <th style="text-align:right">Anonymous</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for each in users %}
+      <tr>
+        <td>{{ each['date'] }}</td>
+        <td style="text-align:right">{{ each['signed_in'] }} ({{ each['signed_in_diff'] }})</td>
+        <td style="text-align:right">{{ each['anonymous'] }} ({{ each['anonymous_diff'] }})</td>
+      </tr>
+      {% end %}
+    </tbody>
+  </table>
+
   <h3>Jobs</h3>
   <div id="chart-jobs" class="chart-container">
     <div class="y-axis"></div>

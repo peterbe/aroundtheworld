@@ -87,7 +87,48 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         elif self.get_argument('get', None):
             raise NotImplementedError(self.get_argument('get'))
         else:
+            data['users'] = self._get_users(since)
             self.render('admin/stats/numbers.html', **data)
+
+    def _get_users(self, since, interval=datetime.timedelta(days=7)):
+        first = since
+        last, = self.db.User.collection.find().sort('add_date', -1).limit(1)
+        last = last['add_date']
+        data = []
+        date = first
+        prev_signed_in = None
+        prev_anonymous = None
+        while date < last:
+            next = date + interval
+            anonymous = (self.db.User
+                         .find({'anonymous': True,
+                                'add_date': {'$gte': date, '$lt': next}})
+                         .count())
+            signed_in = (self.db.User
+                         .find({'anonymous': False,
+                                'add_date': {'$gte': date, '$lt': next}})
+                         .count())
+
+            if prev_signed_in is None:
+                signed_in_diff = None
+            else:
+                signed_in_diff = signed_in - prev_signed_in
+            if prev_anonymous is None:
+                anonymous_diff = None
+            else:
+                anonymous_diff = anonymous - prev_anonymous
+            data.append({
+                'date': date.strftime('%d %b %Y'),
+                'signed_in': signed_in,
+                'signed_in_diff': signed_in_diff if signed_in_diff is not None else '--',
+                'anonymous': anonymous,
+                'anonymous_diff': anonymous_diff if anonymous_diff is not None else '--',
+            })
+            prev_signed_in = signed_in
+            prev_anonymous = anonymous
+            date = next
+
+        return data
 
     def _get_users_data(self, since=None, interval=datetime.timedelta(days=7)):
         #first, = self.db.User.collection.find().sort('add_date').limit(1)
