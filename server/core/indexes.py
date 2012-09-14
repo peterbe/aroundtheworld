@@ -85,6 +85,18 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'user')
 
+    collection = db.Friendship.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'to')
+    yield ensure(collection, 'user')
+    yield ensure(collection, 'token')
+
+    collection = db.TotalEarned.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'coins')
+
     test()
 
 

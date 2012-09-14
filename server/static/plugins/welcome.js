@@ -96,7 +96,6 @@ var Welcome = (function() {
          var c = $('.welcome-back', container);
          $('.current-location', c).html(STATE.location.name);
          $.getJSON(URL, {get: 'stats'}, function(response) {
-           $('.stats', container).show();
            var c = $('.stats ul', container);
            $('li', c).hide();
            // totals
@@ -130,6 +129,7 @@ var Welcome = (function() {
              $('li.invitations .invitations-signedup', c).text(response.invitations_signedup);
            }
 
+           $('.stats', container).show(300);
 
          });
        }
