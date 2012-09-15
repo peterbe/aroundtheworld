@@ -121,7 +121,8 @@ class BaseHandler(tornado.web.RequestHandler):
       'about': ['css/plugins/about.css',
                 'plugins/about.js'],
       'league': ['css/plugins/league.css',
-                'plugins/league.js'],
+                 'lib/handlebars-1.0.0.beta.6.js',
+                 'plugins/league.js'],
     }
 
 #    def write(self, *a, **k):
@@ -393,7 +394,9 @@ class BaseHandler(tornado.web.RequestHandler):
     def render_string(self, template, **options):
         options['PROJECT_TITLE'] = settings.PROJECT_TITLE
         options['SIGNATURE'] = settings.SIGNATURE
-        return super(BaseHandler, self).render_string(template, **options)
+        output = super(BaseHandler, self).render_string(template, **options)
+        output = output.replace('{!{', '{{')  # handlebars
+        return output
 
     def static_url(self, path, **kwargs):
         if self.application.settings['embed_static_url_timestamp']:
@@ -4223,6 +4226,7 @@ email_re = re.compile(
     r'|\[(25[0-5]|2[0-4]\d|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3}\]$',
     re.IGNORECASE)  # literal form, ipv4 address (SMTP 4.1.3)
 
+
 @route('/league.json', name='league')
 class League(AuthenticatedBaseHandler, LeagueMixin):
 
@@ -4236,6 +4240,9 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         if self.get_argument('preview', None):
             self.write({'text': self.get_preview_text()})
             return
+        if self.get_argument('about', None):
+            self.write({'info': self.get_user_info(self.get_argument('about'))})
+            return
         user = self.get_current_user()
         total_earned = self.get_total_earned(user)
         rank = (self.db.TotalEarned
@@ -4248,6 +4255,28 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         data['highscore'] = self.get_highscore(user)
         data['invites'] = self.get_pending_invites(user)
         self.write(data)
+
+    def get_user_info(self, user_id):
+        info = {}
+        user = self._find_user(user_id)
+        info['name'] = self.get_name(user)
+        user_settings = self.get_user_settings(user)
+        current_location = self.get_current_location(user)
+        total_earned = self.get_total_earned(user)
+        info['cities_visited'] = len(self.db.Flight
+                                     .find({'user': user['_id']})
+                                     .distinct('to'))
+        rank = (self.db.TotalEarned
+                .find({'coins': {'$gt': total_earned['coins']}})
+                .count() + 1)
+        info['global_rank'] = rank
+        info['joined'] = smartertimesince(user['add_date'])
+        info['miles_total'] = int(round(user_settings['miles_total']))
+        info['current_location'] = unicode(current_location)
+        info['total_earned'] = dict((k, v) for (k, v)
+                                    in total_earned.items()
+                                    if isinstance(v, int))
+        return info
 
     def get_preview_text(self):
         user = self.get_current_user()
@@ -4309,6 +4338,7 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
                 'total': self.get_total_earned(user)['coins'],
                 'name': name,
                 'you': is_you,
+                'id': str(user_id),
             })
 
         list_.sort(key=lambda x: x['total'], reverse=True)

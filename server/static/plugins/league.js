@@ -14,9 +14,32 @@ var League = (function() {
         .addClass(i === 1 ? 'second' : '')
         .addClass(i === 2 ? 'third' : '')
         .append($('<td>').text(i + 1))
-        .append($('<td>').text(each.name))
+        .append($('<td>').append($('<a href="#league" title="Title to see more info"></a>')
+                                 .text(each.name)
+                                 .data('id', each.id)
+                                 .click(function() {
+                                   _click_friend(this);
+                                 })))
         .append($('<td>').addClass('total').text(Utils.formatCost(each.total)))
         .appendTo(c);
+    });
+  }
+
+  function _click_friend(element) {
+    var link = $(element);
+    $('p.info').hide();
+    var template = Handlebars.compile($('.template-about-user', container).html());
+    $.getJSON(URL, {about: link.data('id')}, function(response) {
+      var info = response.info;
+      info.miles_total = Utils.formatMiles(info.miles_total, true);
+      info.total_earned.jobs = Utils.formatCost(info.total_earned.jobs, true);
+      info.total_earned.awards = Utils.formatCost(info.total_earned.awards, true);
+      info.total_earned.interest = Utils.formatCost(info.total_earned.interest, true);
+      info.total_earned.questions = Utils.formatCost(info.total_earned.questions, true);
+      info.total_earned.coins = Utils.formatCost(info.total_earned.coins, true);
+
+      $('.about .inner', container).html(template(response.info));
+      $('.about', container).hide().fadeIn(300);
     });
   }
 
@@ -168,6 +191,12 @@ var League = (function() {
       return false;
     });
 
+    $('.about .close', container).click(function() {
+      $('.about', container).hide();
+      $('p.info', container).fadeIn(300);
+      return false;
+    });
+
     // auto-complete for search
     $('input[name="email"]', container).keyup(function(event) {
       if (_locked) return;
@@ -213,7 +242,6 @@ var League = (function() {
     });
 
     $('button.preview', container).click(function() {
-      L('PREVIEW CLICK');
       $('.invite-hint', container).hide();
       $('table.search-results', container).hide();
       $.getJSON(URL, {preview: true}, function(response) {
@@ -224,7 +252,6 @@ var League = (function() {
     });
 
     $('button.cancel', container).click(function() {
-      L('CANCEL');
       $('.invite-hint', container).hide();
       $('.invite-preview', container).hide();
       $('.invite-sent', container).hide();

@@ -31,16 +31,16 @@
     width: 80%;
 }
 
-#league tr.head td {
+#league .highscore tr.head td {
     font-weight: bold;
 }
 
-#league tr.capped td {
+#league .highscore tr.capped td {
     font-style: italic;
     text-align: center;
 }
 
-#league tr td {
+#league .highscore tr td {
     padding: 2px 4px;
 }
 
@@ -54,4 +54,15 @@
 
 #league p.hint {
     font-size: 0.8em;
+}
+
+#league .about {
+    padding: 15px;
+}
+#league .about table {
+    max-width: 600px;
+}
+#league .about .head {
+    padding-top: 20px;
+    border-top: none;
 }

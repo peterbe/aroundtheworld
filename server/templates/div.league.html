@@ -7,6 +7,69 @@
   on the global list but what matters is how you compare to your friends.
   </p>
 
+  <script class="template-about-user" type="text/x-handlebars-template">
+
+    <table class="table table-condensed">
+      <tr>
+        <td colspan="2" class="head">
+          <h4>About {!{name}}</h4>
+        </td>
+      </tr>
+      <tr>
+        <th>Currently in:</th>
+        <td>{!{current_location}}</td>
+      </tr>
+      <tr>
+        <th>Joined:</th>
+        <td>{!{joined}} ago</td>
+      </tr>
+      <tr>
+        <th>Total miles flown:</th>
+        <td>{!{miles_total}}</td>
+      </tr>
+      <tr>
+        <th>Cities visited:</th>
+        <td>{!{cities_visited}}</td>
+      </tr>
+      <tr>
+        <th>Global earnings rank:</th>
+        <td>#{!{global_rank}}</td>
+      </tr>
+
+      <tr>
+        <td colspan="2" class="head">
+        <h4>How {!{name}} earned all these coins:</h4>
+        </td>
+      </tr>
+
+      <tr>
+        <th>Jobs:</th>
+        <td>{!{total_earned.jobs}}</td>
+      </tr>
+      <tr>
+        <th>Awards:</th>
+        <td>{!{total_earned.awards}}</td>
+      </tr>
+      <tr>
+        <th>Published questions:</th>
+        <td>{!{total_earned.questions}}</td>
+      </tr>
+      <tr>
+        <th>Bank interest:</th>
+        <td>{!{total_earned.interest}}</td>
+      </tr>
+      <tr>
+        <th>TOTAL:</th>
+        <td>{!{total_earned.coins}}</td>
+      </tr>
+    </table>
+  </script>
+
+  <div class="about" style="display:none">
+    <a class="close" href="#">&times; Close</a>
+    <div class="inner"></div>
+  </div>
+
   <div class="highscore">
     <h3>The List</h3>
     <table>
