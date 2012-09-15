@@ -125,11 +125,15 @@ var Awards = (function() {
          _once = true;
        }
        Utils.update_title();
+       Utils.loading_overlay_reset();
+
        var _has_preloaded = false;
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          $('.index-outer .award', container).remove();
          loaded = {};
+
+         Utils.loading_overlay_remove();
          $.each(response.awards, function(i, award) {
            if (!award.read && !_has_preloaded) {
              sounds.preload('applause');

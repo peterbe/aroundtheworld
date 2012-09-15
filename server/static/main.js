@@ -214,6 +214,10 @@ var Utils = (function() {
       $('.overlay:visible .loading-overlay').hide();
       clearInterval(_loading_timer);
     },
+    loading_overlay_remove: function() {
+      clearInterval(_loading_timer);
+      $('.loading-overlay:visible').remove();
+    },
     general_error: function(message, reload_tip) {
       message = 'Error!\n' + message;
       if (!reload_tip) {

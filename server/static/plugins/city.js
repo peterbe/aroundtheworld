@@ -3,6 +3,7 @@ var City = (function() {
   var AIRPORT_URL = '/airport.json';
   var container = $('#city');
   var _message_form_setup = false;
+  var _has_loaded_home = false;
 
   function _load_jobs(callback) {
     $.getJSON(URL, {get: 'jobs'}, function(response) {
@@ -148,6 +149,10 @@ var City = (function() {
      load: function(page) {
        Utils.loading_overlay_reset();
        $('.section:visible', container).hide();
+       if (_has_loaded_home && !page) {
+         Utils.loading_overlay_stop();
+         $('.home', container).show();
+       }
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          Utils.loading_overlay_stop();
@@ -173,6 +178,7 @@ var City = (function() {
          $('.about-pictures', container).html(response.about_pictures);
          $('.about-banks', container).html(response.about_banks);
          $('.about-league', container).html(response.about_league);
+
 
          if (page == 'embassy') {
            _load_embassy(function() {
@@ -219,24 +225,10 @@ var City = (function() {
                });
              });
            } else {
-             /*
-             // introduction?
-             if (response.has_introduction) {
-               $('li.intro-link', container).show();
-             } else {
-               $('li.intro-link', container).hide();
+             if (!_has_loaded_home) {
+               $('.home', container).hide().fadeIn(300);
              }
-             */
-             /*
-             // ambassadors?
-             if (response.has_ambassadors) {
-               $('li.ambassadors-link', container).show();
-             } else {
-               $('li.ambassadors-link', container).hide();
-             }
-             */
-
-             $('.home', container).hide().fadeIn(300);
+             _has_loaded_home = true;
 
              $.getJSON(AIRPORT_URL, {ticket_progress: true}, function(response) {
                if (!response.destinations.length) {

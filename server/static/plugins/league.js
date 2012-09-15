@@ -4,6 +4,7 @@ var League = (function() {
   var _once = false;
 
   function _show_highscore(list) {
+    Utils.loading_overlay_remove();
     var c = $('.highscore table', container);
     $('tr', c).remove();
     $.each(list, function(i, each) {
@@ -240,6 +241,8 @@ var League = (function() {
          setup_once();
          _once = true;
        }
+
+       Utils.loading_overlay_reset();
 
        $.getJSON(URL, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
