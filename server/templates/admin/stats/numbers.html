@@ -103,4 +103,25 @@ var SINCE = '{{ since }}';
   </div>
 
 
+  <h3>Friendships</h3>
+  <table id="table-friendships" class="table table-condensed">
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th style="text-align:right">Friendships</th>
+        <th style="text-align:right">Mutual friendships</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for each in friendships %}
+      <tr>
+        <td>{{ each['date'] }}</td>
+        <td style="text-align:right">{{ each['not_mutual'] }} ({{ each['not_mutual_diff'] }})</td>
+        <td style="text-align:right">{{ each['mutual'] }} ({{ each['mutual_diff'] }})</td>
+      </tr>
+      {% end %}
+    </tbody>
+  </table>
+
+
 {% end %}

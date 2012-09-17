@@ -88,6 +88,7 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
             raise NotImplementedError(self.get_argument('get'))
         else:
             data['users'] = self._get_users(since)
+            data['friendships'] = self._get_friendships(since)
             self.render('admin/stats/numbers.html', **data)
 
     def _get_users(self, since, interval=datetime.timedelta(days=7)):
@@ -126,6 +127,46 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
             })
             prev_signed_in = signed_in
             prev_anonymous = anonymous
+            date = next
+
+        return data
+
+    def _get_friendships(self, since, interval=datetime.timedelta(days=7)):
+        _first = datetime.datetime(2012, 9, 14, 0, 0, 0)  # the day is was launched
+        first = max(since, _first)
+        last, = self.db.Friendship.collection.find().sort('add_date', -1).limit(1)
+        last = last['add_date']
+        data = []
+        date = first
+        prev_not_mutual = None
+        prev_mutual = None
+        while date < last:
+            next = date + interval
+            not_mutual = (self.db.Friendship
+                          .find({'add_date': {'$gte': date, '$lt': next}})
+                          .count())
+            mutual = (self.db.Friendship
+                      .find({'mutual': True,
+                             'add_date': {'$gte': date, '$lt': next}})
+                      .count())
+
+            if prev_not_mutual is None:
+                not_mutual_diff = None
+            else:
+                not_mutual_diff = not_mutual - prev_not_mutual
+            if prev_mutual is None:
+                mutual_diff = None
+            else:
+                mutual_diff = mutual - prev_mutual
+            data.append({
+                'date': date.strftime('%d %b %Y'),
+                'not_mutual': not_mutual,
+                'not_mutual_diff': not_mutual_diff if not_mutual_diff is not None else '--',
+                'mutual': mutual,
+                'mutual_diff': mutual_diff if mutual_diff is not None else '--',
+            })
+            prev_not_mutual = not_mutual
+            prev_mutual = mutual
             date = next
 
         return data
