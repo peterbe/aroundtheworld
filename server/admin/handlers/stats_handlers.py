@@ -172,8 +172,6 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         return data
 
     def _get_users_data(self, since=None, interval=datetime.timedelta(days=7)):
-        #first, = self.db.User.collection.find().sort('add_date').limit(1)
-        #first = first['add_date']
         first = since and since or datetime.datetime(2012, 6, 1)
         last, = self.db.User.collection.find().sort('add_date', -1).limit(1)
         last = last['add_date']
@@ -212,8 +210,6 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         return series
 
     def _get_jobs_data(self, since=None, interval=datetime.timedelta(days=7)):
-        #first, = self.db.Job.collection.find().sort('add_date').limit(1)
-        #first = first['add_date']
         first = since and since or datetime.datetime(2012, 6, 1)
         last, = self.db.Job.collection.find().sort('add_date', -1).limit(1)
         last = last['add_date']
@@ -222,16 +218,19 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         cum_points = defaultdict(int)
         categories = [(x['_id'], x['name']) for x in
                       self.db.Category.collection.find(None, ('_id', 'name'))]
+        _categories = dict(categories)
         while date < last:
             next = date + interval
+            counts = defaultdict(int)
+            for job in (self.db.Job.collection
+                         .find({'add_date': {'$gte': date, '$lt': next}},
+                               ('category',))):
+                counts[job['category']] += 1
+
             for category, name in categories:
-                count = (self.db.Job.collection
-                         .find({'category': category,
-                                'add_date': {'$gte': date, '$lt': next}})
-                         .count())
+                count = counts[category]
                 points[name].append((date, count + cum_points.get(category, 0)))
-                # uncomment if you want accumulative
-                #cum_points[category] += count
+
             date = next
 
         colors = ColorPump()
