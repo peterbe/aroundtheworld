@@ -92,8 +92,22 @@ class UsersTotalEarnedAdminHandler(SuperuserBaseHandler):
             ))
         data['no_users'] = self.db.User.find().count()
         data['no_totals'] = self.db.TotalEarned.find().count()
+        if data['no_totals'] > data['no_users']:
+            self._clean_unused_totals()
+            data['no_users'] = self.db.User.find().count()
+            data['no_totals'] = self.db.TotalEarned.find().count()
+
         data['totals'] = totals
         self.render('admin/users_totals.html', **data)
+
+    def _clean_unused_totals(self):
+        # this is slow but only happens very rarely
+        for each in self.db.TotalEarned.collection.find(None, ('user',)):
+            c = self.db.TotalEarned.find({'user': each['user']}).count()
+            if c != 1:
+                [x.delete() for x in self.db.TotalEarned.find({'user': each['user']})]
+            elif not self.db.User.find({'_id': each['user']}).count():
+                [x.delete() for x in self.db.TotalEarned.find({'user': each['user']})]
 
     def post(self):
         all_users = set([
