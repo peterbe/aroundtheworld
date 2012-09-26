@@ -2999,6 +2999,7 @@ class BaseAuthHandler(BaseHandler):
         if friendship_invites:
             for token in friendship_invites:
                 from_user = self.db.User.find_one({'_id': token['user']})
+                assert from_user['_id'] != user['_id'], user['_id']
                 friendship1 = self.db.Friendship()
                 friendship1['user'] = from_user['_id']
                 friendship1['to'] = user['_id']
