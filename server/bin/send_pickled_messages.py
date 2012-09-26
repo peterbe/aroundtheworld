@@ -40,7 +40,7 @@ def main():
     max_count = 10
     filenames = filenames[:max_count]
     messages = [cPickle.load(open(x, 'rb')) for x in filenames]
-    backend = EmailBackend()
+    backend = EmailBackend(fail_silently=True)
     backend.send_messages(messages)
     if not options.dry_run:
         for filename in filenames:
