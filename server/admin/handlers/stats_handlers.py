@@ -280,18 +280,11 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
 
         return series
 
-    def _get_miles_travelled_data(self, since=None, intervals=10):
+    def _get_miles_travelled_data(self, since=None, intervals=12):
         min_ = 0.0
-        peter = self.db.User.find_one({'username': 'peterbe'})  # exceptional
-        max_filter = {'user': {'$ne': peter['_id']}}
-        if since:
-            max_filter['add_date'] = {'$gte': since}
-        max_, = (self.db.UserSettings
-                 .find(max_filter, ('miles_total',))
-                 .sort('miles_total', -1)
-                 .limit(1))
-        max_ = max_['miles_total']
         bands = defaultdict(int)
+        max_ = 10000
+
         chunk = (max_ - min_) / intervals
         data = []
 
@@ -302,6 +295,8 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
             a, b = i * chunk, (i + 1) * chunk
             a = int(round(a / 1000.0) * 1000)
             b = int(round(b / 1000.0) * 1000)
+            if b == max_:
+                b *= 10
             filter_ = {'miles_total': {'$gte': a, '$lt': b}}
             if since:
                 filter_['add_date'] = {'$gte': since}
