@@ -104,11 +104,13 @@ var City = (function() {
 
   function _load_intro(callback) {
     $.getJSON(URL, {get: 'intro'}, function(response) {
+      var c = $('.intro', container);
       if (response.intro) {
-        $('.intro .none:visible', container).hide();
-        $('.intro .html-container', container).html(response.intro);
+        $('.none', c).hide();
+        $('.html-container', c).html(response.intro).show();
       } else {
-        $('.intro .none:hidden', container).show();
+        $('.none', c).show();
+        $('.html-container', c).hide();
       }
       callback();
     });
@@ -188,7 +190,6 @@ var City = (function() {
            });
          } else if (page == 'intro') {
            _load_intro(function() {
-             $('.intro .none', container).hide();
              $('.intro', container).hide().fadeIn(300);
              Utils.update_title();
            });
