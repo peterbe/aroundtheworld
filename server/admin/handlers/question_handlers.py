@@ -6,7 +6,7 @@ import urllib
 from cStringIO import StringIO
 from pprint import pprint
 from collections import defaultdict
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 import tornado.escape
 from tornado.web import HTTPError
 from tornado_utils.routes import route

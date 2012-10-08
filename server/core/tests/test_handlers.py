@@ -8,7 +8,7 @@ import tempfile
 from pprint import pprint
 from urllib import urlencode
 import tornado.escape
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from .base import BaseHTTPTestCase
 import settings
 import tornado_utils.send_mail as mail

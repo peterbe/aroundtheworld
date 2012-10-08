@@ -1,6 +1,6 @@
 import re
 import uuid
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 import datetime
 from mongokit import Document
 from mongokit import Connection

@@ -57,7 +57,7 @@ def is_different(dict1, dict2):
 
 if __name__ == '__main__':
     from models import *
-    from pymongo.objectid import InvalidId, ObjectId
+    from bson.objectid import ObjectId, InvalidId
 
     import settings
     db = connection[settings.DATABASE_NAME]

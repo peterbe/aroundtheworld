@@ -1,6 +1,6 @@
 import re
 import urllib
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from tornado_utils.routes import route
 from .forms import DocumentForm, AddDocumentForm
 from .base import djangolike_request_dict, AmbassadorBaseHandler

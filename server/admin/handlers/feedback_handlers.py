@@ -1,6 +1,6 @@
 import re
 import urllib
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from tornado_utils.routes import route
 from tornado.web import HTTPError
 from tornado_utils.send_mail import send_email

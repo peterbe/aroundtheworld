@@ -1,4 +1,4 @@
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 from core.models import BaseDocument, register
 
 

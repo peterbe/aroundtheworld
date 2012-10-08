@@ -21,7 +21,7 @@ from tornado.web import HTTPError
 from tornado_utils.routes import route
 from tornado_utils.send_mail import send_email
 from tornado_utils.timesince import smartertimesince
-from pymongo.objectid import InvalidId, ObjectId
+from bson.objectid import ObjectId, InvalidId
 from geopy.distance import distance as geopy_distance
 from core.ui_modules import PictureThumbnailMixin
 from models import Question
