@@ -45,7 +45,7 @@ from bson import BSON
 from bson.binary import Binary
 from bson.code import Code
 from bson.dbref import DBRef
-from pymongo.objectid import ObjectId
+from bson.objectid import ObjectId
 import re
 from copy import deepcopy
 from uuid import UUID, uuid4
@@ -84,9 +84,6 @@ class DocumentProperties(SchemaProperties):
                         raise BadIndexError(
                           "'fields' key must be specify in indexes")
                     for key, value in index.iteritems():
-                        if key not in ['fields', 'unique', 'ttl', 'check']:
-                            raise BadIndexError(
-                              "%s is unknown key for indexes" % key)
                         if key == "fields":
                             if isinstance(value, basestring):
                                 if value not in attrs['_namespaces'] and value not in STRUCTURE_KEYWORDS:
@@ -128,8 +125,6 @@ class DocumentProperties(SchemaProperties):
                                   "fields must be a string, a tuple or a list of tuple (got %s instead)" % type(value))
                         elif key == "ttl":
                             assert isinstance(value, int)
-                        else:
-                            assert value in [False, True], value
 
 
 
@@ -215,6 +210,15 @@ class Document(SchemaDocument):
         #self.update(DotExpandedDict(old_value))
         self._process_custom_type('python', self, self.structure)
 
+    def _get_size_limit(self):
+        server_version = tuple(self.connection.server_info()['version'].split("."))
+        mongo_1_8 = tuple("1.8.0".split("."))
+
+        if server_version < mongo_1_8:
+            return (3999999, '4MB')
+        else:
+            return (15999999, '16MB')
+
     def validate(self, auto_migrate=False):
         if self.use_autorefs:
             if not auto_migrate:
@@ -223,9 +227,11 @@ class Document(SchemaDocument):
                 # found when validating at __init__ with autorefs
                 self._make_reference(self, self.structure)
         size = self.get_size()
-        if size > 3999999:
+        (size_limit, size_limit_str) = self._get_size_limit()
+
+        if size > size_limit:
             raise MaxDocumentSizeError("The document size is too big, documents "
-              "lower than 4Mb is allowed (got %s bytes)" % size)
+              "lower than %s is allowed (got %s bytes)" % (size_limit_str, size))
         if auto_migrate:
             error = None
             try:
@@ -386,7 +392,7 @@ class Document(SchemaDocument):
         save the document into the db.
 
         if uuid is True, a uuid4 will be automatiquely generated
-        else, the pymongo.ObjectId will be used.
+        else, the bson.ObjectId will be used.
 
         If validate is True, the `validate` method will be called before
         saving. Not that the `validate` method will be called *before* the
@@ -414,26 +420,33 @@ class Document(SchemaDocument):
 
     @classmethod
     def generate_index(cls, collection):
+        """generate indexes from ``indexes`` class-attribute
+
+        supports additional index-creation-keywords supported by pymongos ``ensure_index``.
+        """
         # creating index if needed
-        for index in cls.indexes:
+        for index in deepcopy(cls.indexes):
             unique = False
-            if 'unique' in index.keys():
-                unique = index['unique']
+            if index.has_key('unique'):
+                unique = index.pop('unique')
             ttl = 300
-            if 'ttl' in index.keys():
-                ttl = index['ttl']
-            if isinstance(index['fields'], tuple):
-                fields = [index['fields']]
-            elif isinstance(index['fields'], basestring):
-                fields = [(index['fields'], 1)]
+            if index.has_key('ttl'):
+                ttl = index.pop('ttl')
+            
+            given_fields = index.pop("fields", list())
+            
+            if isinstance(given_fields, tuple):
+                fields = [given_fields]
+            elif isinstance(given_fields, basestring):
+                fields = [(given_fields, 1)]
             else:
                 fields = []
-                for field in index['fields']:
+                for field in given_fields:
                     if isinstance(field, basestring):
                         field = (field, 1)
                     fields.append(field)
-            log.debug('Creating index for %s' % str(index['fields']))
-            collection.ensure_index(fields, unique=unique, ttl=ttl)
+            log.debug('Creating index for %s' % str(given_fields))
+            collection.ensure_index(fields, unique=unique, ttl=ttl, **index)
 
     def to_json_type(self):
         """
@@ -502,12 +515,14 @@ class Document(SchemaDocument):
                         doc[key]['_collection'] = self.collection.name
                         doc[key]['_database'] = self.db.name
         try:
-            import anyjson
+            from json import dumps
+        except ImportError:
+            from anyjson import serialize as dumps
         except ImportError:
             raise ImportError("can't import anyjson. Please install it before continuing.")
         obj = self.to_json_type()
         _convert_to_python(obj, self.structure)
-        return unicode(anyjson.serialize(obj))
+        return unicode(dumps(obj))
 
     def from_json(self, json):
         """
@@ -572,10 +587,12 @@ class Document(SchemaDocument):
                     _id = doc[key][id_ref]
                     doc[key] = getattr(self.connection[db][col], obj_class.__name__).one({'_id': _id})
         try:
-            import anyjson
+            from json import loads
+        except ImportError:
+            from anyjson import deserialize as loads
         except ImportError:
             raise ImportError("can't import anyjson. Please install it before continuing.")
-        obj = anyjson.deserialize(json)
+        obj = loads(json)
         _convert_to_python(obj, self.structure)
         if '_id' in obj:
             if '$oid' in obj['_id']:

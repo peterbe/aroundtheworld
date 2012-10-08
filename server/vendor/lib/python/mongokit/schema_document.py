@@ -119,7 +119,7 @@ class SchemaProperties(type):
                     #parent = parent()
                     if parent.structure:
                         if 'structure' not in attrs and parent.structure:
-                            attrs['structure'] = parent.structure
+                            attrs['structure'] = parent.structure.copy()
                         else:
                             obj_structure = attrs.get('structure', {}).copy()
                             attrs['structure'] = parent.structure.copy()
@@ -566,13 +566,13 @@ class SchemaDocument(dict):
                     for field in struct_doc_diff:
                         if (type(field) is not type) and (not self.use_schemaless):
                             self._raise_exception(StructureError, None,
-                              "missed fields : %s" % struct_doc_diff )
+                              "missed fields %s in %s" % (struct_doc_diff, type(doc).__name__) )
                 else:
                     struct_struct_diff = list(set(doc).difference(set(struct)))
                     bad_fields = [s for s in struct_struct_diff if s not in STRUCTURE_KEYWORDS]
                     if bad_fields and not self.use_schemaless:
                         self._raise_exception(StructureError, None,
-                          "unknown fields : %s" % bad_fields)
+                          "unknown fields %s in %s" % (bad_fields, type(doc).__name__))
             for key in struct:
                 if type(key) is type:
                     new_key = "$%s" % key.__name__
@@ -587,7 +587,7 @@ class SchemaDocument(dict):
                                 path, key.__name__, type(doc_key).__name__))
                         self._validate_doc(doc[doc_key], struct[key], new_path)
                 else:
-                    if doc.get(key):
+                    if key in doc:
                         self._validate_doc(doc[key], struct[key],  new_path)
         elif isinstance(struct, list):
             if not isinstance(doc, list) and not isinstance(doc, tuple):
@@ -644,14 +644,16 @@ class SchemaDocument(dict):
             #
             if isinstance(struct[key], CustomType):
                 if target == 'bson':
-                    if struct[key].python_type is not None:
-                        if not isinstance(doc[key], struct[key].python_type) and doc[key] is not None:
-                            self._raise_exception(SchemaTypeError, new_path,
-                              "%s must be an instance of %s not %s" % (
-                                new_path, struct[key].python_type.__name__, type(doc[key]).__name__))
-                    doc[key] = struct[key].to_bson(doc[key])
+                    if key in doc:
+                        if struct[key].python_type is not None:
+                            if not isinstance(doc[key], struct[key].python_type) and doc[key] is not None:
+                                self._raise_exception(SchemaTypeError, new_path,
+                                                      "%s must be an instance of %s not %s" % (
+                                        new_path, struct[key].python_type.__name__, type(doc[key]).__name__))
+                        doc[key] = struct[key].to_bson(doc[key])
                 else:
-                    doc[key] = struct[key].to_python(doc[key])
+                    if key in doc:
+                        doc[key] = struct[key].to_python(doc[key])
             elif isinstance(struct[key], dict):
                 if doc: # we don't need to process an empty doc
                     if type(key) is type:

@@ -794,7 +794,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             if previous_question['answer'] is None:
                 # no answer was sent, it must have timed out
                 previous_question['timedout'] = True
-                previous_question['points'] = 0
+                previous_question['points'] = 0.0
                 previous_question.save()
 
         question_id = session['questions'].pop(0)
@@ -956,7 +956,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
             if not answer_obj['answer']:
                 answer_obj['timedout'] = True
-                answer_obj['points'] = 0
+                answer_obj['points'] = 0.0
                 answer_obj.save()
 
             total_points = 0
@@ -1104,9 +1104,11 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             time_bonus_p = round(float(time_left) / question['seconds'], 1)
             data['time_bonus'] = 1 + time_bonus_p
             data['points_value'] = question.get('points_value', 1)
-            data['points'] = (data['time_bonus'] *
-                              data['points_value'] *
-                              data['correct'])
+            data['points'] = float(
+                data['time_bonus'] *
+                data['points_value'] *
+                data['correct']
+            )
             # if you got it right and have never got it right before, then
             # double the points
             if self._first_time(user, question, session):
