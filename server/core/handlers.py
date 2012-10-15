@@ -922,6 +922,9 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         user = self.get_current_user()
         location = self.get_current_location(user)
 
+        cache_key = 'questions_answered_stats:%s' % user['_id']
+        self.redis.delete(cache_key)
+
         if self.get_argument('teardown', None):
             # called when the plugin is torn down
             # Use this opportunity to close any unfinished sessions
@@ -2374,6 +2377,9 @@ class PictureDetectiveHandler(QuizzingHandler):
         session['finish_date'] = datetime.datetime.utcnow()
         session.save()
 
+        cache_key = 'questions_answered_stats:%s' % user['_id']
+        self.redis.delete(cache_key)
+
         # if the last job was of the same category and location
         # then increment the number of coins
         for job in (self.db.Job
@@ -3166,6 +3172,7 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
             raise HTTPError(500, "No email provided")
 
 #        user={u'username': u'martin', u'superuser': False, u'first_name': u'Martin', u'last_name': u'Seehuusen', u'anonymous': False, u'add_date': datetime.datetime(2012, 6, 11, 0, 51, 4, 40000), u'password': u'5c0a5392-063d-433c-842d-43d01a148f47', u'modify_date': datetime.datetime(2012, 6, 11, 2, 7, 24, 226000), u'current_location': ObjectId('4f3d6fc974a1f83646000001'), u'_id': ObjectId('4fd540f874a1f866e7000079'), u'email': u'martin@msdesigns.com.au'}
+#        user={u'username': u'ashleynbe', u'first_name': u'Ashley', u'last_name': u'Bengtsson', u'email': u'ashleynbe@gmail.com'}
 
         user_struct = user
         #locale = user.get('locale')  # not sure what to do with this yet
@@ -3352,21 +3359,19 @@ class WelcomeHandler(AuthenticatedBaseHandler):
 
         spent_total = 0
         spent_flights = 0
-        for transaction in self.db.Transaction.find(user_search):
+        for transaction in (self.db.Transaction.collection
+                            .find(user_search,
+                                  ('cost', 'flight'))):
             spent_total += transaction['cost']
             if transaction['flight']:
                 spent_flights += transaction['cost']
         data['spent_total'] = spent_total
         data['spent_flights'] = spent_flights
 
-        earned_jobs = 0
-        for job in self.db.Job.collection.find(user_search, ('coins',)):
-            earned_jobs += job['coins']
+        total_earned = self.get_total_earned(user)
+        earned_jobs = total_earned['jobs']
+        earned_questions = total_earned['questions']
 
-        earned_questions = 0
-        for earning in (self.db.QuestionAnswerEarning.collection
-                        .find(user_search, ('coins',))):
-            earned_questions += earning['coins']
         invitations = self.db.Invitation.find(user_search).count()
         data['invitations'] = invitations
         invitations = (self.db.Invitation
@@ -3393,7 +3398,8 @@ class WelcomeHandler(AuthenticatedBaseHandler):
         data['earned_total'] = earned_total
 
         _tos = set()
-        for flight in self.db.Flight.collection.find(user_search):
+        for flight in (self.db.Flight.collection
+                       .find(user_search, ('to',))):
             _tos.add(flight['to'])
         data['visited_cities'] = len(_tos)
         _available_cities = (self.db.Location
@@ -3405,7 +3411,26 @@ class WelcomeHandler(AuthenticatedBaseHandler):
                              .find({'published': True})
                              .count())
         data['questions_max'] = _available_questions
+        data.update(self.get_questions_answered_stats(user))
+        return data
 
+    def get_questions_answered_stats(self, user):
+        cache_key = 'questions_answered_stats:%s' % user['_id']
+        data = self.redis.get(cache_key)
+        if data:
+            data = tornado.escape.json_decode(data)
+        else:
+            data = self._get_questions_answered_stats(user)
+            self.redis.setex(
+                cache_key,
+                tornado.escape.json_encode(data),
+                ONE_DAY
+            )
+        return data
+
+    def _get_questions_answered_stats(self, user):
+        # actually do the queries
+        user_search = {'user': user['_id']}
         sessions = 0
         answers = 0
         answers_right = 0
@@ -3421,13 +3446,12 @@ class WelcomeHandler(AuthenticatedBaseHandler):
                 if answer['correct']:
                     answers_right += 1
                 _answered_questions.add(answer['question'])
-
-        data['question_sessions'] = sessions
-        data['question_answers'] = answers
-        data['question_answers_right'] = answers_right
-        data['question_answered_unique_questions'] = len(_answered_questions)
-
-        return data
+        return {
+            'question_sessions': sessions,
+            'question_answers': answers,
+            'question_answers_right': answers_right,
+            'question_answered_unique_questions': len(_answered_questions)
+        }
 
 
 @route('/feedback.json$', name='feedback')
