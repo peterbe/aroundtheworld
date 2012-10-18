@@ -180,7 +180,15 @@ var City = (function() {
          $('.about-pictures', container).html(response.about_pictures);
          $('.about-banks', container).html(response.about_banks);
          $('.about-league', container).html(response.about_league);
-
+         if (response.flag) {
+           $('a.flag img', container).attr('src', response.flag);
+           var loc = response.locality || response.country;
+           $('a.flag', container)
+             .attr('href', 'http://en.wikipedia.org/wiki/' + loc.replace(' ', '_'))
+             .show();
+         } else {
+           $('a.flag', container).hide();
+         }
 
          if (page == 'embassy') {
            _load_embassy(function() {

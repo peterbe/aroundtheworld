@@ -1686,8 +1686,10 @@ class CityHandler(AuthenticatedBaseHandler,
                   BankingMixin,
                   LeagueMixin):
 
+    FLAGS_CONTAINER = 'images/flags-64'
+    # if not in this list, it'll do a good job guessing
     FLAGS = {
-      'Sweden': 'sweden.png',
+        #'Sweden': 'Sweden.png',
     }
 
     def get_ambassadors_html(self, location):
@@ -1713,11 +1715,16 @@ class CityHandler(AuthenticatedBaseHandler,
             return document['html']
 
     def get_flag(self, location):
+        root = self.FLAGS_CONTAINER
         country = location['country']
+        guess = os.path.join(root, country.replace(' ', '-') + '.png')
+        full = os.path.join(self.application.settings['static_path'], guess)
+        if os.path.isfile(full):
+            return self.static_url(guess)
         if country not in self.FLAGS:
             logging.warn("No flag for %r" % country)
             return
-        return self.static_url(os.path.join('images/flags',
+        return self.static_url(os.path.join(self.FLAGS_CONTAINER,
                                             self.FLAGS[country]))
 
     def get(self):
@@ -1758,6 +1765,9 @@ class CityHandler(AuthenticatedBaseHandler,
             #data['count_banks'] = self.get_banks_count(location)
             #data['has_introduction'] = bool(self.get_intro_html(location))
             #data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
+            flag = self.get_flag(location)
+            if flag:
+                data['flag'] = flag
             data['state'] = self.get_state()
 
         self.write(data)
