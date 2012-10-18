@@ -1682,8 +1682,8 @@ class LeagueMixin(object):
 class FlagMixin(object):
 
     FLAGS_CONTAINER = {
-        64: 'images/flags-64',
-        16: 'images/flags-16',
+        64: 'images/flags/64',
+        16: 'images/flags/16',
     }
     # if not in this list, it'll do a good job guessing
     FLAGS = {
