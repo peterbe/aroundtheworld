@@ -1679,18 +1679,40 @@ class LeagueMixin(object):
         return users
 
 
+class FlagMixin(object):
+
+    FLAGS_CONTAINER = {
+        64: 'images/flags-64',
+        16: 'images/flags-16',
+    }
+    # if not in this list, it'll do a good job guessing
+    FLAGS = {
+        #'Sweden': 'Sweden.png',
+    }
+
+    def get_flag(self, location, size):
+        root = self.FLAGS_CONTAINER[size]
+        country = location['country']
+        if not country and location['name'] == 'Moon':
+            country = 'Moon'
+        guess = os.path.join(root, country.replace(' ', '-') + '.png')
+        full = os.path.join(self.application.settings['static_path'], guess)
+        if os.path.isfile(full):
+            return self.static_url(guess)
+        if country not in self.FLAGS:
+            logging.warn("No flag for %r" % country)
+            return
+        return self.static_url(os.path.join(self.FLAGS_CONTAINER,
+                                            self.FLAGS[country]))
+
+
 @route('/city.json$', name='city')
 class CityHandler(AuthenticatedBaseHandler,
                   PictureThumbnailMixin,
                   FlightFinderMixin,
                   BankingMixin,
-                  LeagueMixin):
-
-    FLAGS_CONTAINER = 'images/flags-64'
-    # if not in this list, it'll do a good job guessing
-    FLAGS = {
-        #'Sweden': 'Sweden.png',
-    }
+                  LeagueMixin,
+                  FlagMixin):
 
     def get_ambassadors_html(self, location):
         filter_ = {
@@ -1713,19 +1735,6 @@ class CityHandler(AuthenticatedBaseHandler,
             if not document['html']:
                 document.update_html()
             return document['html']
-
-    def get_flag(self, location):
-        root = self.FLAGS_CONTAINER
-        country = location['country']
-        guess = os.path.join(root, country.replace(' ', '-') + '.png')
-        full = os.path.join(self.application.settings['static_path'], guess)
-        if os.path.isfile(full):
-            return self.static_url(guess)
-        if country not in self.FLAGS:
-            logging.warn("No flag for %r" % country)
-            return
-        return self.static_url(os.path.join(self.FLAGS_CONTAINER,
-                                            self.FLAGS[country]))
 
     def get(self):
         data = {}
@@ -1765,7 +1774,7 @@ class CityHandler(AuthenticatedBaseHandler,
             #data['count_banks'] = self.get_banks_count(location)
             #data['has_introduction'] = bool(self.get_intro_html(location))
             #data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
-            flag = self.get_flag(location)
+            flag = self.get_flag(location, 64)
             if flag:
                 data['flag'] = flag
             data['state'] = self.get_state()
@@ -2732,7 +2741,9 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
 
 @route('/airport.json$', name='airport')
-class AirportHandler(AuthenticatedBaseHandler, FlightFinderMixin):
+class AirportHandler(AuthenticatedBaseHandler,
+                     FlightFinderMixin,
+                     FlagMixin):
 
     def get(self):
         user = self.get_current_user()
@@ -2754,6 +2765,10 @@ class AirportHandler(AuthenticatedBaseHandler, FlightFinderMixin):
             ticket_progress_min=ticket_progress_min,
         )
         data['destinations'] = destinations
+        for destination in destinations:
+            flag = self.get_flag(destination, 16)
+            if flag:
+                destination['flag'] = flag
         data['for_amount'] = user_settings['coins_total']
         self.write(data)
 

@@ -105,6 +105,17 @@ var Airport = (function() {
              r.removeClass('cantafford');
              a_title = "You can not yet afford to fly to " + each.name;
            }
+           if (each.flag) {
+           $('<td>')
+             .append($('<img>')
+                     .attr('alt', each.country)
+                     .attr('src', each.flag))
+             .appendTo(r);
+           } else {
+           $('<td>')
+             .text('')
+             .appendTo(r);
+           }
            $('<a href="#">')
                .attr('id', 'code-' + each.code)
                .text(each.name).attr('title', a_title)
