@@ -123,6 +123,8 @@ class BaseHandler(tornado.web.RequestHandler):
       'league': ['css/plugins/league.css',
                  'lib/handlebars-1.0.0.beta.6.js',
                  'plugins/league.js'],
+      'unsubscribed': ['css/plugins/unsubscribed.css',
+                       'plugins/unsubscribed.js'],
     }
 
 #    def write(self, *a, **k):
@@ -4675,3 +4677,20 @@ class JoinFriendshipHandler(BaseHandler):
         self.set_secure_cookie('invites', '|'.join(invites))
 
         self.redirect('/')
+
+
+@route('/unsubscribe/(\w{12})', name='unsubscribe')
+class UnsubscribeHandler(BaseHandler):
+
+    def get(self, token):
+        for user in (self.db.User.collection
+                     .find({'email': {'$ne': None}}, ('_id',))):
+            if self.db.User.tokenize_id(user['_id'], 12) == token:
+                user = self.db.User.find_one({'_id': user['_id']})
+                break
+
+        user_settings = self.get_user_settings(user)
+        user_settings['unsubscribe_emails'] = True
+        user_settings.save()
+
+        self.redirect('/unsubscribed')

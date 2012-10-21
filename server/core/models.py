@@ -1,4 +1,5 @@
 import re
+import hashlib
 import uuid
 from bson.objectid import ObjectId
 import datetime
@@ -42,6 +43,10 @@ class BaseDocument(Document):
 
     def __ne__(self, other_doc):
         return not self == other_doc
+
+    @classmethod
+    def tokenize_id(self, _id, length):
+        return hashlib.md5(str(_id)).hexdigest()[:length]
 
 
 @register
