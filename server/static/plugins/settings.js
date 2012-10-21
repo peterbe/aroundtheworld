@@ -10,6 +10,11 @@ var Settings = (function() {
     } else {
       $('input[name="disable_sound"]', f).removeAttr('checked');
     }
+    if (data.unsubscribe_emails) {
+      $('input[name="unsubscribe_emails"]', f).attr('checked', 'checked');
+    } else {
+      $('input[name="unsubscribe_emails"]', f).removeAttr('checked');
+    }
     $('input[name="username"]', f).val(data.username);
     if (data.anonymous) {
       $('input[name="username"]', f).attr('disabled', 'disabled');

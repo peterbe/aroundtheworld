@@ -1259,6 +1259,7 @@ class SettingsHandler(AuthenticatedBaseHandler):
         assert user_settings
         data = {}
         data['disable_sound'] = user_settings['disable_sound']
+        data['unsubscribe_emails'] = user_settings['unsubscribe_emails']
         data['username'] = user['username']
         data['anonymous'] = user['anonymous']
         data['first_name'] = user['first_name']
@@ -1289,7 +1290,9 @@ class SettingsHandler(AuthenticatedBaseHandler):
 
         user_settings = self.get_user_settings(user)
         disable_sound = bool(self.get_argument('disable_sound', False))
+        unsubscribe_emails = bool(self.get_argument('unsubscribe_emails', False))
         user_settings['disable_sound'] = disable_sound
+        user_settings['unsubscribe_emails'] = unsubscribe_emails
         user_settings.save()
         self.get()
 
