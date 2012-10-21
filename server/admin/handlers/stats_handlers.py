@@ -44,6 +44,18 @@ class StatsSpreadAdminHandler(SuperuserBaseHandler):
             100.0 * data['not_anonymous'] / total
         )
 
+        could_subscribe = data['not_anonymous']
+        not_subscribed = self.db.UserSettings.find({'unsubscribe_emails': True}).count()
+        data['subscribed'] = could_subscribe - not_subscribed
+        data['not_subscribed'] = not_subscribed
+        total = data['subscribed'] + data['not_subscribed']
+        data['subscribed_percentage'] = round(
+            100.0 * data['subscribed'] / total
+        )
+        data['not_subscribed_percentage'] = round(
+            100.0 * data['not_subscribed'] / total
+        )
+
         self.render('admin/stats/spread.html', **data)
 
 

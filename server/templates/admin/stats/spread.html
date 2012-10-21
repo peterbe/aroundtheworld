@@ -26,6 +26,28 @@
       <table class="condensed-table table">
         <thead>
           <tr>
+            <th>Email (un)subscribers</th>
+            <th>Count</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Not subscribed</td>
+            <td>{{ not_subscribed }}</td>
+            <td>{{ not_subscribed_percentage }}%</td>
+          </tr>
+          <tr>
+            <td>Subscribed</td>
+            <td>{{ subscribed }}</td>
+            <td>{{ subscribed_percentage }}%</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="condensed-table table">
+        <thead>
+          <tr>
             <th>Location</th>
             <th>Count</th>
           </tr>
