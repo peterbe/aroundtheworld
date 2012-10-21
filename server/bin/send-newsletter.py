@@ -56,6 +56,7 @@ def run(options):
             continue
         if str(user['_id']) in done_user_ids:
             print "Skipping", user['email']
+            continue
         if only_email_addresses:
             if user['email'] in only_email_addresses:
                 print "ONLY", user['email']
