@@ -82,7 +82,7 @@ var Quiz = (function() {
     function rand_pick(options) {
       function shuffle(o) { //v1.0
         for (var j, x, i = o.length; i;
-             j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x) {};
+             j = parseInt(Math.random() * i, 10), x = o[--i], o[i] = o[j], o[j] = x) {}
         return o;
       }
       return shuffle(options)[0];
@@ -364,15 +364,29 @@ var Quiz = (function() {
              $('a.next-question', container).html('Finish job &rarr;');
            }
 
+           var dc = $('.didyouknow', container);
+           $('p', dc).remove();
            if (response.didyouknow) {
-             $('.didyouknow p', container).remove();
-             $('.didyouknow', container)
-               .append(response.didyouknow)
+             dc.append(response.didyouknow)
                  .fadeIn(300);
-             //Quiz.restart_timer(last_question && 3 || 10);
            } else {
-             //Quiz.restart_timer(3);
+             dc.hide();
            }
+
+           if (response.didyouknow_picture) {
+             dc.append($('<p>')
+                       .addClass('didyouknowpicture')
+                       .append(
+                               $('<img alt="Full picture">')
+                               .attr('width', response.didyouknow_picture.width)
+                               .attr('height', response.didyouknow_picture.height)
+                               .attr('src', response.didyouknow_picture.url)
+                              ))
+               .fadeIn(300);
+           } else {
+             dc.removeClass('didyouknow-with-picture');
+           }
+
            if (response.enable_rating) {
              $('.rate', container).show();
              $('.rate-label', container).show();

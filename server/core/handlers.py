@@ -847,7 +847,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             })
         if len(data['question'].get('pictures', [])) == 4:
             random.shuffle(data['question']['pictures'])
-        elif len(data['question'].get('pictures', [])) == 1:
+        elif 1 <= len(data['question'].get('pictures', [])) < 4:
             data['question']['picture'] = data['question']['pictures'][0]
             data['question'].pop('pictures')
 
@@ -1081,6 +1081,21 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
 
             if question.get('didyouknow'):
                 data['didyouknow'] = self.render_didyouknow(question['didyouknow'])
+            _count_pictures = question.count_pictures()
+            if _count_pictures == 2:
+                # include the second picture in the didyouknow text
+                max_width, max_height = (200, 200)
+                second = list(question.get_pictures())[1]
+                uri, (width, height) = self.get_thumbnail(
+                    second,
+                    (max_width, max_height),
+                    **{}
+                )
+                data['didyouknow_picture'] = {
+                    'url': uri,
+                    'width': width,
+                    'height': height,
+                }
 
             answer = self.get_argument('answer')
             time_ = float(self.get_argument('time'))

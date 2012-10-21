@@ -16,6 +16,9 @@
     border-radius:4px;
 
 }
+#quizzing .question-attention a.next-question {
+    font-weight: bold;
+}
 #quizzing .question-attention .first-time {
     float:right;
 }
@@ -52,6 +55,11 @@
     padding:10px;
     margin:20px 5px;
 }
+
+#quizzing .didyouknow .didyouknowpicture {
+    text-align: center;
+}
+
 
 #quizzing .points-total-outer,
 #quizzing .timer-outer {

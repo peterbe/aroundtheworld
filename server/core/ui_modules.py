@@ -95,15 +95,15 @@ class PictureThumbnailMixin:
         # with this trick, this mixin can be used for UIModules as well as
         # RequestHandlers
         redis_ = getattr(self, 'redis', None) or self.handler.redis
-
         cache_key = '%s%s%s' % (question_image['_id'], max_width, max_height)
         cache_key += str(kwargs)
         result = redis_.get(cache_key)
-        if result is not None:
-            return tornado.escape.json_decode(result)
-        logging.debug('Thumbnail Cache miss')
-        result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
-        redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
+        if result is None:
+            logging.debug('Thumbnail Cache miss')
+            result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
+            redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
+        else:
+            result = tornado.escape.json_decode(result)
         return result
 
 
