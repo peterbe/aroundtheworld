@@ -90,6 +90,8 @@ def run(options):
         )
         if not options.dry_run:
             open(log_filename, 'a').write('%s\n' % user['_id'])
+        else:
+            print "emailed", user['email']
 
 
 if __name__ == '__main__':
