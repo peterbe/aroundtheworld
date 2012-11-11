@@ -99,7 +99,7 @@ class PictureThumbnailMixin:
         cache_key += str(kwargs)
         result = redis_.get(cache_key)
         if result and 'file_broken' in result[0]:
-            result is None
+            result = None
         if result is None:
             logging.debug('Thumbnail Cache miss')
             result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
