@@ -98,10 +98,13 @@ class PictureThumbnailMixin:
         cache_key = '%s%s%s' % (question_image['_id'], max_width, max_height)
         cache_key += str(kwargs)
         result = redis_.get(cache_key)
+        if result and 'file_broken' in result[0]:
+            result is None
         if result is None:
             logging.debug('Thumbnail Cache miss')
             result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
-            redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
+            if 'file_broken' not in result[0]:
+                redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
         else:
             result = tornado.escape.json_decode(result)
         return result
@@ -124,9 +127,9 @@ class ShowPictureThumbnail(tornado.web.UIModule,
 
         url = self.handler.static_url(uri.replace('/static/', ''))
         args = {'src': url, 'width': width, 'height': height, 'alt': alt}
-        if (not question_image.render_attributes
+        if (not question_image['render_attributes']
           or kwargs.get('save_render_attributes', False)):
-            question_image.render_attributes = args
+            question_image['render_attributes'] = args
             question_image.save()
         if return_args:
             return args
