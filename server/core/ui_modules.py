@@ -98,13 +98,18 @@ class PictureThumbnailMixin:
         cache_key = '%s%s%s' % (question_image['_id'], max_width, max_height)
         cache_key += str(kwargs)
         result = redis_.get(cache_key)
-        if result and 'file_broken' in result[0]:
+        # remember if redis returned anything, it'll be a JSON encoded list
+        if result and 'file_broken' in result:
             result = None
         if result is None:
-            logging.debug('Thumbnail Cache miss')
+            logging.info('Thumbnail Cache miss')
             result = self.make_thumbnail(question_image, (max_width, max_height), **kwargs)
-            if 'file_broken' not in result[0]:
-                redis_.setex(cache_key, tornado.escape.json_encode(result), ONE_WEEK)
+
+            if 'file_broken' in result[0]:
+                _expires = 60  # to avoid repeating the same mistake over and over
+            else:
+                _expires = ONE_WEEK
+            redis_.setex(cache_key, tornado.escape.json_encode(result), _expires)
         else:
             result = tornado.escape.json_decode(result)
         return result
