@@ -362,6 +362,15 @@ class BaseHandler(tornado.web.RequestHandler):
             out.write("\t%s: " % cookie)
             out.write("%r\n" % self.get_secure_cookie(cookie))
 
+        try:
+            current_user = self.get_current_user()
+            if current_user:
+                out.write("\nUSER:\n")
+                out.write("\tusername: %s " % current_user['username'])
+                out.write("\temail: %s " % current_user['email'])
+        except:
+            logging.error("Unable to debug current user", exc_info=True)
+
         out.write("\nREQUEST:\n")
         for key in ('full_url', 'protocol', 'query', 'remote_ip',
                     'request_time', 'uri', 'version'):
