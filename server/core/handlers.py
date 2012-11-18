@@ -3687,7 +3687,7 @@ class QuestionWriterHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             self.write(dict(errors=errors))
             return
 
-        didyouknow = self.get_argument('didyouknow', '').strip()
+        didyouknow = self.get_argument('didyouknow', u'').strip()
         category_id = self.get_argument('category')
         category, = self.db.Category.find({'_id': ObjectId(category_id)})
         points_value = int(self.get_argument('points_value'))
