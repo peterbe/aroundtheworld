@@ -3129,6 +3129,7 @@ class BaseAuthHandler(BaseHandler):
           self.db.Award,
           self.db.Deposit,
           self.db.InterestEarning,
+          self.db.NewsItem,
         )
 
         for each in models:

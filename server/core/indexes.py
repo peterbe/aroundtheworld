@@ -97,6 +97,11 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'coins')
 
+    collection = db.NewsItem.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'user')
+
     test()
 
 
