@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+  <h2>Write News</h2>
+
+  {% include "_show_form_errors.html" %}
+  <form action="." method="post">{% module xsrf_form_html() %}
+  {% include "_show_fieldset.html" %}
+  </form>
+
+
+{% end %}

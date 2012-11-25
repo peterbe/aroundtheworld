@@ -10,6 +10,7 @@ from core.handlers import BaseHandler as CoreBaseHandler
 from tornado_utils.timesince import smartertimesince
 from admin.utils import truncate_text
 from core.handlers import QuizzingHandler
+from .forms import NewsItemForm
 
 
 class djangolike_request_dict(dict):
@@ -625,3 +626,39 @@ class AwardsAdminHandler(AuthenticatedBaseHandler):
         data['awards'] = awards
         data['filtering'] = bool(filter_)
         self.render('admin/awards.html', **data)
+
+
+@route('/admin/news/write/', name='admin_news_write')
+class NewsWriteAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self, form=None):
+        data = {}
+        if form is None:
+            initial = {'username': self.get_argument('username', u'')}
+            form = NewsItemForm(**initial)
+        data['form'] = form
+        self.render('admin/write_news.html', **data)
+
+    def post(self):
+        post_data = djangolike_request_dict(self.request.arguments)
+        form = NewsItemForm(post_data)
+        if form.validate():
+            user, = self.db.User.find({'username': form.username.data})
+            title = form.title.data.strip()
+            body = form.body.data.strip()
+
+            newsitem = self.db.NewsItem()
+            newsitem['user'] = user['_id']
+            newsitem['title'] = title
+            newsitem['body'] = body
+            newsitem.save()
+
+            self.push_flash_message(
+                'Newsitem saved' ,
+                text='Newsitem to %s saved' % user['username'],
+                type_='success'
+            )
+
+            self.redirect(self.reverse_url('admin_user', user['_id']))
+        else:
+            self.get(form=form)

@@ -125,6 +125,9 @@ class BaseHandler(tornado.web.RequestHandler):
                  'plugins/league.js'],
       'unsubscribed': ['css/plugins/unsubscribed.css',
                        'plugins/unsubscribed.js'],
+      'news': ['css/plugins/news.css',
+               'lib/transparency.min.js',
+               'plugins/news.js'],
     }
 
 #    def write(self, *a, **k):
@@ -1808,7 +1811,24 @@ class CityHandler(AuthenticatedBaseHandler,
                 data['flag'] = flag
             data['state'] = self.get_state()
 
+            data['newsitem'] = self.get_unread_newsitem(user)
+            data['count_newsitems'] = self.get_count_newsitems(user)
+
         self.write(data)
+
+    def get_unread_newsitem(self, user):
+        for each in (self.db.NewsItem.collection
+                     .find({'user': user['_id'],
+                            'read': False})
+                     .sort('add_date', 1)
+                     .limit(1)):
+            return {
+                'id': str(each['_id']),
+                'title': each['title'],
+            }
+
+    def get_count_newsitems(self, user):
+        return self.db.NewsItem.find({'user': user['_id']}).count()
 
     def get_day_number(self, user, location):
         day = 1
@@ -4706,3 +4726,58 @@ class UnsubscribeHandler(BaseHandler):
         user_settings.save()
 
         self.redirect('/unsubscribed')
+
+
+@route('/news.json', name='news')
+class NewsHandler(BaseHandler):
+
+    def get(self):
+        data = {}
+        user = self.get_current_user()
+
+        def describe_newsitem(item):
+            body = markdown.markdown(
+                item['body']
+            )
+
+            info = {
+                'title': item['title'],
+                'body': item['body'],
+                'body_html': body,
+                'id': str(item['_id']),
+                'read': item['read'],
+                'age': smartertimesince(
+                    item['add_date'],
+                    datetime.datetime.utcnow()
+                )
+            }
+            return info
+
+        if self.get_argument('id', None):
+            item = self._get_newsitem(user, self.get_argument('id'))
+            if not item:
+                self.write({'error': 'INVALIDNEWSITEMS'})
+                return
+            was_unread = not item['read']
+            if was_unread:
+                item['read'] = True
+                item.save()
+            info = describe_newsitem(item)
+            data['newsitem'] = info
+        else:
+            items = []
+            for each in (self.db.NewsItem.collection
+                         .find({'user': user['_id']})
+                         .sort('add_date', -1)):
+                items.append(describe_newsitem(each))
+            data['newsitems'] = items
+
+        self.write(data)
+
+    def _get_newsitem(self, user, _id):
+        try:
+            item = self.db.NewsItem.find_one({'_id': ObjectId(_id)})
+            assert item
+            return item
+        except:
+            logging.error('Unable to find news item %r' % _id, exc_info=True)

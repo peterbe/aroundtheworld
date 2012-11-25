@@ -74,7 +74,15 @@
 }
 
 #city .affordable-tickets {
-    margin-top: 30px; 
+    margin-top: 30px;
+}
+
+#city .news-teaser {
+    float: right;
+    border: 1px solid rgb(214, 233, 198);
+    background-color: rgb(223, 240, 216);
+    padding: 5px;
+    border-radius: 5px;
 }
 
 @media (max-width: 480px) {
@@ -82,4 +90,4 @@
     #city .affordable-tickets {
         width: 99%;
     }
-}    
+}

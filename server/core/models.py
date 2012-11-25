@@ -773,3 +773,18 @@ class FriendshipToken(BaseDocument):
 
     def generate_token(self, length):
         self['token'] = unicode(uuid.uuid4().hex[:length])
+
+
+@register
+class NewsItem(BaseDocument):
+    __collection__ = 'newsitems'
+    structure = {
+      'user': ObjectId,
+      'read': bool,
+      'title': unicode,
+      'body': unicode,
+    }
+
+    default_values = {
+      'read': False,
+    }

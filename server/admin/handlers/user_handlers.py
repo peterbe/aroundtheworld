@@ -134,7 +134,6 @@ class UsersTotalEarnedAdminHandler(SuperuserBaseHandler):
         self.redirect(self.reverse_url('admin_users_totals'))
 
 
-
 @route('/admin/users/(\w{24})/', name='admin_user')
 class UserAdminHandler(SuperuserBaseHandler):
 

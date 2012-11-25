@@ -1,0 +1,38 @@
+#news .no-news p {
+    font-style: italic;
+    margin: 20px;
+}
+
+#news .item {
+    margin: 20px;
+    width: 70%;
+    border: 1px solid rgb(214, 233, 198);
+    background-color: rgb(223, 240, 216);
+    padding: 5px 15px;
+    border-radius: 5px;
+
+}
+#news .item a.closer {
+    float: right;
+}
+
+#news .items div {
+    width: 70%;
+    margin: 10px;
+    border-bottom: 1px solid #efefef;
+}
+#news .items p.metadata {
+    font-size: 80%;
+    font-weight: bold;
+}
+
+#news .items p {
+    margin-bottom: 3px;
+}
+#news .items .read {
+    opacity: 0.7;
+}
+
+#news .items .unread {
+    font-weight: bold;
+}

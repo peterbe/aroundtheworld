@@ -189,6 +189,14 @@ var City = (function() {
          } else {
            $('a.flag', container).hide();
          }
+         if (response.newsitem) {
+           $('.news-teaser a', container)
+             .attr('href', '#news,' + response.newsitem.id)
+               .text(response.newsitem.title);
+           $('.news-teaser', container).show();
+         } else {
+           $('.news-teaser', container).hide();
+         }
 
          if (page == 'embassy') {
            _load_embassy(function() {

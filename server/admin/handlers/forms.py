@@ -3,6 +3,7 @@ from wtforms import (Form, BooleanField, TextField, TextAreaField, validators,
 from wtforms.widgets import html_params, TextInput, TextArea as WTTextArea
 from wtforms.validators import ValidationError
 
+
 class TextArea(WTTextArea):
     def __init__(self, **attrs):
         self.attrs = attrs
@@ -359,3 +360,20 @@ class FeedbackReplyForm(BaseForm):
     comment = TextAreaField("Reply",
                             [validators.Required()],
                             widget=TextArea(**{'class': 'span5'}))
+
+
+class NewsItemForm(BaseForm):
+
+    username = TextField('Username', [validators.Required()])
+    title = TextField(
+        'Title',
+        [validators.Required()],
+        widget=TextInputWithMaxlength(200, attrs={
+            'size': 200,
+            'class': 'input-xlarge',
+        })
+    )
+    body = TextAreaField(
+        'Body',
+        widget=TextArea(**{'class': 'span5'})
+    )
