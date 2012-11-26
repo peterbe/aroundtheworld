@@ -31,22 +31,6 @@ var Welcome = (function() {
        }
        $('.not-logged-in .loading', container).hide();
        $('.not-logged-in .login', container).show();
-       /*
-       if (map && !STATE.location) {
-         var t0 = new Date().getTime();
-         $.getJSON('/iplookup/', function(response) {
-           if (response.lat && response.lng) {
-             var t1 = new Date().getTime();
-             // if it took a really long time, (more than 1 second)
-             // then don't bother because it would just look weird
-             if ((t1 - t0) < 1000) {
-               map.setCenter(new google.maps.LatLng(response.lat, response.lng));
-               map.setZoom(5);
-             }
-           }
-         });
-       }
-       */
        $('.alternative', container).hide();
        if (!STATE.user) {
          $('.not-logged-in', container).show();

@@ -162,7 +162,7 @@ var City = (function() {
            STATE = response.state;
          }
          $('h2 strong', container).text(response.name);
-         if (map && map.getZoom() < 15) {
+         if (map && map.getZoom() < 15 && response.name.search('Tutorial') === -1) {
            var p = new google.maps.LatLng(response.lat, response.lng);
            if (p != map.getCenter()) {
              map.setCenter(p);
