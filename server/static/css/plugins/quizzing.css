@@ -86,7 +86,7 @@
     margin: 40px;
     font-style: italic;
 }
-#quizzing td {
+#quizzing table.table td {
     border-top: 1px solid #858585;
 }
 #quizzing tr.wrong {

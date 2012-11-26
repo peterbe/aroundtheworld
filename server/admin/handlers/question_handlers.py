@@ -490,9 +490,13 @@ class QuestionAdminHandler(BaseQuestionAdminHandler, QuestionStatsMixin):
                                 **initial)
         data['form'] = form
         data['can_delete'] = self.can_delete(data['question'])
-        data['rating_total'] = (self.db.QuestionRatingTotal
-                              .find_one({'question': data['question']['_id']}))
-        data['answer_stats'], __ = self.get_or_create_answer_stats(data['question'])
+        if data['question']['published']:
+            data['rating_total'] = (self.db.QuestionRatingTotal
+                                   .find_one({'question': data['question']['_id']}))
+            data['answer_stats'], __ = self.get_or_create_answer_stats(data['question'])
+        else:
+            data['rating_total'] = None
+            data['answer_stats'] = None
         self.render('admin/question.html', **data)
 
     def post(self, _id):
