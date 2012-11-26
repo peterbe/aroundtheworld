@@ -66,3 +66,9 @@
     padding-top: 20px;
     border-top: none;
 }
+
+#league a.closer {
+    float: right;
+    font-weight: bold;
+    font-size: 120%;
+}

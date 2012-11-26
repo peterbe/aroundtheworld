@@ -121,7 +121,7 @@ class BaseHandler(tornado.web.RequestHandler):
       'about': ['css/plugins/about.css',
                 'plugins/about.js'],
       'league': ['css/plugins/league.css',
-                 'lib/handlebars-1.0.0.beta.6.js',
+                 'lib/mustache.min.js',
                  'plugins/league.js'],
       'unsubscribed': ['css/plugins/unsubscribed.css',
                        'plugins/unsubscribed.js'],
@@ -409,7 +409,7 @@ class BaseHandler(tornado.web.RequestHandler):
         options['PROJECT_TITLE'] = settings.PROJECT_TITLE
         options['SIGNATURE'] = settings.SIGNATURE
         output = super(BaseHandler, self).render_string(template, **options)
-        output = output.replace('{!{', '{{')  # handlebars
+        output = output.replace('{!{', '{{')  # mustache
         return output
 
     def static_url(self, path, **kwargs):

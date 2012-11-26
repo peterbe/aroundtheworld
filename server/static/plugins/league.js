@@ -27,8 +27,9 @@ var League = (function() {
 
   function _click_friend(element) {
     var link = $(element);
+    $('.highscore, .friends', container).hide();
     $('p.info').hide();
-    var template = Handlebars.compile($('.template-about-user', container).html());
+    var template = $('.template-about-user', container).html();
     $.getJSON(URL, {about: link.data('id')}, function(response) {
       var info = response.info;
       info.miles_total = Utils.formatMiles(info.miles_total, true);
@@ -38,7 +39,7 @@ var League = (function() {
       info.total_earned.questions = Utils.formatCost(info.total_earned.questions, true);
       info.total_earned.coins = Utils.formatCost(info.total_earned.coins, true);
 
-      $('.about .inner', container).html(template(response.info));
+      $('.about .inner', container).html(Mustache.render(template, info));
       $('.about', container).hide().fadeIn(300);
     });
   }
@@ -191,9 +192,12 @@ var League = (function() {
       return false;
     });
 
-    $('.about .close', container).click(function() {
+    $('.about .closer', container).click(function() {
+
       $('.about', container).hide();
       $('p.info', container).fadeIn(300);
+      $('.highscore, .friends', container).fadeIn(300);
+
       return false;
     });
 
