@@ -374,15 +374,19 @@ class QuestionAlternativesAdminHandler(BaseQuestionAdminHandler):
     def get(self, _id):
         question = self.db.Question.find_one({'_id': ObjectId(_id)})
         categories = []
+        _correct = None
         for alternative in question['alternatives']:
             if alternative == question['correct']:
-                categories.append('%s (CORRECT)' % alternative)
-            else:
-                categories.append(alternative)
+                #categories.append('%s (CORRECT)' % alternative)
+                _correct = alternative
+            #else:
+            categories.append(alternative)
         categories.append('Timed out')
+
         categories = defaultdict(int)
         for answer in (self.db.SessionAnswer.collection
-                       .find({'question': question['_id']}, ('answer', 'timedout'))):
+                       .find({'question': question['_id']},
+                             ('answer', 'timedout', 'correct', 'time'))):
             if answer['timedout']:
                 categories['Timed out'] += 1
             elif answer['answer']:
@@ -391,6 +395,8 @@ class QuestionAlternativesAdminHandler(BaseQuestionAdminHandler):
         groups = []
         data = []
         for key, value in categories.items():
+            if key == _correct:
+                key += ' (CORRECT)'
             groups.append(key)
             data.append(round(100.0 * value / count))
         self.write({'categories': groups, 'data': data})
@@ -414,6 +420,8 @@ class QuestionStatsMixin(object):
                 pass
 
         if not stats:
+            for each in self.db.QuestionStats.find({'question':question['_id']}):
+                each.delete()
             stats = self._create_answer_stats(question)
             created = True
 
@@ -480,6 +488,7 @@ class QuestionAdminHandler(BaseQuestionAdminHandler, QuestionStatsMixin):
         data['question'] = self.db.Question.find_one({'_id': ObjectId(_id)})
         if not data['question']:
             raise HTTPError(404)
+        from time import time
         if form is None:
             initial = dict(data['question'])
             initial['category'] = str(initial['category'])
@@ -963,7 +972,6 @@ class QuestionRatingsBiasAdminHandler(AuthenticatedBaseHandler):
         wrongs = []
         for each in self.db.QuestionRatingTotal.find():
             if not each['average']['all']:
-                #print "Broken", repr(each)
                 continue
             all.append(each['average']['all'])
             if each['average']['right']:

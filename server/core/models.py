@@ -290,22 +290,31 @@ class Question(BaseDocument):
         if value in correct:
             return True
 
-        for each in correct:
-            if len(each) >= 4 and len(value) >= 3:
-                ed = EditDistance(each)
-                if ed.match(value):
+        # if there is a chance of spelling it wrong, proceed
+        alphas = re.findall('[^\d]+', correct[0])
+        nums = re.findall('\d+', correct[0])
+        if len(nums) > len(alphas):
+            return False
+
+        if len(value) < 3:
+            # short answers aren't spell corrected
+            return False
+
+        for each in [x for x in correct if len(x) >= 4]:
+            ed = EditDistance(each)
+            if ed.match(value):
+                return True
+            # perhaps there are multiple words, like "Tupac Shakur"
+            if (len(each.split()) > 1 and len(value.split()) > 1 and
+                len(each.split()) == len(value.split())):
+                all = True
+                for i, part in enumerate(each.split()):
+                    ed = EditDistance(part)
+                    if not ed.match(value.split()[i]):
+                        all = False
+                        break
+                if all:
                     return True
-                # perhaps there are multiple words, like "Tupac Shakur"
-                if (len(each.split()) > 1 and len(value.split()) > 1 and
-                    len(each.split()) == len(value.split())):
-                    all = True
-                    for i, part in enumerate(each.split()):
-                        ed = EditDistance(part)
-                        if not ed.match(value.split()[i]):
-                            all = False
-                            break
-                    if all:
-                        return True
         return False
 
     def has_picture(self):

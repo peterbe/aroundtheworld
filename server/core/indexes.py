@@ -31,6 +31,7 @@ def run(**options):
     if options.get('clear_all_first'):
         collection.drop_indexes()
     yield ensure(collection, 'session')
+    yield ensure(collection, 'question')
 
     collection = db.PinpointAnswer.collection
     if options.get('clear_all_first'):
@@ -101,6 +102,11 @@ def run(**options):
     if options.get('clear_all_first'):
         collection.drop_indexes()
     yield ensure(collection, 'user')
+
+    collection = db.QuestionStats.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, 'question')
 
     test()
 

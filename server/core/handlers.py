@@ -126,7 +126,6 @@ class BaseHandler(tornado.web.RequestHandler):
       'unsubscribed': ['css/plugins/unsubscribed.css',
                        'plugins/unsubscribed.js'],
       'news': ['css/plugins/news.css',
-               'lib/transparency.min.js',
                'plugins/news.js'],
     }
 
@@ -947,9 +946,9 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             return
 
         filter_ = {
-          'user': user['_id'],
-          'location': location['_id'],
-          'finish_date': None
+            'user': user['_id'],
+            'location': location['_id'],
+            'finish_date': None
         }
         if not self.db.QuestionSession.find(filter_).count():
             self.write({'error': 'ALREADYFINISHED'})
@@ -1206,7 +1205,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
             if (self.db.SessionAnswer
                 .find({'session': s['_id'],
                        'question': question['_id'],
-                       'first_time_correct': True,})
+                       'first_time_correct': True})
                 .count()):
                 return False
         return True
@@ -4597,11 +4596,17 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         subject = ("%s on your League of Friends" %
                    (self.get_name(from_user),)
                    )
+        from_address = (
+            "%s <%s>" % (
+                settings.PROJECT_TITLE,
+                self.application.settings['admin_emails'][0]
+            )
+        )
         send_email(
             self.application.settings['email_backend'],
             subject,
             body,
-            self.application.settings['admin_emails'][0],
+            from_address,
             [user['email']],
         )
         return True
@@ -4652,11 +4657,17 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
                    (self.get_name(from_user),)
                    )
 
+        from_address = (
+            "%s <%s>" % (
+                settings.PROJECT_TITLE,
+                self.application.settings['admin_emails'][0]
+            )
+        )
         send_email(
             self.application.settings['email_backend'],
             subject,
             body,
-            self.application.settings['admin_emails'][0],
+            from_address,
             [user['email']],
         )
         return True

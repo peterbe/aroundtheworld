@@ -83,7 +83,7 @@ $(function() {
         <td>{{ answer_stats['unique_count'] }}</td>
       </tr>
       <tr>
-        <td># users getting it <strong>Right</strong>:</td>
+        <td># users getting it <strong>Right</strong> first time:</td>
         <td>{{ answer_stats['rights'] }}
           {% if answer_stats['rights'] %}
           ({{ '%.1f' % answer_stats['rights_percentage'] }}%)
@@ -91,7 +91,7 @@ $(function() {
         </td>
       </tr>
       <tr>
-        <td># users getting it <strong>Wrong</strong>:</td>
+        <td># users getting it <strong>Wrong</strong> first time:</td>
         <td>{{ answer_stats['wrongs'] }}
           {% if answer_stats['wrongs'] %}
           ({{ '%.1f' % answer_stats['wrongs_percentage'] }}%)

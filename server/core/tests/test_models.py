@@ -1,5 +1,5 @@
 from unittest import TestCase
-from core.models import User, connection
+from core.models import User, connection, Question
 from .base import DatabaseTestCaseMixin
 
 class ModelsTestCase(TestCase, DatabaseTestCaseMixin):
@@ -13,7 +13,6 @@ class ModelsTestCase(TestCase, DatabaseTestCaseMixin):
         self.teardown_connection()
 
     def test_question_check_answer(self):
-        from core.models import Question
         q = Question()
         q['correct'] = u'Yes'
         self.assertTrue(q.check_answer('yes'))
@@ -36,3 +35,12 @@ class ModelsTestCase(TestCase, DatabaseTestCaseMixin):
         q['correct'] = u'Tupac Shakur'
         self.assertTrue(q.check_answer('tupak Shacur'))
         self.assertTrue(not q.check_answer('Toopack shakure'))  # too wrong
+
+    def test_question_check_answer_with_numbers(self):
+        q = Question()
+        q['correct'] = u'90,000'
+        self.assertTrue(q.check_answer('90,000'))
+        self.assertTrue(not q.check_answer('60,000'))
+
+        q['correct'] = u'Terminator 2'
+        self.assertTrue(q.check_answer('Terminatur 2'))

@@ -60,7 +60,7 @@ tfoot th select[name="categories"] { width:130px; }
           {% for job, user, category, location in jobs %}
           <tr>
             <td>
-              {{ user['username'] }}
+              <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
             </td>
             <td>{{ job['coins'] }}</td>
             <td><abbr title="{{ location }}">{{ location['code'] }}</abbr></td>
