@@ -354,7 +354,7 @@ class LocationPictureAdminHandler(BaseLocationPictureHandler):
         if form is None:
             initial = dict(data['location_picture'])
             initial['location'] = str(initial['location'])
-            form = LocationPictureForm(locations=self.locations,
+            form = LocationPictureForm(locations=self.locations_with_airports,
                                        **initial)
         data['form'] = form
         self.render('admin/location_picture.html', **data)

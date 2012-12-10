@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 
 {% block extrajs %}
+<script>
+$(function() {
+  $('[type="submit"]')
+    .clone()
+    .attr('name', 'addanother')
+    .attr('value', 'addanother')
+    .text('And add another')
+    .insertAfter($('[type="submit"]').eq(0));
+});
+</script>
 {% end %}
 
 {% block content %}
