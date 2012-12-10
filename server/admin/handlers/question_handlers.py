@@ -235,7 +235,7 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
     def get(self, form=None):
         data = {}
         if form is None:
-            initial = {'seconds': 10}
+            initial = {'seconds': 10, 'points_value': '3'}
             _cutoff = (datetime.datetime.utcnow() -
                        datetime.timedelta(seconds=60 * 10))  # 10 min
             for q in (self.db.Question
@@ -336,7 +336,11 @@ class AddQuestionAdminHandler(BaseQuestionAdminHandler):
                        (count, location))
             self.push_flash_message("Question added!", msg, type_='success')
 
-            self.redirect(self.reverse_url('admin_questions'))
+            if self.get_argument('addanother', False):
+                url = self.reverse_url('admin_add_question')
+            else:
+                url = self.reverse_url('admin_questions')
+            self.redirect(url)
         else:
             self.get(form=form)
 

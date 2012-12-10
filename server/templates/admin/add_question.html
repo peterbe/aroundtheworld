@@ -15,6 +15,14 @@ $(function() {
       $('#alternatives_1').focus();
     }
   });
+
+  $('[type="submit"]')
+    .clone()
+    .attr('name', 'addanother')
+    .attr('value', 'addanother')
+    .text('And add another')
+    .insertAfter($('[type="submit"]').eq(0));
+
 });
 </script>
 {% end %}
