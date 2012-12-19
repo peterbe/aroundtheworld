@@ -4699,8 +4699,17 @@ class AcceptFriendshipHandler(BaseHandler):
         new_friendship.save()
 
         friendship_token.delete()
-
-        self.redirect('/league')
+        message = (
+            "You and %s are now in the same League of Friends" %
+            self.get_name(user)
+        )
+        data = {
+            'title': 'Great!',
+            'message': message,
+            'next_url': '/league',
+        }
+        self.render('simplemessage.html', **data)
+        #self.redirect('/league')
 
 
 @route('/join/(\w{12})', name='join_friendship')

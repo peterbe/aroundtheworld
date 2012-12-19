@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>{{ title }} - Around The World</title>
+<style>
+h3, h4 { text-align: center; margin: 20px; font-family: sans-serif; }
+</style>
+<script>
+var next_url = '{{ next_url }}';
+window.onload = function() {
+  setTimeout(function() {
+    location.href = next_url;
+  }, 15 * 1000);
+};
+</script>
+</head>
+<body>
+
+<h3>{{ message }}</h3>
+
+<h4><a href="{{ next_url }}">Now go to <strong>{{ next_url }}</strong></a></h4>

@@ -1916,7 +1916,11 @@ class HandlersTestCase(BaseHTTPTestCase):
 
         # anybody can visit this accept link
         response = self.client.get(accept_link)
-        assert response.code == 302
+        self.assertEqual(response.code, 200)
+        self.assertTrue(
+            "You and Peter Bengtsson are now in the same League of Friends"
+            in response.body
+        )
         self.assertEqual(self.db.Friendship.find().count(), 2)
 
         friendship, = self.db.Friendship.find({
