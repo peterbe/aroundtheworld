@@ -240,8 +240,13 @@ class UserJourneyAdminHandler(UserAdminHandler):
                   self.db.Location.find_one({'_id': flight['to']})
             from_ = _locations[flight['from']]
             to = _locations[flight['to']]
-            description = ("Flew %s miles from %s to %s" %
-                           (commafy(int(flight['miles'])),
+            if flight['class'] == 1:
+                first_class = '(First Class)'
+            else:
+                first_class = ''
+            description = ("Flew %s %s miles from %s to %s" %
+                           (first_class,
+                            commafy(int(flight['miles'])),
                             from_, to))
             events.append((
               flight['add_date'],

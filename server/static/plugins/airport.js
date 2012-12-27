@@ -27,7 +27,7 @@ var Airport = (function() {
        sounds.preload('airport-pa');
 
      },
-     confirm: function(name, id, cost) {
+     confirm: function(name, code, cost, first) {
        if ($('#airport:hidden').size()) {
          // was on the interactive map
          $('#airport').show();
@@ -39,15 +39,37 @@ var Airport = (function() {
        $('.choices', container).hide();
        var c = $('.confirm', container);
        c.show();
+       if (first) {
+         $('.first-class', c).show();
+         $.getJSON('/flight-stats.json', {code: code, first: true}, function(response) {
+           if (response.html) {
+             $('.first-class .flight-stats', c)
+               .html(response.html)
+                 .show();
+           } else {
+             $('.first-class .flight-stats', c)
+               .hide();
+           }
+         });
+       } else {
+         $('.first-class', c).hide();
+       }
        $('.cant-afford:visible', c).hide();
        $('button[type="submit"]', c).removeAttr('disabled');
        $('em', c).text(name);
-       $('input[name="id"]', c).val(id);
+       $('input[name="code"]', c).val(code);
+       if (first) {
+         $('input[name="first"]', c).val(true);
+       } else {
+         $('input[name="first"]', c).val('');
+       }
        $('.cost', c).text(Utils.formatCost(cost, true));
        $('.current-coins', c).text(Utils.formatCost(STATE.user.coins_total, true));
        $('button[type="reset"]', c).click(function() {
          c.hide();
-         $('.choices', container).show();
+         Airport.load(function() {
+           $('.choices', container).show();
+         });
        });
        if (cost > STATE.user.coins_total) {
          $('.cant-afford', c).show('fast');
@@ -59,7 +81,11 @@ var Airport = (function() {
          if (cost > STATE.user.coins_total) {
            return false;
          }
-         $.post('/fly.json', {id: $('input[name="id"]', this).val()}, function(response) {
+         var data = {
+            code: $('input[name="code"]', this).val(),
+           first: $('input[name="first"]', this).val()
+         };
+         $.post('/fly.json', data, function(response) {
            if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
            if (response.error == 'FLIGHTALREADYTAKEN') {
              Utils.general_error("It appears that flight has already started once.");
@@ -94,43 +120,67 @@ var Airport = (function() {
          //var c = $('.destinations', container);
          $('.destinations tbody', container).remove();
          var r;
+         var a_title;
          $.each(response.destinations, function(i, each) {
            r = $('<tr>');
            r.data('cost', each.cost);
-           var a_title;
-           if (each.cost > STATE.user.coins_total) {
+           if (!each.canafford) {
              r.addClass('cantafford');
-             a_title = "You can afford to fly to " + each.name;
+             a_title = "You can not yet afford to fly to " + each.name;
            } else {
              r.removeClass('cantafford');
-             a_title = "You can not yet afford to fly to " + each.name;
+             a_title = "You can afford to fly to " + each.name;
            }
            if (each.flag) {
-           $('<td>')
-             .append($('<img>')
-                     .attr('alt', each.country)
-                     .attr('src', each.flag))
-             .appendTo(r);
+             $('<td>')
+               .append($('<img>')
+                       .attr('alt', each.country)
+                       .attr('src', each.flag))
+                 .appendTo(r);
            } else {
-           $('<td>')
-             .text('')
-             .appendTo(r);
+             $('<td>')
+               .text('')
+                 .appendTo(r);
            }
-           $('<a href="#">')
-               .attr('id', 'code-' + each.code)
-               .text(each.name).attr('title', a_title)
-                 .click(function() {
-                   Airport.confirm(each.name, each.id, each.cost);
-                   return false;
-                 }).appendTo($('<td>').appendTo(r));
+           $('<td>')
+             .text(each.name)
+               .appendTo(r);
+
            $('<td>')
              .addClass('distance').addClass('number')
                .text(Utils.formatMiles(each.miles, true))
                  .appendTo(r);
-           $('<td>')
-             .addClass('cost').addClass('number')
-               .text(Utils.formatCost(each.cost, true))
-                 .appendTo(r);
+
+           $('<a href="#">')
+               .data('code', each.code)
+               .data('first', false)
+               .text(Utils.formatCost(each.cost.economy, true)).attr('title', a_title)
+                 .click(function() {
+                   Airport.confirm(each.name, each.code, each.cost.economy, false);
+                   return false;
+                 }).appendTo($('<td>')
+                             .addClass('cost')
+                             .addClass('number')
+                             .appendTo(r));
+
+           if (each.cost.first) {
+             $('<a href="#">')
+                 .data('code', each.code)
+                 .data('first', true)
+                 .text(Utils.formatCost(each.cost.first, true))
+                   .click(function() {
+                     Airport.confirm(each.name, each.code, each.cost.first, true);
+                     return false;
+                   }).appendTo($('<td>')
+                               .addClass('cost')
+                               .addClass('number')
+                               .appendTo(r));
+           } else {
+             $('<td>')
+               .addClass('cost')
+                 .text('not available')
+                   .appendTo(r);
+           }
 
            $('.destinations', container).append($('<tbody>').append(r));
          }); // $.each
@@ -166,12 +216,20 @@ var Airport = (function() {
           made_markers.push(marker);
           var content = '<strong>'+each.name+'</strong><br>';
           content += Utils.formatMiles(each.miles, true) + '<br>';
-          content += Utils.formatCost(each.cost, true) + '<br>';
+          content += Utils.formatCost(each.cost.economy, true);
+          if (each.cost.first) {
+            content += ' (' + Utils.formatCost(each.cost.first, true) + ' First Class)';
+          }
+          content += '<br>';
           if (!each.canafford) {
             content += ' <span class="cantafford">can\'t afford it yet</span><br>';
           } else {
             content += ' <a href="#airport,' + each.code + '"';
-            content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.id+ '\',\''+each.cost+'\');return false">Buy ticket</a>';
+            content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.economy+'\',false);return false">Buy ticket</a>';
+            if (each.cost.first) {
+              content += ' <a href="#airport,' + each.code + '"';
+              content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.first+'\',true);return false">First Class</a>';
+            }
           }
           var infowindow = new google.maps.InfoWindow({
               content: content
@@ -190,7 +248,17 @@ var Airport = (function() {
       $('#airport-tucked').show();
     },
     click_on: function(code) {
-      $('a#code-' + code, container).click();
+      var the_one;
+      $('a', container).each(function(i, each) {
+        if ($(each).data('code') == code) {
+          if (!$(each).data('first')) {
+            the_one = $(each);
+          }
+        }
+      });
+      if (the_one) {
+        the_one.click();
+      }
     },
     teardown: function() {
       if (open_infowindows.length) {

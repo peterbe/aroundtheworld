@@ -6,9 +6,13 @@ var Miles = (function() {
     var tbody = $('.flightlog tbody', container);
     $.each(flights, function(i, each) {
       var c = $('<tr>');
+      var name = each.from.name;
+      if (each.firstclass) {
+        name += ' <strong class="firstclass">First Class!</strong>';
+      }
       $('<td>')
         .addClass('flight-from')
-        .text(each.from.name)
+        .html(name)
           .appendTo(c);
       $('<td>')
         .html('&rarr;')

@@ -8,13 +8,22 @@
   <h2>Airport</h2>
 
   <div class="confirm" style="display:none">
-    <p><strong>Are you sure you want to buy a ticket to <em></em>?</strong></p>
+
+    <div class="first-class" style="display:none">
+      <img class="deferred" src="." data-src="{{ static_url('images/champagne.png') }}" alt="Champagne in First Class!">
+      <p><strong>Fancy that!<br>You want to fly <span class="firstclass">First Class</span>?</strong></p>
+      <p class="flight-stats" style="display:none">
+
+      </p>
+    </div>
+
+    <p style="clear:left"><strong>Are you sure you want to buy a ticket to <em></em>?</strong></p>
     <p>The price is <strong class="cost"></strong><br>
     and you currently have <span class="current-coins"></span></p>
 
-
     <form>
-      <input type="hidden" name="id" value="">
+      <input type="hidden" name="code" value="">
+      <input type="hidden" name="first" value="">
       <p class="cant-afford" style="display:none">
       Sorry you <strong>can't afford that</strong> yet. You need
       <strong class="more-coins"></strong> more coins.
@@ -39,14 +48,19 @@
   <table class="destinations">
   <thead>
     <tr>
+      <td colspan="3">&nbsp;</td>
+      <td style="text-align: center" colspan="2">Price</td>
+    </tr>
+    <tr>
       <td colspan="2">Destination</td>
       <td class="number">Distance</td>
-      <td class="number">Price</td>
+      <td class="number">Economy</td>
+      <td class="number">First Class</td>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td colspan="3"><p><em>Loading prices. Please wait...</em></p></td>
+      <td colspan="4"><p><em>Loading prices. Please wait...</em></p></td>
     </tr>
   </tbody>
   </table>

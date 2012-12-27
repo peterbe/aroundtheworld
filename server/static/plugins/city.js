@@ -237,7 +237,7 @@ var City = (function() {
                $.each(response.destinations, function(i, each) {
                  $('<li>')
                    .append($('<strong>').text(each.name))
-                     .append($('<span>').text(Utils.formatCost(each.cost, true)))
+                     .append($('<span>').text(Utils.formatCost(each.cost.economy, true)))
                        .appendTo(c);
                });
              });
@@ -284,7 +284,7 @@ var City = (function() {
                            .text(destination.name))
                    .append($('<span>')
                            .addClass('ticket-info')
-                           .text(Utils.formatCost(destination.cost, true)))
+                           .text(Utils.formatCost(destination.cost.economy, true)))
                    .appendTo($('.bar', dd));
 
                  d.append(dd);

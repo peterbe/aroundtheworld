@@ -228,8 +228,12 @@ class Flight(BaseDocument):
       'from': ObjectId,
       'to': ObjectId,
       'miles': float,
+      'class': int,
     }
     required_fields = structure.keys()
+    default_values = {
+        'class': 2,
+    }
 
 
 @register

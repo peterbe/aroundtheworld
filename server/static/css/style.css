@@ -136,3 +136,7 @@ thead td {
     font-size: 120%;
     margin: 50px;
 }
+
+span.firstclass, strong.firstclass {
+    color: orange;
+}

@@ -29,3 +29,14 @@ span.cantafford {
   #airport-tucked p {
     margin: 10px;
   }
+
+#airport .destinations td.number {
+    padding-right: 15px;
+}
+
+#airport .first-class {
+    padding: 15px;
+}
+#airport .first-class img {
+    float: left;
+}

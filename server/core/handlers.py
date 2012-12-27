@@ -1347,6 +1347,7 @@ class MilesHandler(AuthenticatedBaseHandler):
               'from': _locations[each['from']],
               'to': _locations[each['to']],
               'miles': int(each['miles']),
+              'firstclass': each['class'] == 1,
               'date': each['add_date'].strftime(FULL_DATE_FMT),
             }
             flights.append(flight)
@@ -1601,7 +1602,10 @@ class LocationHandler(AuthenticatedBaseHandler):
 
 class FlightFinderMixin(object):
 
-    BASE_PRICE = 100  # coins
+    CLASS_PRICES = {
+        2: (100, 0.08),  # (base price, price per mile)
+        1: (400, 0.18),
+    }
 
     def get_destinations(self, user, user_settings, current_location,
                          only_affordable=False,
@@ -1614,10 +1618,12 @@ class FlightFinderMixin(object):
             if not self.enough_questions(location):
                 continue
             distance = calculate_distance(current_location, location)
-            cost = self.calculate_cost(distance.miles, user)
+
+            economy = self.calculate_cost(distance.miles, user, 2)
             if only_affordable:
-                if cost > user_settings['coins_total']:
+                if economy > user_settings['coins_total']:
                     continue
+            first = self.calculate_cost(distance.miles, user, 1)
 
             destination = {
               'id': str(location['_id']),
@@ -1626,15 +1632,15 @@ class FlightFinderMixin(object):
               'city': location['city'],
               'locality': location['locality'],
               'country': location['country'],
-              'cost': cost,
-              'canafford': cost <= user_settings['coins_total'],
+              'cost': {'economy': economy, 'first': first},
+              'canafford': economy <= user_settings['coins_total'],
               'miles': distance.miles,
               'lat': location['lat'],
               'lng': location['lng'],
             }
             if ticket_progress:
                 destination['ticket_info'] = 'bla coins'
-                percentage = 100.0 * user_settings['coins_total'] / cost
+                percentage = 100.0 * user_settings['coins_total'] / economy
                 if percentage < ticket_progress_min:
                     continue
                 destination['percentage'] = min(100, int(percentage))
@@ -1649,7 +1655,7 @@ class FlightFinderMixin(object):
               'country': '',
               'locality': 'space',
               'name': 'Moon',
-              'cost': 1000000,
+              'cost': {'economy': 1000000},
               'miles': 238857,
               'canafford': False
             })
@@ -1659,15 +1665,15 @@ class FlightFinderMixin(object):
                 c = cmp(x['percentage'], y['percentage'])
                 if not c:
                     # cheapest first
-                    c = cmp(y['cost'], x['cost'])
+                    c = cmp(y['cost']['economy'], x['cost']['economy'])
                 return c
-            destinations.sort(sorter,
-                              reverse=True)
+            destinations.sort(sorter, reverse=True)
 
         return destinations
 
-    def calculate_cost(self, miles, user):
-        return self.BASE_PRICE + int(round(miles * .08))
+    def calculate_cost(self, miles, user, class_):
+        base, rate = self.CLASS_PRICES[class_]
+        return base + int(round(miles * rate))
 
 
 class LeagueMixin(object):
@@ -1884,10 +1890,11 @@ class CityHandler(AuthenticatedBaseHandler,
             self.get_user_settings(user),
             location,
         )
-        cheapest = sorted(destinations, key=lambda x: x['cost'])[0]
+        cheapest = sorted(destinations, key=lambda x: x['cost']['economy'])[0]
         text = ("The cheapest ticket right now is going to "
                 "<strong>%s</strong> for %s coins "
-                % (cheapest['name'], cheapest['cost']))
+                % (cheapest['name'],
+                   cheapest['cost']['economy']))
 
         if cheapest['canafford']:
             text += "which you <strong>can afford</strong> right now."
@@ -2786,8 +2793,6 @@ class PinpointHandler(AuthenticatedBaseHandler):
         self.write(data)
 
 
-
-
 @route('/airport.json$', name='airport')
 class AirportHandler(AuthenticatedBaseHandler,
                      FlightFinderMixin,
@@ -2820,6 +2825,31 @@ class AirportHandler(AuthenticatedBaseHandler,
         data['for_amount'] = user_settings['coins_total']
         self.write(data)
 
+
+@route('/flight-stats.json$', name='flight_stats')
+class FlightStatsHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        user = self.get_current_user()
+        code = self.get_argument('code')
+        first_class = self.get_argument('first', False)
+        location = self.db.Location.find_one({'code': code})
+        assert location, code
+        search = {'to': location['_id'],
+                  'class': 1 if first_class else 2,
+                  'user': {'$ne': user['_id']}}
+        flights = self.db.Flight.find(search).count()
+        html = ''
+        if not flights:
+            html = 'No one has ever flown this! You can be the first!'
+        elif flights < 10:
+            if flights == 1:
+                html = 'Only 1 other person have flown this!'
+            else:
+                html = 'Only %s other people have flown this!' % flights
+        else:
+            html = '%s people have flown this before.' % flights
+        self.write({'html': html})
 
 
 @route('/fly.json$', name='fly')
@@ -2866,19 +2896,23 @@ class FlyHandler(AirportHandler):
         self.write(data)
 
     def post(self):
-        _id = self.get_argument('id')
+        code = self.get_argument('code')
+        if self.get_argument('first', ''):
+            class_ = 1
+        else:
+            class_ = 2
         try:
-            location = self.db.Location.find_one({'_id': ObjectId(_id)})
+            location = self.db.Location.find_one({'code': code})
             assert location
         except (InvalidId, AssertionError):
-            raise tornado.web.HTTPError(400, 'Invalid id')
+            raise tornado.web.HTTPError(400, 'Invalid code')
         user = self.get_current_user()
         current_location = self.get_current_location(user)
         if location == current_location:
             self.write({'error': 'FLIGHTALREADYTAKEN'})
             return
         distance = calculate_distance(current_location, location)
-        cost = self.calculate_cost(distance.miles, user)
+        cost = self.calculate_cost(distance.miles, user, class_)
         state = self.get_state()
         if cost > state['user']['coins_total']:
             self.write({'error': 'CANTAFFORD'})
@@ -2899,6 +2933,7 @@ class FlyHandler(AirportHandler):
         flight['from'] = current_location['_id']
         flight['to'] = location['_id']
         flight['miles'] = distance.miles
+        flight['class'] = class_
         flight.save()
 
         transaction = self.db.Transaction()
