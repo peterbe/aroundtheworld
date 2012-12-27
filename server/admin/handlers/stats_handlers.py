@@ -21,18 +21,53 @@ class StatsSpreadAdminHandler(SuperuserBaseHandler):
     def get(self):
         data = {}
 
+        _all_locations = {}
         _locations = defaultdict(int)
         for user in self.db.User.collection.find(None, ('current_location',)):
             if user['current_location'] is None:
                 continue
             _locations[user['current_location']] += 1
-
         locations = []
         for _id, count in _locations.items():
-            location = self.db.Location.find_one({'_id': _id})
+            if _id not in _all_locations:
+                _all_locations[_id] = (
+                    self.db.Location.find_one({'_id': _id})
+                )
+            location = _all_locations[_id]
+            if not location['available']:
+                continue
             locations.append((count, location))
         locations.sort(reverse=True)
         data['locations'] = locations
+
+        _flights_to = defaultdict(int)
+        _destinations = defaultdict(int)
+        for each in self.db.Flight.collection.find(None, ('to', 'user')):
+            _flights_to[each['to']] += 1
+            _destinations[each['user']] += 1
+        flights_to = []
+        for _id, count in _flights_to.items():
+            if _id not in _all_locations:
+                _all_locations[_id] = (
+                    self.db.Location.find_one({'_id': _id})
+                )
+            location = _all_locations[_id]
+            if not location['available']:
+                continue
+            flights_to.append((count, location))
+        flights_to.sort(reverse=True)
+        data['flights_to'] = flights_to
+
+        destinations = defaultdict(int)
+        for count in _destinations.values():
+            destinations[count] += 1
+
+        #destinations = [(count) for (count, x) in destinations.items()]
+        total_flights = sum(destinations.values())
+        destinations = [(x, round(100. * y / total_flights, 1), y)
+                        for (x, y) in destinations.items()]
+        destinations.sort()
+        data['destinations'] = destinations
 
         data['no_anonymous'] = self.db.User.find({'anonymous': True}).count()
         data['not_anonymous'] = self.db.User.find({'anonymous': False}).count()
@@ -56,6 +91,21 @@ class StatsSpreadAdminHandler(SuperuserBaseHandler):
             100.0 * data['not_subscribed'] / total
         )
 
+        """
+        flights_to = defaultdict(int)
+        destinations_to = defaultdict(int)
+        _locations = {}
+        for flight in self.db.Flight.find(None, ('to', 'user')):
+            #print flight['to']
+            if flight['to'] not in _locations:
+                _locations[flight['to']] = (
+                    self.db.Location.collection
+                    .find_one({'_id': flight['to']})['name']
+                )
+
+            flights_to[_locations[flight['to']]] += 1
+        print flights_to
+        """
         self.render('admin/stats/spread.html', **data)
 
 
