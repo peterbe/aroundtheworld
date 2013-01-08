@@ -40,7 +40,8 @@ $(function() {
               + {{ count_users_anonymous }} anonymous
               = {{ count_users }} users in total
               </strong></dd>
-          <dd>latest user joined {% module TimeSince(latest_user['add_date']) %} ago</dd>
+          <dd>latest anonymous user joined {% module TimeSince(latest_anonymous_user['add_date']) %} ago,
+          signed in {% module TimeSince(latest_user['add_date']) %} ago</dd>
 
           <dt>Jobs:</dt>
           <dd><strong>

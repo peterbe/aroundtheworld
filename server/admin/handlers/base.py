@@ -221,8 +221,13 @@ class HomeAdminHandler(AuthenticatedBaseHandler):
           .find({'anonymous': True})
           .count()
         )
+        options['latest_anonymous_user'] = (
+          list(self.db.User.find({'anonymous': True})
+          .sort('add_date', -1)
+          .limit(1))[0]
+        )
         options['latest_user'] = (
-          list(self.db.User.find()
+          list(self.db.User.find({'anonymous': False})
           .sort('add_date', -1)
           .limit(1))[0]
         )
