@@ -44,6 +44,10 @@ AWARDTYPE_SIGNIN = u'signin'
 AWARDTYPE_10KMILES = u'10k'
 AWARDTYPE_50KMILES = u'50k'
 AWARDTYPE_100KMILES = u'100k'
+AWARDTYPE_FIRST_FIRSTCLASS = u'first first class'
+
+FIRST_CLASS = 1
+ECONOMY_CLASS = 2
 
 TUTORIAL_INTRO = u"""
 **This is the tutorial job.**
@@ -549,6 +553,12 @@ class BaseHandler(tornado.web.RequestHandler):
                        'type': AWARDTYPE_100KMILES})
                 .count())
 
+    def has_first_firstclass_award(self, user):
+        return (self.db.Award
+                .find({'user': user['_id'],
+                       'type': AWARDTYPE_FIRST_FIRSTCLASS})
+                .count())
+
     def create_signin_award(self, user, location, reward, data):
         data['sign_in'] = True
         award = self.db.Award()
@@ -587,6 +597,16 @@ class BaseHandler(tornado.web.RequestHandler):
         award['data'] = data
         award['location'] = location['_id']
         award['type'] = AWARDTYPE_100KMILES
+        award['reward'] = reward
+        award.save()
+
+    def create_first_firstclass_award(self, user, location, reward, data):
+        award = self.db.Award()
+        award['user'] = user['_id']
+        award['description'] = u'First time flying First Class'
+        award['data'] = data
+        award['location'] = location['_id']
+        award['type'] = AWARDTYPE_FIRST_FIRSTCLASS
         award['reward'] = reward
         award.save()
 
@@ -1603,8 +1623,8 @@ class LocationHandler(AuthenticatedBaseHandler):
 class FlightFinderMixin(object):
 
     CLASS_PRICES = {
-        2: (100, 0.08),  # (base price, price per mile)
-        1: (400, 0.18),
+        ECONOMY_CLASS: (100, 0.08),  # (base price, price per mile)
+        FIRST_CLASS:   (400, 0.18),
     }
 
     def get_destinations(self, user, user_settings, current_location,
@@ -1619,11 +1639,11 @@ class FlightFinderMixin(object):
                 continue
             distance = calculate_distance(current_location, location)
 
-            economy = self.calculate_cost(distance.miles, user, 2)
+            economy = self.calculate_cost(distance.miles, user, ECONOMY_CLASS)
             if only_affordable:
                 if economy > user_settings['coins_total']:
                     continue
-            first = self.calculate_cost(distance.miles, user, 1)
+            first = self.calculate_cost(distance.miles, user, FIRST_CLASS)
 
             destination = {
               'id': str(location['_id']),
@@ -2898,9 +2918,9 @@ class FlyHandler(AirportHandler):
     def post(self):
         code = self.get_argument('code')
         if self.get_argument('first', ''):
-            class_ = 1
+            class_ = FIRST_CLASS
         else:
-            class_ = 2
+            class_ = ECONOMY_CLASS
         try:
             location = self.db.Location.find_one({'code': code})
             assert location
@@ -2941,6 +2961,24 @@ class FlyHandler(AirportHandler):
         transaction['cost'] = cost
         transaction['flight'] = flight['_id']
         transaction.save()
+
+        if (
+            class_ == FIRST_CLASS and
+            not self.has_first_firstclass_award(user)
+        ):
+            data = {
+                'flight': flight['_id'],
+            }
+            reward = 400
+            self.create_first_firstclass_award(
+                user,
+                current_location,
+                reward,
+                data,
+            )
+            user_settings['coins_total'] += reward
+            user_settings.save()
+
         if current_location['code'] == self.NOMANSLAND['code']:
             # you have left the tutorial
             if not self.has_tutorial_award(user):
@@ -4023,11 +4061,11 @@ class AwardsHandler(BaseHandler):
         if yours:
             name = 'You'
         desc = (
-          "%s earned this award %s ago. "
+          "%s earned this award <strong>%s ago</strong>. "
           % (name,
              smartertimesince(award['add_date'], datetime.datetime.utcnow()))
         )
-        if award['type'] == 'job':
+        if award['type'] == AWARDTYPE_JOB:
             category = self.db.Category.find_one({'_id': award['category']})
             if category.name == u'Tutorial':
                 desc += "%s completed the tutorial. " % name
@@ -4037,10 +4075,19 @@ class AwardsHandler(BaseHandler):
                     desc += " with perfect results. "
                 else:
                     desc += ". "
+        if award['type'] == AWARDTYPE_FIRST_FIRSTCLASS:
+            flight = self.db.Flight.find_one({'_id': award['data']['flight']})
+            from_ = self.db.Location.find_one({'_id': flight['from']})
+            to = self.db.Location.find_one({'_id': flight['to']})
+            desc += (
+                "You flew from <strong>%s miles</strong> from "
+                "<strong>%s</strong> to <strong>%s</strong>. "
+                % (commafy(int(flight['miles'])), from_, to)
+            )
         if award['reward']:
             if name == 'You':
                 name = 'you'
-            desc += ("As a reward %s earned an extra %s coins."
+            desc += ("As a reward %s earned an extra <strong>%s coins</strong>."
                       % (name, award['reward']))
         return desc
 

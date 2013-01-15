@@ -34,14 +34,18 @@ var Awards = (function() {
 
   function _display_modal_award(award) {
     var c = $('.wrapper', container);
+    var award_type = award.type.replace(/ /g, '-');
     $.each(['title', 'type', 'description'], function(i, prefix) {
       $('.' + prefix, c).hide();
-      if ($('.' + prefix + '-' + award.type, c).size()) {
-        $('.' + prefix + '-' + award.type, c).show();
+      if ($('.' + prefix + '-' + award_type, c).size()) {
+        $('.' + prefix + '-' + award_type, c).show();
       } else {
         $('.' + prefix + '-generic', c).show();
       }
     });
+    if (!$('.description-' + award_type, c).size()) {
+      $('.description-other').html(award.description).show();
+    }
     $('.category', c).text(award.category);
     $('.location', c).text(award.location);
     $('.name', c).text(award.name);
@@ -49,7 +53,7 @@ var Awards = (function() {
     $('.signature', c).text(award.ambassador);
     Utils.update_title(award.description);
     if (award.long_description) {
-      $('.long-description span', container).text(award.long_description);
+      $('.long-description span', container).html(award.long_description);
       $('.long-description', container).show();
     } else {
       $('.long-description', container).hide();
@@ -158,6 +162,7 @@ var Awards = (function() {
           alert('Error! Invalid award');
           return;
         }
+        Utils.loading_overlay_remove();
         if (response.award.was_unread) {
           sounds.play('applause');
         }
