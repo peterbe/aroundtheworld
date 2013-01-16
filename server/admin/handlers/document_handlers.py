@@ -128,7 +128,7 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
             regex = re.compile('^%s' % re.escape(search), re.I)
             filter_ = {
               each: regex,
-              {'airport_name': {'$ne': None}
+              'airport_name': {'$ne': None}
             }
             if locations:
                 filter_['_id'] = {'$nin': [x['_id'] for x in locations]}
@@ -196,7 +196,7 @@ class FindLocationAdminHandler(AddDocumentAdminHandler):
         search = self.get_argument('location')
         locations = self.find_locations(search)
         results = ['%s %s' % (x['code'], x) for x in locations]
-        self.write_json({'results': results})
+        self.write({'results': results})
 
 
 @route('/admin/finduser.json')
@@ -213,7 +213,8 @@ class FindUserAdminHandler(AddDocumentAdminHandler):
             if user['email']:
                 r += ', %s' % user['email']
             results.append(r)
-        self.write_json({'results': results})
+        self.write({'results': results})
+
 
 @route('/admin/findcategory.json')
 class FindCategoryAdminHandler(AddDocumentAdminHandler):
@@ -224,4 +225,4 @@ class FindCategoryAdminHandler(AddDocumentAdminHandler):
         results = []
         for category in categories:
             results.append(category['name'])
-        self.write_json({'results': results})
+        self.write({'results': results})
