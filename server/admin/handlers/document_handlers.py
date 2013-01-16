@@ -128,7 +128,7 @@ class AddDocumentAdminHandler(AmbassadorBaseHandler):
             regex = re.compile('^%s' % re.escape(search), re.I)
             filter_ = {
               each: regex,
-              'available': True
+              {'airport_name': {'$ne': None}
             }
             if locations:
                 filter_['_id'] = {'$nin': [x['_id'] for x in locations]}
