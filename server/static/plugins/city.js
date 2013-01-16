@@ -149,6 +149,7 @@ var City = (function() {
 
   return {
      load: function(page) {
+
        Utils.loading_overlay_reset();
        $('.section:visible', container).hide();
        if (_has_loaded_home && !page) {

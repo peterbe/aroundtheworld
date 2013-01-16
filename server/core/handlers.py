@@ -227,6 +227,7 @@ class BaseHandler(tornado.web.RequestHandler):
         if user:
             user_settings = self.get_current_user_settings()
             state['user'] = {}
+            state['user']['id'] = str(user['_id'])
 
             # legacy
             try:
@@ -4884,3 +4885,44 @@ class NewsHandler(BaseHandler):
             return item
         except:
             logging.error('Unable to find news item %r' % _id, exc_info=True)
+
+
+def de_dot_dict(data):
+    """change all keys containing a dot to a - """
+    for key, value in data.iteritems():
+        if isinstance(value, dict):
+            de_dot_dict(value)
+        if '.' in key:
+            data[key.replace('.', '-')] = data.pop(key)
+
+
+@route('/api/raven/store/', name='raven_store')
+class RavenStoreHandler(BaseHandler):
+
+    JUNK_KEYS = (
+        'logger', 'project',
+    )
+
+    def post(self):
+        data = tornado.escape.json_decode(self.request.body)
+        for key in self.JUNK_KEYS:
+            try:
+                del data[key]
+            except:
+                pass
+        user = self.get_current_user()
+        error_event = self.db.ErrorEvent()
+        if user:
+            error_event['user'] = user['_id']
+        error_event['url'] = (
+            data.get('sentry.interfaces.Http', {})
+                .get('url')
+        )
+        # because mongokit can't save dicts that contain keys
+        # that contain dots, we replace them
+        de_dot_dict(data)
+        error_event['data'] = data
+        error_event.save()
+        logging.info('Error event stored: %r', error_event)
+
+        self.write('Thanks')

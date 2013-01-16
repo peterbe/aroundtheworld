@@ -342,6 +342,35 @@ var ErrorCatcher = (function() {
 })();
 
 
+var ErrorCatcherWithRaven = (function() {
+  var _prev_onerror;
+
+  function show_onerror() {
+    $('#onerror').show();
+    $('a', '#onerror')
+      .attr('href', window.location.href)
+        .click(function() {
+          window.location.reload(true);
+          return false;
+        });
+  }
+
+  function post_error(data) {
+    $.post('/errors/', data);
+  }
+
+  return {
+     set_prev_onerror: function(func) {
+       _prev_onerror = func;
+     },
+     trigger: function(message, fileurl, lineno, traceback, options) {
+       show_onerror();
+       return Raven.process(message, fileurl, lineno, traceback, options);
+     }
+  };
+})();
+
+
 // some things can't wait for the map to load
 $(function() {
   // here 'STATE' is a inline defined variable.
@@ -356,6 +385,19 @@ mapInitialized(function(map) {
 //  ErrorCatcher.set_prev_onerror(window.onerror);
 //  window.onerror = ErrorCatcher.trigger;
 
+  //Raven.config(location.protocol + '//public@' + location.hostname + '/raven');
+  Raven.config({
+     servers: [location.protocol + '//' + location.hostname],
+     projectId: 'raven',
+     dataCallback: function (data) {
+       data.STATE = STATE;
+       return data;
+     }
+  });
+
+  //window.onerror = Raven.process;
+  window.onerror = ErrorCatcherWithRaven.trigger;
+
   $('a.overlay-changer').click(function() {
     return Loader.load_hash($(this).attr('href'));
   });
@@ -367,5 +409,3 @@ mapInitialized(function(map) {
   }
 
 });
-
-// small change to trigger new tornado_static build
