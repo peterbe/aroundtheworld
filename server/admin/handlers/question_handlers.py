@@ -492,7 +492,6 @@ class QuestionAdminHandler(BaseQuestionAdminHandler, QuestionStatsMixin):
         data['question'] = self.db.Question.find_one({'_id': ObjectId(_id)})
         if not data['question']:
             raise HTTPError(404)
-        from time import time
         if form is None:
             initial = dict(data['question'])
             initial['category'] = str(initial['category'])

@@ -48,6 +48,7 @@ $(function() {
       </tr>
     </thead>
     <tbody>
+      {% if rating_total['average']['all'] %}
       <tr>
         <td>Average:</td>
         <td>{{ '%.1f' % rating_total['average']['all'] }}</td>
@@ -64,12 +65,15 @@ $(function() {
           {% end %}
         </td>
       </tr>
+      {% end %}
+      {% if rating_total['count']['all'] %}
       <tr>
         <td>Count:</td>
         <td>{{ rating_total['count']['all'] }}</td>
         <td>{{ rating_total['count']['right'] }}</td>
         <td>{{ rating_total['count']['wrong'] }}</td>
       </tr>
+      {% end %}
     </tbody>
   </table>
   {% end %}
