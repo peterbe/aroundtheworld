@@ -1068,3 +1068,44 @@ class QuestionStatsAdminHandler(AuthenticatedBaseHandler, QuestionStatsMixin):
                     break
 
         self.redirect(self.reverse_url('admin_question_stats'))
+
+
+@route('/admin/questions/authors/', name='admin_question_authors')
+class QuestionAuthorsAdminHandler(AuthenticatedBaseHandler):
+
+    def get(self):
+        data = {}
+        questions = defaultdict(int)
+        published = defaultdict(int)
+        _fields = ('author', 'published')
+        for question in self.db.Question.collection.find(None, _fields):
+            questions[question['author']] += 1
+            if question['published']:
+                published[question['author']] += 1
+
+        _ambassador_users = {}
+        for each in self.db.Ambassador.find():
+            _ambassador_users[each['user']] = each['country']
+
+        authors = []
+        for user_id in questions:
+            if not user_id:
+                continue
+            user = self.db.User.find_one({'_id': user_id})
+            user.is_ambassador = _ambassador_users.get(user_id)
+            coins = 0
+
+            for each in (self.db.QuestionAnswerEarning.collection
+                         .find({'user': user_id}, ('coins',))):
+                coins += each['coins']
+            authors.append((
+                user,
+                questions[user_id],
+                published[user_id],
+                coins
+            ))
+
+        authors.sort(lambda x, y: cmp(y[3], x[3]))
+
+        data['authors'] = authors
+        self.render('admin/question_authors.html', **data)

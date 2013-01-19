@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<style>
+</style>
+{% end %}
+
+{% block extrajs %}
+{% end %}
+
+
+{% block content %}
+
+  <form action=".">
+      <table class="table table-condensed">
+        <thead>
+          <tr>
+            <th>Author</th>
+            <th>Questions</th>
+            <th>Published</th>
+            <th>Coins Earned</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user, questions, published, earned in authors %}
+          <tr>
+            <td>
+              <a href="{{ reverse_url('admin_user_journey', user['_id']) }}">{{ user['username'] }}</a>
+              {% if user['superuser'] %}
+                <span class="label warning">Superuser</span>
+              {% end %}
+              {% if user.is_ambassador %}
+                <span class="label notice">Ambassador</span>
+              {% end %}
+            </td>
+            <td>{{ questions }}</td>
+            <td>{{ published }}</td>
+            <td>{% module Thousands(earned) %}</td>
+          </tr>
+          {% end %}
+        </tbody>
+      </table>
+    </form>
+
+
+{% end %}
