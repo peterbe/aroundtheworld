@@ -385,7 +385,6 @@ mapInitialized(function(map) {
 //  ErrorCatcher.set_prev_onerror(window.onerror);
 //  window.onerror = ErrorCatcher.trigger;
 
-  //Raven.config(location.protocol + '//public@' + location.hostname + '/raven');
   Raven.config({
      servers: [location.protocol + '//' + location.hostname],
      projectId: 'raven',
