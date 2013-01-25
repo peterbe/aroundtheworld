@@ -1997,7 +1997,7 @@ class CityHandler(AuthenticatedBaseHandler,
                         total += each['coins']
                 text += ("Your questions have earned you "
                          "<strong>%s coins</strong>!"
-                         % (total, )
+                         % (commafy(total), )
                          )
             else:
                 text = "You have written "
@@ -2052,9 +2052,9 @@ class CityHandler(AuthenticatedBaseHandler,
                 interest = self.calculate_compound_interest(deposits)
                 interest = int(round(interest))
                 text += "You have deposited a total of "
-                text += "<strong>%s coins</strong> " % sum_
+                text += "<strong>%s coins</strong> " % commafy(sum_)
                 text += "with a potential of "
-                text += "<strong>%s coins</strong> interest!" % interest
+                text += "<strong>%s coins</strong> interest!" % commafy(interest)
             else:
                 text += "You currently have no coins deposited."
         else:
