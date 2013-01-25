@@ -760,7 +760,50 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
                 document.update_html()
             return document['html']
 
+    def get_friends_job_results(self, session_id):
+        this_user = self.get_current_user()
+        try:
+            session = self.db.QuestionSession.find_one(
+                {'_id': ObjectId(session_id),
+                 'user': this_user['_id'],
+                 'finish_date': {'$ne': None}}
+            )
+            if not session:
+                raise HTTPError(404, 'Invalid session id')
+        except InvalidId:
+            raise HTTPError(400, 'Invalid session id')
+        others = []
+        _count_friends = 0
+        for friendship in (self.db.Friendship.collection
+                           .find({'user': this_user['_id'],
+                                  'mutual': True}, ('to',))):
+            _count_friends += 1
+            search = {
+                'user': friendship['to'],
+                'location': session['location'],
+                'category': session['category'],
+            }
+            for job in (self.db.Job.collection
+                        .find(search, ('coins',))
+                        .sort('add_date')
+                        .limit(1)):
+                friend = self.db.User.find_one({'_id': friendship['to']})['email']
+                others.append({
+                    'friend': self.db.User.find_one({'_id': friendship['to']}).get_full_name(),
+                    'coins': job['coins']
+                })
+        if not _count_friends:
+            return {'no_friends': True}
+
+        return {'others': others}
+
     def get(self):
+        if self.get_argument('session', None):
+            others = self.get_friends_job_results(
+                self.get_argument('session')
+            )
+            self.write(others)
+            return
         category = self.get_argument('category')
         category = category.replace('+', ' ')
         category = self.db.Category.find_one({'name': category})
@@ -1109,6 +1152,7 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
               'coins': coins,
               'percentage_right': percentage
             }
+            data['session'] = str(session['_id'])
         else:
             question = (self.db.Question
                         .find_one({'_id': answer_obj['question']}))

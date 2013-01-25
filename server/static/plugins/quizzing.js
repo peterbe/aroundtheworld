@@ -8,7 +8,6 @@ var Quiz = (function() {
   var in_pause = false;
   var last_question = false;
   var _category;
-  //var _next_is_last = false;
   var _next_is_first = true;
   var t0, t1;
   var _once = false;
@@ -125,7 +124,9 @@ var Quiz = (function() {
         _show_award_link(response.award);
       }
       $('.post-finish:hidden', container).show();
-      State.show_coin_change(response.results.coins, true);
+      if (response.results.coins) {
+        State.show_coin_change(response.results.coins, true);
+      }
       State.update(function() {
         $('.short-summary .total-coins', container)
           .text(Utils.formatCost(STATE.user.coins_total, true));
@@ -230,6 +231,25 @@ var Quiz = (function() {
             $('.continue-tutorial-cantafford', container).fadeIn(400);
           }
         });
+      } else {
+        $.getJSON(URL, {session: response.session}, function(response) {
+          if (response.no_friends) {
+            $('.other-friends', container).hide();
+            $('.no-friends', container).fadeIn(400);
+          } else if (response.others) {
+            $('.no-friends', container).hide();
+            $('.other-friends li', container).remove();
+            $.each(response.others, function(i, each) {
+              $('<li>')
+                .html('Your friend, <strong>' + each.friend +
+                      '</strong> earned <strong>' +
+                      Utils.formatCost(each.coins, true) +
+                      '</strong> when doing this job the first time.')
+                  .appendTo($('.other-friends ul', container));
+            });
+            $('.other-friends', container).fadeIn(400);
+          }
+        });
       }
     });
   }
@@ -242,6 +262,10 @@ var Quiz = (function() {
         Quiz.rush_next_question();
       }
       return false;
+    });
+
+    $('.no-friends a, .other-friends a', container).click(function() {
+      Loader.load_hash('#league');
     });
 
     // no need to preload the images because they're already in the DOM
