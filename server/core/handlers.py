@@ -1705,17 +1705,30 @@ class LeagueMixin(object):
         for each in self.get_pending_friendship_invites():
             user = self.db.User.find_one({'_id': each['user']})
             invites.append({
-              'user': self.get_name(user),
-              'total_earned': self.get_total_earned(user)['coins'],
-              'id': str(user['_id'])
+                'user': self.get_name(user),
+                'total_earned': self.get_total_earned(user)['coins'],
+                'id': str(user['_id'])
             })
 
         for each in self.db.Friendship.find({'to': this_user['_id'], 'mutual': False}):
+            # due to an earlier bug, it can be possible that a reverse friendship
+            # already exists but wasn't updated
+            opposite = self.db.Friendship.find_one(
+                {'user': each['to'],
+                 'to': each['user']}
+            )
+            if opposite:
+                # the opposite already exists!
+                opposite['mutual'] = True
+                opposite.save()
+                each['mutual'] = True
+                each.save()
+
             user = self.db.User.find_one({'_id': each['user']})
             invites.append({
-              'user': self.get_name(user),
-              'total_earned': self.get_total_earned(user)['coins'],
-              'id': str(user['_id'])
+                'user': self.get_name(user),
+                'total_earned': self.get_total_earned(user)['coins'],
+                'id': str(user['_id'])
             })
 
         return invites
@@ -1729,6 +1742,9 @@ class LeagueMixin(object):
         ))
         for friendship in (self.db.Friendship.collection
                            .find({'user': user['_id']}, ('to',))):
+            if friendship['to'] == user['_id']:
+                # a legacy bug, shouldn't happen any more
+                continue
             users.append((
                 self.get_total_earned(friendship['to'], only_coins=True),
                 friendship['to'],
@@ -4543,6 +4559,11 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         this_user = self.get_current_user()
         user = self._find_user(self.get_argument('id'))
         assert user
+        if user['_id'] == this_user['_id']:
+            # can't create a friendship with yourself
+            self.write({'error': 'FRIENDSWITHYOURSELF'})
+            return
+
         friendship = self.db.Friendship.find_one({
             'user': this_user['_id'],
             'to': user['_id']
@@ -4764,7 +4785,7 @@ class AcceptFriendshipHandler(BaseHandler):
         if not friendship_token:
             self.redirect('/league')
             return
-            #raise HTTPError(404, 'Invalid token')
+
         user = self.db.User.find_one({'_id': friendship_token['user']})
         to = self.db.User.find_one({'_id': friendship_token['to']})
 

@@ -27,7 +27,7 @@ var League = (function() {
 
   function _click_friend(element) {
     var link = $(element);
-    $('.highscore, .friends', container).hide();
+    $('.highscore, .friends, .invites', container).hide();
     $('p.info').hide();
     var template = $('.template-about-user', container).html();
     $.getJSON(URL, {about: link.data('id')}, function(response) {
@@ -75,20 +75,6 @@ var League = (function() {
     $('.total-earned', container).text(Utils.formatCost(info.coins, true));
     $('.total-earned-rank', container).text('#' + info.rank);
   }
-
-  /*
-  function post_form(f) {
-    $('input[name="username"]', f).off('keydown');
-    $.post(URL, f.serializeObject(), function(response) {
-      $('.saved-notification:hidden', container).hide().fadeIn(200);
-      _set_form_data(response);
-      State.update();
-      setTimeout(function() {
-        $('.saved-notification:visible', container).fadeOut(500);
-      }, 2 * 1000);
-    });
-  }
-  */
 
   function _click_connect(element) {
     var button = $(element);
@@ -196,7 +182,7 @@ var League = (function() {
 
       $('.about', container).hide();
       $('p.info', container).fadeIn(300);
-      $('.highscore, .friends', container).fadeIn(300);
+      $('.highscore, .friends, .invites', container).fadeIn(300);
 
       return false;
     });
