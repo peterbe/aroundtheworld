@@ -4005,7 +4005,6 @@ class ErrorsHandler(BaseHandler):
             if (user and error_event['user'] == user['_id'] and
                 error_event['url'] == data.get('url') and
                 error_event['data'] == data):
-
                 error_event['count'] += 1
                 error_event.save()
                 return
@@ -4016,8 +4015,10 @@ class ErrorsHandler(BaseHandler):
         error_event['data'] = data
         error_event['url'] = data.get('url')
         error_event.save()
-        logging.warn("Saved ErrorEvent: %s", data)
-
+        s = StringIO()
+        pprint(data, s)
+        logging.warn("Saved ErrorEvent: %s", s.getvalue())
+        s.close()
 
 @route('/awards.json$', name='awards')
 class AwardsHandler(BaseHandler):
@@ -4548,11 +4549,13 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
             })
             if connected:
                 return
+            first_name = user['first_name'] or u''
+            last_name = user['last_name'] or u''
             result.append([
                 str(user['_id']),
                 user['username'],
                 user['email'],
-                ('%s %s' % (user['first_name'], user['last_name'])).strip()
+                ('%s %s' % (first_name, last_name)).strip()
             ])
         select = ('username', 'first_name', 'last_name', 'email')
         # XXX how to OR these?
@@ -4564,6 +4567,7 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
             'count': len(result),
             'result': result[:10],
             'capped': len(result) > 10,
+            'cap': 10
         }
         return data
 

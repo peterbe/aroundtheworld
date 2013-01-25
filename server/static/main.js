@@ -292,10 +292,11 @@ var ErrorCatcher = (function() {
 
   function show_onerror() {
     $('#onerror').show();
+
     $('a', '#onerror')
       .attr('href', window.location.href)
         .click(function() {
-          window.location.reload();
+          window.location.reload(true);
           return false;
         });
   }
@@ -312,6 +313,7 @@ var ErrorCatcher = (function() {
        if (_prev_onerror) {
          return _prev_onerror(message, file, line);
        }
+       //L(message, file, line);
        if (line === 0 && (
            message == "TypeError: 'null' is not an object" ||
            message == "TypeError: 'undefined' is not an object")) {
@@ -319,6 +321,12 @@ var ErrorCatcher = (function() {
          // some strange Safari errors I'm getting that always gets in the way
          return;
        }
+       if (message && message === 'Script error.' &&
+           file && file.search(/devtools/) > -1) {
+         // some sort of devtools error
+         return;
+       }
+
        show_onerror();
        var data = {};
        if (message) data.message = message;
@@ -342,35 +350,6 @@ var ErrorCatcher = (function() {
 })();
 
 
-var ErrorCatcherWithRaven = (function() {
-  var _prev_onerror;
-
-  function show_onerror() {
-    $('#onerror').show();
-    $('a', '#onerror')
-      .attr('href', window.location.href)
-        .click(function() {
-          window.location.reload(true);
-          return false;
-        });
-  }
-
-  function post_error(data) {
-    $.post('/errors/', data);
-  }
-
-  return {
-     set_prev_onerror: function(func) {
-       _prev_onerror = func;
-     },
-     trigger: function(message, fileurl, lineno, traceback, options) {
-       show_onerror();
-       return Raven.process(message, fileurl, lineno, traceback, options);
-     }
-  };
-})();
-
-
 // some things can't wait for the map to load
 $(function() {
   // here 'STATE' is a inline defined variable.
@@ -383,19 +362,7 @@ $(function() {
 mapInitialized(function(map) {
 
 //  ErrorCatcher.set_prev_onerror(window.onerror);
-//  window.onerror = ErrorCatcher.trigger;
-
-  Raven.config({
-     servers: [location.protocol + '//' + location.hostname],
-     projectId: 'raven',
-     dataCallback: function (data) {
-       data.STATE = STATE;
-       return data;
-     }
-  });
-
-  //window.onerror = Raven.process;
-  window.onerror = ErrorCatcherWithRaven.trigger;
+  window.onerror = ErrorCatcher.trigger;
 
   $('a.overlay-changer').click(function() {
     return Loader.load_hash($(this).attr('href'));

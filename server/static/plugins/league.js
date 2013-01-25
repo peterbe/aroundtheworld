@@ -131,7 +131,7 @@ var League = (function() {
         .addClass('result')
         .addClass('capped')
         .append($('<td>')
-                .text('Only show the first ' + data.count)
+                .text('Only show the first ' + data.cap)
                 .attr('colspan', 3))
         .appendTo(c);
     }

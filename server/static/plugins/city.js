@@ -118,7 +118,7 @@ var City = (function() {
 
   function _load_messages(callback) {
     $.getJSON(URL, {get: 'messages'}, function(response) {
-      $('.messages-outer .message', container).remove();
+      $('.messages-outer blockquote', container).remove();
       _append_messages(response.messages);
     });
     if (STATE.user.anonymous) {
