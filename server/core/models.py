@@ -77,7 +77,9 @@ class User(BaseDocument):
         return str(self.__unicode__())
 
     def get_full_name(self):
-        name = ('%s %s' % (self['first_name'], self['last_name'])).strip()
+        first_name = self['first_name'] or u''
+        last_name = self['last_name'] or u''
+        name = ('%s %s' % (first_name, last_name)).strip()
         if not name:
             name = self['username']
         return name
