@@ -101,7 +101,9 @@ var Pinpoint = (function() {
       c = $('.finish', container);
       $('.total-points', c).text(Utils.formatPoints(response.results.total_points, true));
       $('.coins', c).text(Utils.formatCost(response.results.coins, true));
-      State.show_coin_change(response.results.coins, true);
+      if (response.results.coins) {
+        State.show_coin_change(response.results.coins, true);
+      }
       _show_summary(response.summary);
       if (response.results.coins) {
         $('h2', c).text('Well done!');
