@@ -2598,16 +2598,31 @@ class PictureDetectiveHandler(QuizzingHandler):
 class PinpointHandler(AuthenticatedBaseHandler):
 
     # number that is multiplied with the percentage from perfection
-    PERCENTAGE_COINS_RATIO = 1.4
+    PERCENTAGE_COINS_RATIO = 1.5
 
-    MIN_DISTANCE = 50.0
     NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
     SECONDS = 10
 
     CATEGORY_NAME = u'Geographer'
 
-    def calculate_points(self, miles, seconds_left):
-        min_ = self.MIN_DISTANCE
+    def calculate_points(self, miles, diagonal_miles, seconds_left):
+        # @diagonal_miles is the number of miles from the north east to
+        # the south west of the PinpointAnswer.
+
+        # FYI, France is 796 miles
+        # UK is 621,
+        # Australia is 3253
+
+        if diagonal_miles > 3000:
+            min_ = 250
+        elif diagonal_miles > 2000:
+            min_ = 180
+        elif diagonal_miles > 1000:
+            min_ = 100
+        else:
+            # default
+            min_ = 50
+
         if miles < min_:
             p = (min_ - miles) / min_
         else:
@@ -2640,14 +2655,14 @@ class PinpointHandler(AuthenticatedBaseHandler):
         assert center
 
         data['center'] = {
-          'sw': {
-            'lat': center['south_west'][0],
-            'lng': center['south_west'][1],
-          },
-          'ne': {
-            'lat': center['north_east'][0],
-            'lng': center['north_east'][1],
-          }
+            'sw': {
+                'lat': center['south_west'][0],
+                'lng': center['south_west'][1],
+            },
+            'ne': {
+                'lat': center['north_east'][0],
+                'lng': center['north_east'][1],
+            }
         }
         data['no_questions'] = self.NO_QUESTIONS
         data['waiting_time'] = self.SECONDS
@@ -2655,12 +2670,12 @@ class PinpointHandler(AuthenticatedBaseHandler):
         if self.get_argument('next', None):
             session = (self.db.PinpointSession
                        .find_one({'user': user['_id'],
-                                  'center': current_location['_id'],
+                                  'center': center['_id'],
                                   'finish_date': None}))
             if session is None:
                 session = self.db.PinpointSession()
                 session['user'] = user['_id']
-                session['center'] = current_location['_id']
+                session['center'] = center['_id']
                 session.save()
 
             for each in (self.db.PinpointAnswer
@@ -2681,11 +2696,11 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
             try:
                 location = self._get_next_location(
-                  session,
-                  country,
-                  locality=locality,
-                  previous_location=(previous_answer['location']
-                                     if previous_answer else None),
+                    session,
+                    country,
+                    locality=locality,
+                    previous_location=(previous_answer['location']
+                                       if previous_answer else None),
                 )
             except NoLocationsError:
                 self.write({'error': 'NOLOCATIONS'})
@@ -2695,9 +2710,9 @@ class PinpointHandler(AuthenticatedBaseHandler):
                            .find({'session': session['_id']})
                            .count())
             data['no_questions'] = {
-              'total': self.NO_QUESTIONS,
-              'number': _no_answers + 1,
-              'last': _no_answers + 1 == self.NO_QUESTIONS,
+                'total': self.NO_QUESTIONS,
+                'number': _no_answers + 1,
+                'last': _no_answers + 1 == self.NO_QUESTIONS,
             }
             if _no_answers < self.NO_QUESTIONS:
                 answer = self.db.PinpointAnswer()
@@ -2717,7 +2732,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             # close any unfinished sessions
             for session in (self.db.PinpointSession
                              .find({'user': user['_id'],
-                                    'center': current_location['_id'],
+                                    'center': center['_id'],
                                     'finish_date': None})):
                 # XXX: should I just delete them?
                 session['finish_date'] = datetime.datetime.utcnow()
@@ -2741,7 +2756,11 @@ class PinpointHandler(AuthenticatedBaseHandler):
 
         if not allow_repeats:
             past_location_ids = set()
-            for a in self.db.PinpointAnswer.find({'session': session['_id']}):
+            _previous_answers = (
+                self.db.PinpointAnswer.collection
+                .find({'session': session['_id']}, ('location',))
+            )
+            for a in _previous_answers:
                 past_location_ids.add(a['location'])
             if past_location_ids:
                 if '_id' in filter_:
@@ -2763,18 +2782,22 @@ class PinpointHandler(AuthenticatedBaseHandler):
     def post(self):
         #stop_time = datetime.datetime.utcnow()
         user = self.get_current_user()
-        center = self.get_current_location(user)
+        #center = self.get_current_location(user)
+        current_location = self.get_current_location(user)
 
         data = {}
 
         if self.get_argument('finish', None):
             session, = (self.db.PinpointSession
                         .find({'user': user['_id'],
-                               'center': center['_id']})
+                               #'center': center['_id']
+                               })
                         .sort('add_date', -1)  # newest first
                         .limit(1))
             session['finish_date'] = datetime.datetime.utcnow()
             session.save()
+
+            #center = self.db.PinpointCenter.find_one({'_id': session['center']})
 
             last_answer, = (self.db.PinpointAnswer
                             .find({'session': session['_id']})
@@ -2822,7 +2845,7 @@ class PinpointHandler(AuthenticatedBaseHandler):
             job['user'] = user['_id']
             job['coins'] = coins
             job['category'] = category['_id']
-            job['location'] = center['_id']
+            job['location'] = current_location['_id']
             job.save()
 
             data['results'] = {
@@ -2831,28 +2854,45 @@ class PinpointHandler(AuthenticatedBaseHandler):
             }
 
         else:
-
             guess = {
-              'lat': float(self.get_argument('lat')),
-              'lng': float(self.get_argument('lng'))
+                'lat': float(self.get_argument('lat')),
+                'lng': float(self.get_argument('lng'))
             }
             session, = (self.db.PinpointSession
                         .find({'user': user['_id'],
-                               'center': center['_id'],
+                               #'center': center['_id'],
                                'finish_date': None})
                         .sort('add_date', -1)  # newest first
                         .limit(1))
+            center = self.db.PinpointCenter.find_one({'_id': session['center']})
+            assert center
             answer, = (self.db.PinpointAnswer
                        .find({'session': session['_id']})
                        .sort('add_date', -1)  # newest first
                        .limit(1))
-            correct_location = (self.db.Location
-                                .find_one({'_id': answer['location']}))
+            correct_location = (
+                self.db.Location
+                .find_one({'_id': answer['location']})
+            )
             assert correct_location
             correct_position = {
-              'lat': correct_location['lat'],
-              'lng': correct_location['lng']
+                'lat': correct_location['lat'],
+                'lng': correct_location['lng']
             }
+
+            try:
+                diagonal_miles = center['diagonal_miles']
+            except KeyError:
+                d = calculate_distance(
+                    {'lat': center['south_west'][0],
+                     'lng': center['south_west'][1]},
+                    {'lat': center['north_east'][0],
+                     'lng': center['north_east'][1]},
+                )
+                diagonal_miles = int(d.miles)
+                center['diagonal_miles'] = diagonal_miles
+                center.save()
+            print repr(center['diagonal_miles'])
 
             distance = calculate_distance(guess, correct_position)
             data['miles'] = int(distance.miles)
@@ -2860,7 +2900,11 @@ class PinpointHandler(AuthenticatedBaseHandler):
             data['time'] = float(self.get_argument('time'))
 
             time_left = float(self.SECONDS - data['time'])
-            points = self.calculate_points(distance.miles, time_left)
+            points = self.calculate_points(
+                distance.miles,
+                diagonal_miles,
+                time_left
+            )
 
             data['points'] = round(points, 1)
             data['correct_position'] = correct_position

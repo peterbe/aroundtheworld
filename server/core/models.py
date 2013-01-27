@@ -529,10 +529,10 @@ class SessionAnswer(BaseDocument):
 class QuestionAnswerEarning(BaseDocument):
     __collection__ = 'questionearnings'
     structure = {
-      'user': ObjectId,
-      'question': ObjectId,
-      'answer': ObjectId,
-      'coins': int,
+        'user': ObjectId,
+        'question': ObjectId,
+        'answer': ObjectId,
+        'coins': int,
     }
 
 
@@ -542,10 +542,11 @@ class PinpointCenter(BaseDocument):
     # Or http://www.birdtheme.org/useful/v3tool.html
     __collection__ = 'pinpointcenters'
     structure = {
-      'country': unicode,
-      'locality': unicode,
-      'south_west': [float],
-      'north_east': [float],
+        'country': unicode,
+        'locality': unicode,
+        'south_west': [float],
+        'north_east': [float],
+        'diagonal_miles': int,
     }
 
     required_fields = ['country', 'south_west', 'north_east']
@@ -555,9 +556,9 @@ class PinpointCenter(BaseDocument):
 class PinpointSession(BaseDocument):
     __collection__ = 'pintpointsessions'
     structure = {
-      'center': ObjectId,
-      'user': ObjectId,
-      'finish_date': datetime.datetime,
+        'center': ObjectId,
+        'user': ObjectId,
+        'finish_date': datetime.datetime,
     }
 
     required_fields = ['center', 'user']
