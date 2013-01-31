@@ -34,7 +34,7 @@ ONE_DAY = ONE_HOUR * 24
 ONE_WEEK = ONE_DAY * 7
 FULL_DATE_FMT = '%d %b %Y'
 MOBILE_USER_AGENTS = re.compile(
-  'android|fennec|ipad|iemobile|iphone|opera (?:mini|mobi)',
+  'android|fennec|ipad|mobile|iemobile|iphone|opera (?:mini|mobi)',
   re.I
 )
 
