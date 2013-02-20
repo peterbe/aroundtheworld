@@ -86,7 +86,7 @@ def run(options):
             email_backend,
             subject,
             body,
-            settings.ADMIN_EMAILS[0],
+            "Around The World <%s>" % settings.ADMIN_EMAILS[0],
             [user['email']],
         )
         if not options.dry_run:
