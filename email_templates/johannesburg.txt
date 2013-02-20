@@ -1,0 +1,13 @@
+Hi {% if user['first_name'] %}{{ user['first_name'] }}{% else %}there{% end %},
+
+A new destination has been added to Around The World:
+
+  **Johannesburg, South Africa!**
+
+To fly there, go to: http://aroundtheworldgame.com/airport
+
+You are currently in {{ current_location }} and you have {{ user_settings['coins_total'] }} coins.
+To unsubscribe, go to http://aroundtheworldgame.com{{ unsubscribe_uri }}
+
+--
+{{ SIGNATURE }}
