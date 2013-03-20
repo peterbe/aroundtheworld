@@ -1,9 +1,19 @@
 var City = (function() {
   var URL = '/city.json';
   var AIRPORT_URL = '/airport.json';
-  var container = $('#city');
+  var container;
   var _message_form_setup = false;
   var _has_loaded_home = false;
+  var _once = false;
+
+  function setup_once() {
+    container = $('#city');
+    $('.affordable-tickets .show-more a', container).click(function() {
+      $('.affordable-tickets .destination:hidden', container).fadeIn(200);
+      $('.affordable-tickets .show-more').hide();
+      return false;
+    });
+  }
 
   function _load_jobs(callback) {
     $.getJSON(URL, {get: 'jobs'}, function(response) {
@@ -252,8 +262,6 @@ var City = (function() {
                if (!response.destinations.length) {
                  $('.affordable-tickets:visible', container).hide();
                  return;
-               } else {
-                 $('.affordable-tickets:hidden', container).show();
                }
                var c = $('.affordable-tickets', container);
 
@@ -263,6 +271,8 @@ var City = (function() {
                }
                c.data('for_amount', response.for_amount);
                $('.destination', c).remove();
+               var d_container = $('.destinations', container);
+               var count = 0;
                $.each(response.destinations, function(i, destination) {
                  var d = $('<div>').addClass('destination');
 
@@ -287,18 +297,32 @@ var City = (function() {
                            .addClass('ticket-info')
                            .text(Utils.formatCost(destination.cost.economy, true)))
                    .appendTo($('.bar', dd));
-
+                 if (count >= 4) {
+                   d.hide();
+                 }
+                 count++;
                  d.append(dd);
-                 c.append(d);
+                 d_container.append(d);
                });
+               if (count >= 4) {
+                 $('.show-more', c).show();
+               } else {
+                 $('.show-more', c).hide();
+               }
                c.show();
-
+               $('.affordable-tickets:hidden', container).show();
              });
            }
            Utils.update_title();
          }
        });
      },
+    setup: function() {
+       if (!_once) {
+         setup_once();
+         _once = true;
+       }
+    },
     setup_message_post: function() {
       if (STATE.user && STATE.user.anonymous) {
         $('form.message-teaser', container).hide();
@@ -335,8 +359,10 @@ var City = (function() {
 })();
 
 Plugins.start('city', function(page, callback) {
+  City.setup();
   City.setup_message_post();
   City.load(page);
+
 });
 
 

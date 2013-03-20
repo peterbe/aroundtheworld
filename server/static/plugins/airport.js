@@ -16,6 +16,7 @@ var Airport = (function() {
       Airport.teardown();
       Airport.load();
     });
+    sounds.preload('airport-pa');
   }
 
   return {
@@ -24,8 +25,6 @@ var Airport = (function() {
          setup_once();
          _once = true;
        }
-       sounds.preload('airport-pa');
-
      },
      confirm: function(name, code, cost, first) {
        if ($('#airport:hidden').size()) {
