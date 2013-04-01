@@ -127,10 +127,18 @@ class BaseHandler(tornado.web.RequestHandler):
       'league': ['css/plugins/league.css',
                  'lib/mustache.min.js',
                  'plugins/league.js'],
-      'unsubscribed': ['css/plugins/unsubscribed.css',
-                       'plugins/unsubscribed.js'],
-      'news': ['css/plugins/news.css',
-               'plugins/news.js'],
+      'unsubscribed': [
+          'css/plugins/unsubscribed.css',
+          'plugins/unsubscribed.js'
+      ],
+      'news': [
+          'css/plugins/news.css',
+          'plugins/news.js'
+      ],
+      'leaguenews': [
+          'css/plugins/leaguenews.css',
+          'plugins/leaguenews.js'
+      ],
     }
 
 #    def write(self, *a, **k):
@@ -1797,6 +1805,185 @@ class LeagueMixin(object):
         return users
 
 
+class LeagueNewsMixin(object):
+
+    def get_league_news(self, user, since, limit):
+        friends = (
+            self.db.Friendship.collection
+            .find({'user': user['_id']}, ('to',))
+        )
+        friend_ids = []
+        for friend in friends:
+            friend_ids.append(friend['to'])
+
+        _names = {}
+        def get_user_name(user_id):
+            if user_id not in _names:
+                only = ('username', 'email', 'first_name', 'last_name')
+                user = (
+                    self.db.User.collection
+                    .find_one({'_id': user_id}, only)
+                )
+                _names[user_id] = (
+                    self.get_name(user)
+                )
+            return _names[user_id]
+
+        _locations = {}
+        def get_location_name(location_id):
+            if location_id not in _locations:
+                _locations[location_id] = (
+                    self.db.Location.collection
+                    .find_one({'_id': location_id})['city']
+                )
+            return _locations[location_id]
+
+        _categories = {}
+        def get_category_name(category_id):
+            if category_id not in _categories:
+                _categories[category_id] = (
+                    self.db.Category.collection
+                    .find_one({'_id': category_id})['name']
+                )
+            return _categories[category_id]
+
+        _banks = {}
+        def get_bank_name(bank_id):
+            if bank_id not in _banks:
+                bank = (
+                    self.db.Bank.collection
+                    .find_one({'_id': bank_id}, ('name', 'location'))
+                )
+                name = bank['name']
+                location = get_location_name(bank['location'])
+                _banks[bank_id] = (
+                    "%s in %s" % (name, location)
+                )
+            return _banks[bank_id]
+
+        items = []
+
+        search = {'user': {'$in': friend_ids}}
+        if since:
+            since = int(since)
+            since = datetime.datetime.utcfromtimestamp(since)
+            search['add_date'] = {'$lt': since}
+
+        flights = (
+            self.db.Flight.collection
+            .find(search)
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in flights:
+            items.append((each['add_date'], {
+                'type': 'flight',
+                'user': each['user'],
+                'to': each['to'],
+                'miles': each['miles'],
+                'first_class': each['class'] == FIRST_CLASS,
+            }))
+
+        jobs = (
+            self.db.Job.collection
+            .find(search)
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in jobs:
+            items.append((each['add_date'], {
+                'type': 'job',
+                'user': each['user'],
+                'coins': each['coins'],
+                'category': each['category'],
+                'location': each['location'],
+            }))
+
+        location_messages = (
+            self.db.LocationMessage.collection
+            .find(dict(search, censored=False))
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in location_messages:
+            items.append((each['add_date'], {
+                'type': 'location_message',
+                'user': each['user'],
+                'location': each['location'],
+                'message': each['message'],
+            }))
+
+        awards = (
+            self.db.Award.collection
+            .find(search)
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in awards:
+            if each['description'] == 'Finishing the tutorial':
+                continue
+            items.append((each['add_date'], {
+                'type': 'award',
+                'user': each['user'],
+                'location': each['location'],
+                'description': each['description'],
+                'reward': each['reward'],
+            }))
+
+        deposits = (
+            self.db.Deposit.collection
+            .find(search)
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in deposits:
+            items.append((each['add_date'], {
+                'type': 'deposit',
+                'user': each['user'],
+                'amount': each['amount'],
+                'bank': each['bank'],
+            }))
+
+        interest_earnings = (
+            self.db.InterestEarning
+            .find(search)
+            .sort('add_date', -1)
+            .limit(limit)
+        )
+        for each in interest_earnings:
+            items.append((each['add_date'], {
+                'type': 'interest',
+                'user': each['user'],
+                'coins': each['coins'],
+                'bank': each['bank'],
+            }))
+
+        items.sort(reverse=True)
+        items = items[:limit]
+        htmls = []
+        last = latest = None
+        for date, item in items:
+            htmls.append(self.render_string(
+                '_league_newsitems.html',
+                date=date,
+                item=item,
+                get_user_name=get_user_name,
+                get_location_name=get_location_name,
+                get_category_name=get_category_name,
+                get_bank_name=get_bank_name,
+            ))
+            if latest is None:
+                latest = date
+            last = date
+
+        data = {
+            'items': htmls,
+            'last': time.mktime(last.utctimetuple()),
+            'latest': time.mktime(latest.utctimetuple()),
+        }
+        return data
+
+
 class FlagMixin(object):
 
     FLAGS_CONTAINER = {
@@ -1830,7 +2017,8 @@ class CityHandler(AuthenticatedBaseHandler,
                   FlightFinderMixin,
                   BankingMixin,
                   LeagueMixin,
-                  FlagMixin):
+                  FlagMixin,
+                  LeagueNewsMixin):
 
     def get_ambassadors_html(self, location):
         filter_ = {
@@ -1871,6 +2059,10 @@ class CityHandler(AuthenticatedBaseHandler,
             data['pictures'] = self.get_pictures(location)
         elif get == 'messages':
             data['messages'] = self.get_messages(location, limit=10)
+        elif get == 'leaguenews':
+            since = self.get_argument('since', None)
+            limit = int(self.get_argument('limit', 10))
+            data['news'] = self.get_league_news(user, since, limit)
         elif get:
             raise tornado.web.HTTPError(404, 'Invalid get')
         else:
@@ -4943,6 +5135,18 @@ class UnsubscribeHandler(BaseHandler):
         user_settings.save()
 
         self.redirect('/unsubscribed')
+
+
+@route('/leaguenews.json', name='leaguenews')
+class LeagueNewsHandler(BaseHandler, LeagueNewsMixin):
+
+    def get(self):
+        data = {}
+        user = self.get_current_user()
+        since = self.get_argument('since', None)
+        limit = int(self.get_argument('limit', 20))
+        data['news'] = self.get_league_news(user, since, limit)
+        self.write(data)
 
 
 @route('/news.json', name='news')

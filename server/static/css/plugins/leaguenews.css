@@ -1,0 +1,28 @@
+#leaguenews .no-news p {
+    font-style: italic;
+    margin: 20px;
+}
+
+#leaguenews .item {
+    margin: 20px;
+    width: 70%;
+    border: 1px solid rgb(214, 233, 198);
+    background-color: rgb(223, 240, 216);
+    padding: 5px 15px;
+    border-radius: 5px;
+
+}
+
+#leaguenews .items div {
+    width: 70%;
+    margin: 10px;
+    border-bottom: 1px solid #efefef;
+}
+#leaguenews .items p.metadata {
+    font-size: 80%;
+    font-weight: bold;
+}
+
+#leaguenews .items p {
+    margin-bottom: 3px;
+}

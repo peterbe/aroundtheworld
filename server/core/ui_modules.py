@@ -1,3 +1,4 @@
+import cgi
 import logging
 import datetime
 import os
@@ -5,6 +6,7 @@ from time import mktime
 import settings
 import json
 from tornado_utils.thumbnailer import get_thumbnail
+from tornado_utils.timesince import smartertimesince
 import tornado.web
 
 
@@ -25,6 +27,30 @@ class Thousands(tornado.web.UIModule):
 
     def render(self, number):
         return commafy(str(number))
+
+
+class ShowMiles(Thousands):
+
+    def render(self, number):
+        number = super(ShowMiles, self).render(int(number))
+        return "%s miles" % number
+
+
+class ShowCoins(Thousands):
+
+    def render(self, number):
+        number = super(ShowCoins, self).render(int(number))
+        if number == 1:
+            return "1 coin"
+        return "%s coins" % number
+
+
+class ShowBriefMessageSafely(tornado.web.UIModule):
+
+    def render(self, message, max_length):
+        if len(message) > max_length:
+            message = message[:max_length] + '...'
+        return cgi.escape(message, True)
 
 
 class JSON(tornado.web.UIModule):
@@ -184,3 +210,9 @@ class LinkTags(tornado.web.UIModule):
             html.append('<link href="%s" rel="stylesheet" type="text/css">' %
                          self.handler.static_url(each))
         return '\n'.join(html)
+
+
+class TimeSince(tornado.web.UIModule):
+    def render(self, date, date2=None):
+        assert date
+        return smartertimesince(date, date2)

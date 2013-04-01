@@ -1,0 +1,35 @@
+<p>
+  <small style="float:right" class="date">{% module TimeSince(date) %} ago</small>
+  <strong>{{ get_user_name(item['user']) }}</strong>
+  {% if item['type'] == 'flight' %}
+    flew <strong>{% module ShowMiles(item['miles']) %}</strong>
+    {% if item['first_class'] %}<strong>First Class!</strong>{% end %}
+    to {{ get_location_name(item['to']) }}.
+
+  {% elif item['type'] == 'job' %}
+    completed the job as <strong>{{ get_category_name(item['category']) }}</strong>
+    in {{ get_location_name(item['location']) }}
+    and earned {% module ShowCoins(item['coins']) %}.
+
+  {% elif item['type'] == 'location_message' %}
+    wrote a message on the wall in {{ get_location_name(item['location']) }}
+    <em>&quot;{% module ShowBriefMessageSafely(item['message'], 30) %}&quot;</em>.
+
+  {% elif item['type'] == 'award' %}
+    earned an award, <strong>{{ item['description'] }}</strong> in
+    {{ get_location_name(item['location']) }}
+    and war rewarded a bonus of {% module ShowCoins(item['reward']) %}.
+
+  {% elif item['type'] == 'deposit' %}
+    deposited <strong>{% module ShowCoins(item['amount']) %}</strong> into the bank
+    <strong>{{ get_bank_name(item['bank']) }}</strong>.
+
+  {% elif item['type'] == 'interest' %}
+    earned <strong>{% module ShowCoins(item['coins']) %}</strong>
+    of interest from withdrawing from
+    <strong>{{ get_bank_name(item['bank']) }}</strong>.
+
+  {% else %}
+    {{ notdefined(item['type']) }}
+  {% end %}
+</p>

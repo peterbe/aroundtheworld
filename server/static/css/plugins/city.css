@@ -38,8 +38,17 @@
     font-size: 90%;
 }
 
+#city .league-news {
+    width: 48%;
+    float: right;
+}
+#city .affordable-tickets,
+#city .league-news {
+    margin-top: 10px;
+}
+
 #city .affordable-tickets {
-    width: 50%;
+    width: 48%;
 }
 #city .affordable-tickets a {
     font-weight: bold;
@@ -53,7 +62,6 @@
 #city .affordable-tickets .progress {
     margin-bottom: 8px;
 }
-
 #city .affordable-tickets .bar {
     text-align: left;
 }
@@ -69,12 +77,13 @@
     margin-right: 3px;
 }
 
-#city .row-fluid {
-    margin-top: 25px;
+#city .affordable-tickets .show-more a,
+#city .league-news .show-more a {
+    font-weight: normal;
 }
 
-#city .affordable-tickets {
-    margin-top: 30px;
+#city .row-fluid {
+    margin-top: 25px;
 }
 
 #city .news-teaser {

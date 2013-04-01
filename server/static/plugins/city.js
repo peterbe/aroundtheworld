@@ -45,6 +45,10 @@ var City = (function() {
     });
   }
 
+  function _load_friends_news(callback) {
+    callback();
+  }
+
   function _load_pictures(callback) {
     $.getJSON(URL, {get: 'pictures'}, function(response) {
       var parent = $('#picture-carousel .carousel-inner');
@@ -297,21 +301,34 @@ var City = (function() {
                            .addClass('ticket-info')
                            .text(Utils.formatCost(destination.cost.economy, true)))
                    .appendTo($('.bar', dd));
-                 if (count >= 4) {
+                 if (count >= 5) {
                    d.hide();
                  }
                  count++;
                  d.append(dd);
                  d_container.append(d);
                });
-               if (count >= 4) {
+               if (count >= 5) {
                  $('.show-more', c).show();
                } else {
                  $('.show-more', c).hide();
                }
                c.show();
                $('.affordable-tickets:hidden', container).show();
-             });
+             });  // end load airport tickets
+
+             $.getJSON(URL, {get: 'leaguenews', limit: 5}, function(response) {
+               var c = $('.league-news', container);
+               var cc = $('.news', c);
+               $('p', cc).remove();
+               $.each(response.news.items, function(i, item) {
+                 $('<p>').html(item).appendTo(cc);
+               });
+               if (response.news.items.length >= 5) {
+                 $('.show-more', c).show();
+               }
+               c.fadeIn(300);
+             }); // end load airport tickets
            }
            Utils.update_title();
          }
