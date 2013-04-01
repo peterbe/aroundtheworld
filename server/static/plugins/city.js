@@ -317,14 +317,14 @@ var City = (function() {
                $('.affordable-tickets:hidden', container).show();
              });  // end load airport tickets
 
-             $.getJSON(URL, {get: 'leaguenews', limit: 5}, function(response) {
+             $.getJSON(URL, {get: 'leaguenews', limit: 4}, function(response) {
                var c = $('.league-news', container);
                var cc = $('.news', c);
                $('p', cc).remove();
                $.each(response.news.items, function(i, item) {
                  $('<p>').html(item).appendTo(cc);
                });
-               if (response.news.items.length >= 5) {
+               if (response.news.items.length >= 4) {
                  $('.show-more', c).show();
                }
                c.fadeIn(300);

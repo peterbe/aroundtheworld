@@ -62,7 +62,7 @@ class JSON(tornado.web.UIModule):
 class PictureThumbnailMixin:
 
     def make_thumbnail(self, question_image, (max_width, max_height), **kwargs):
-        timestamp = int(mktime(question_image.modify_date.timetuple()))
+        timestamp = int(mktime(question_image['modify_date'].timetuple()))
         image = question_image.fs.get_last_version('original')
         if image.content_type == 'image/png':
             ext = '.png'

@@ -139,6 +139,10 @@ class BaseHandler(tornado.web.RequestHandler):
           'css/plugins/leaguenews.css',
           'plugins/leaguenews.js'
       ],
+      'screenshots': [
+          #'css/plugins/leaguenews.css',
+          'plugins/screenshots.js'
+      ],
     }
 
 #    def write(self, *a, **k):
@@ -2566,6 +2570,33 @@ class CityHandler(AuthenticatedBaseHandler,
         location_message.save()
         messages = self.get_messages(location, limit=1)
         self.write({'messages': messages})
+
+@route('/screenshots.json', name='screenshots')
+class ScreenshotHandler(HomeHandler,
+                        PictureThumbnailMixin):
+
+    def get(self):
+        pictures = []
+        location = self.db.Location.find_one({'code': self.NOMANSLAND['code']})
+        search = {
+            'location': location['_id'],
+            'published': True,
+        }
+        for item in (self.db.LocationPicture
+                     .find(search)
+                     .sort('index')):
+            uri, (width, height) = self.get_thumbnail(item, (700, 700))  # XXX might need some more thought
+            picture = {
+              'src': uri,
+              'width': width,
+              'height': height,
+              'title': item['title'],
+            }
+            if item['description']:
+                picture['description'] = item['description']  # XXX should this be markdown?
+            pictures.append(picture)
+
+        self.write({'pictures': pictures})
 
 
 @route('/picturedetective.json$', name='picturedetective')
