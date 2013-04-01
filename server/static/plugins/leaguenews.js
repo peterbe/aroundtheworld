@@ -27,6 +27,7 @@ var LeagueNews = (function() {
   function load(since) {
     since = since || null;
     $.getJSON(URL, {limit: LIMIT, since: since}, function(response) {
+      if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
       var c = $('.items', container);
       $('div', c).remove();
       $.each(response.news.items, function(i, item) {

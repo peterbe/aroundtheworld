@@ -5143,6 +5143,9 @@ class LeagueNewsHandler(BaseHandler, LeagueNewsMixin):
     def get(self):
         data = {}
         user = self.get_current_user()
+        if not user:
+            self.write({'error': 'NOTLOGGEDIN'})
+            return
         since = self.get_argument('since', None)
         limit = int(self.get_argument('limit', 20))
         data['news'] = self.get_league_news(user, since, limit)
