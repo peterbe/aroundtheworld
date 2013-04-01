@@ -4797,7 +4797,7 @@ class League(AuthenticatedBaseHandler, LeagueMixin):
         # XXX how to OR these?
         for key in ('username', 'email', 'first_name', 'last_name'):
             for each in (self.db.User.collection
-                         .find({key: search1}, select)):
+                         .find({key: search1, 'anonymous': False}, select)):
                 append(each)
         data = {
             'count': len(result),
