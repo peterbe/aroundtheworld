@@ -1980,10 +1980,15 @@ class LeagueNewsMixin(object):
                 latest = date
             last = date
 
+        if latest:
+            latest = time.mktime(latest.utctimetuple())
+        if last:
+            last = time.mktime(last.utctimetuple())
+
         data = {
             'items': htmls,
-            'last': time.mktime(last.utctimetuple()),
-            'latest': time.mktime(latest.utctimetuple()),
+            'last': last,
+            'latest': latest,
         }
         return data
 
