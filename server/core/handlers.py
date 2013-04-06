@@ -2858,7 +2858,7 @@ class PictureDetectiveHandler(QuizzingHandler):
 class PinpointHandler(AuthenticatedBaseHandler):
 
     # number that is multiplied with the percentage from perfection
-    PERCENTAGE_COINS_RATIO = 1.5
+    PERCENTAGE_COINS_RATIO = 1.7
 
     NO_QUESTIONS = settings.PINPOINT_NO_QUESTIONS
     SECONDS = 10
