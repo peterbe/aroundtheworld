@@ -29,7 +29,9 @@ var Screenshots = (function() {
         }
         item.appendTo(parent);
       });
-      $('.carousel', container).carousel();
+      $('.carousel', container).carousel({
+         interval: 15 * 1000
+      });
       callback();
     });
   }
