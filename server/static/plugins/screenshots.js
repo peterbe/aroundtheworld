@@ -5,10 +5,9 @@ var Screenshots = (function() {
   var _loading = false;
 
   function _load_pictures(callback) {
-    $.getJSON(URL, function(response) {
+    var data = {include_description: true};
+    $.getJSON(URL, data, function(response) {
       var parent = $('#screenshot-carousel .carousel-inner', container);
-      console.log('parent', parent.length);
-      console.log('response', response);
       var no_pictures = response.pictures.length;
       $('div.item', parent).remove();
       $.each(response.pictures, function(i, each) {
@@ -38,7 +37,6 @@ var Screenshots = (function() {
   function setup_once() {
     _load_pictures(function() {
       $('.pictures', container).hide().fadeIn(300);
-      console.log('post loaded');
     });
   }
 

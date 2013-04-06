@@ -2576,31 +2576,63 @@ class CityHandler(AuthenticatedBaseHandler,
         messages = self.get_messages(location, limit=1)
         self.write({'messages': messages})
 
-@route('/screenshots.json', name='screenshots')
-class ScreenshotHandler(HomeHandler,
-                        PictureThumbnailMixin):
 
-    def get(self):
+class ScreenshotsMixin(PictureThumbnailMixin):
+
+    DEFAULT_SIZE = (700, 700)
+
+    def get_screenshots(self, limit=None, size=None,
+                        include_description=False):
+        if not size:
+            size = self.DEFAULT_SIZE
         pictures = []
         location = self.db.Location.find_one({'code': self.NOMANSLAND['code']})
         search = {
             'location': location['_id'],
             'published': True,
         }
-        for item in (self.db.LocationPicture
-                     .find(search)
-                     .sort('index')):
-            uri, (width, height) = self.get_thumbnail(item, (700, 700))  # XXX might need some more thought
+        query = (
+            self.db.LocationPicture
+            .find(search)
+            .sort('index')
+        )
+        if limit:
+            query = query.limit(limit)
+
+        for item in query:
+            uri, (width, height) = self.get_thumbnail(item, size)
             picture = {
               'src': uri,
               'width': width,
               'height': height,
               'title': item['title'],
             }
-            if item['description']:
+            if include_description and item['description']:
                 picture['description'] = item['description']  # XXX should this be markdown?
             pictures.append(picture)
 
+        return pictures
+
+
+@route('/screenshots.json', name='screenshots')
+class ScreenshotHandler(HomeHandler, ScreenshotsMixin):
+
+    def get(self):
+        if self.get_argument('limit', None):
+            limit = int(self.get_argument('limit'))
+        else:
+            limit = None
+        if self.get_argument('geometry', None):
+            size = [int(x) for x in self.get_argument('geometry').split('x')]
+        else:
+            size = None
+        include_description = self.get_argument('include_description', False)
+
+        pictures = self.get_screenshots(
+            limit=limit,
+            size=size,
+            include_description=include_description,
+        )
         self.write({'pictures': pictures})
 
 
@@ -3120,7 +3152,6 @@ class PinpointHandler(AuthenticatedBaseHandler):
                 diagonal_miles = int(d.miles)
                 center['diagonal_miles'] = diagonal_miles
                 center.save()
-            print repr(center['diagonal_miles'])
 
             distance = calculate_distance(guess, correct_position)
             data['miles'] = int(distance.miles)

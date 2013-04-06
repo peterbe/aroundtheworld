@@ -27,9 +27,14 @@
 }
 
 #welcome .not-logged-in p.login,
-#welcome .not-logged-in p.loading {
+#welcome .not-logged-in p.loading,
+#welcome p.screenshots {
     text-align: center;
     font-weight: bold;
+}
+#welcome p.screenshots {
+    font-size: 1.2em;
+    margin-top: 35px;
 }
 #welcome .not-logged-in p.login a {
     font-size: 1.4em;

@@ -21,6 +21,28 @@ var Welcome = (function() {
       });
       return false;
     });
+
+    if (!STATE.user) {
+      var data = {geometry: '60x60', limit: 5};
+      $.getJSON('/screenshots.json', data, function(response) {
+        var cc = $('.screenshots', container);
+        $.each(response.pictures, function() {
+          $('<img>')
+            .attr('src', this.src)
+              .attr('alt', this.title)
+                .appendTo($('a', cc));
+        });
+        cc.fadeIn(600);
+        $.getJSON('/screenshots.json', {limit: 3}, function(response) {
+          $.each(response.pictures, function() {
+            Utils.preload_image(this.src, function() {
+            });
+          });
+        });
+      });
+    } else {
+      $('.screenshots', container).hide();
+    }
   }
 
   return {
