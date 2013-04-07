@@ -149,8 +149,8 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         elif self.get_argument('get', None):
             raise NotImplementedError(self.get_argument('get'))
         else:
-            data['users'] = self._get_users(since)
-            data['friendships'] = self._get_friendships(since)
+            data['users'] = self._get_users(since, interval=None)
+            data['friendships'] = self._get_friendships(since, interval=None)
             self.render('admin/stats/numbers.html', **data)
 
     def _get_users(self, since, interval=datetime.timedelta(days=7)):
@@ -161,8 +161,15 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         date = first
         prev_signed_in = None
         prev_anonymous = None
+
         while date < last:
-            next = date + interval
+            next = date
+            if interval:
+                next += interval
+            else:
+                # monthly increment
+                while next.month == date.month:
+                    next += datetime.timedelta(days=1)
             anonymous = (self.db.User
                          .find({'anonymous': True,
                                 'add_date': {'$gte': date, '$lt': next}})
@@ -203,7 +210,13 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         prev_not_mutual = None
         prev_mutual = None
         while date < last:
-            next = date + interval
+            next = date
+            if interval:
+                next += interval
+            else:
+                # monthly increment
+                while next.month == date.month:
+                    next += datetime.timedelta(days=1)
             not_mutual = (self.db.Friendship
                           .find({'add_date': {'$gte': date, '$lt': next}})
                           .count())
