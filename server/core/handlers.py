@@ -2081,18 +2081,18 @@ class CityHandler(AuthenticatedBaseHandler,
             data['country'] = location['country']
             data['lat'] = location['lat']
             data['lng'] = location['lng']
-            data['about_jobs'] = self.get_about_jobs(location, user)
-            data['about_flights'] = self.get_about_flights(location, user)
-            data['about_writings'] = self.get_about_writings(location, user)
-            data['about_question_writing'] = self.get_about_question_writing(location, user)
-            data['about_pictures'] = self.get_about_pictures(location)
-            data['about_banks'] = self.get_about_banks(location, user)
-            data['about_league'] = self.get_about_league(user)
-            #data['count_pictures'] = self.get_pictures_count(location)
-            #data['count_messages'] = self.get_messages_count(location)
-            #data['count_banks'] = self.get_banks_count(location)
-            #data['has_introduction'] = bool(self.get_intro_html(location))
-            #data['has_ambassadors'] = bool(self.get_ambassadors_html(location))
+
+            if not self.get_argument('page', None):
+                about = {}
+                about['jobs'] = self.get_about_jobs(location, user)
+                about['flights'] = self.get_about_flights(location, user)
+                about['writings'] = self.get_about_writings(location, user)
+                about['question_writing'] = self.get_about_question_writing(location, user)
+                about['pictures'] = self.get_about_pictures(location)
+                about['banks'] = self.get_about_banks(location, user)
+                about['league'] = self.get_about_league(user)
+                data['about'] = about
+
             flag = self.get_flag(location, 64)
             if flag:
                 data['flag'] = flag

@@ -103,6 +103,9 @@ var Airport = (function() {
              return;
            }
            var hash = '#fly,' + response.from_code + '->' + response.to_code;
+           if (map.getZoom() != 15) {
+             map.setZoom(15);
+           }
            Loader.load_hash(hash);
            //State.update();
          });

@@ -26,23 +26,37 @@ var Welcome = (function() {
       var data = {geometry: '60x60', limit: 5};
       $.getJSON('/screenshots.json', data, function(response) {
         var cc = $('.screenshots', container);
+        var _preloaded = response.pictures.length;
         $.each(response.pictures, function() {
-          $('<img>')
-            .attr('src', this.src)
-              .attr('alt', this.title)
-                .appendTo($('a', cc));
-        });
-        cc.fadeIn(600);
-        $.getJSON('/screenshots.json', {limit: 3}, function(response) {
-          $.each(response.pictures, function() {
-            Utils.preload_image(this.src, function() {
-            });
+          var src = this.src;
+          var title = this.title;
+          Utils.preload_image(this.src, function() {
+            _preloaded--;
+            $('<img>')
+              .attr('src', src)
+                .attr('alt', title)
+                  .appendTo($('a', cc));
+            if (!_preloaded) {
+              // all thumbnails preloaded
+              cc.fadeIn(600, function() {
+                _load_some_screenshots();
+              });
+            }
           });
         });
       });
     } else {
       $('.screenshots', container).hide();
     }
+  }
+
+  function _load_some_screenshots() {
+    $.getJSON('/screenshots.json', {limit: 3}, function(response) {
+      $.each(response.pictures, function() {
+        Utils.preload_image(this.src, function() {
+        });
+      });
+    });
   }
 
   return {

@@ -97,6 +97,7 @@ def run(**options):
     collection = db.TotalEarned.collection
     if options.get('clear_all_first'):
         collection.drop_indexes()
+    yield ensure(collection, 'user')
     yield ensure(collection, 'coins')
 
     collection = db.NewsItem.collection

@@ -163,38 +163,41 @@ var City = (function() {
 
   return {
      load: function(page) {
-
+       page = page || null;
        Utils.loading_overlay_reset();
        $('.section:visible', container).hide();
        if (_has_loaded_home && !page) {
          Utils.loading_overlay_stop();
          $('.home', container).show();
        }
-       $.getJSON(URL, function(response) {
+       $.getJSON(URL, {page: page}, function(response) {
          if (response.error == 'NOTLOGGEDIN') return State.redirect_login();
          Utils.loading_overlay_stop();
          if (response.state) {
            STATE = response.state;
          }
-         $('h2 strong', container).text(response.name);
-         if (map && map.getZoom() < 15 && response.name.search('Tutorial') === -1) {
-           var p = new google.maps.LatLng(response.lat, response.lng);
-           if (p != map.getCenter()) {
-             map.setCenter(p);
-           }
-           map.setZoom(15);
-         }
+
          if (response.name) {
+           if (map && map.getZoom() < 15 && response.name.search('Tutorial') === -1) {
+             var p = new google.maps.LatLng(response.lat, response.lng);
+             if (p != map.getCenter()) {
+               map.setCenter(p);
+             }
+             map.setZoom(15);
+           }
            $('.location-name', container).text(response.name);
+           $('h2 strong', container).text(response.name);
          }
 
-         $('.about-jobs', container).html(response.about_jobs);
-         $('.about-flights', container).html(response.about_flights);
-         $('.about-writings', container).html(response.about_writings);
-         $('.about-question-writing', container).html(response.about_question_writing);
-         $('.about-pictures', container).html(response.about_pictures);
-         $('.about-banks', container).html(response.about_banks);
-         $('.about-league', container).html(response.about_league);
+         if (response.about) {
+           $('.about-jobs', container).html(response.about.jobs);
+           $('.about-flights', container).html(response.about.flights);
+           $('.about-writings', container).html(response.about.writings);
+           $('.about-question-writing', container).html(response.about.question_writing);
+           $('.about-pictures', container).html(response.about.pictures);
+           $('.about-banks', container).html(response.about.banks);
+           $('.about-league', container).html(response.about.league);
+         }
          if (response.flag) {
            $('a.flag img', container).attr('src', response.flag);
            var loc = response.locality || response.country;
@@ -327,7 +330,9 @@ var City = (function() {
                if (response.news.items.length >= 4) {
                  $('.show-more', c).show();
                }
-               c.fadeIn(300);
+               if (response.news.items.length) {
+                 c.fadeIn(300);
+               }
              }); // end load airport tickets
            }
            Utils.update_title();
