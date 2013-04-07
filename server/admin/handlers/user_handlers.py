@@ -22,6 +22,10 @@ class UsersAdminHandler(SuperuserBaseHandler):
                   if x.strip()]
             filter_['username'] = re.compile('|'.join(_q), re.I)
 
+        data['signedin'] = self.get_argument('signedin', False)
+        if data['signedin']:
+            filter_['anonymous'] = False
+
         args = dict(self.request.arguments)
         if 'page' in args:
             args.pop('page')

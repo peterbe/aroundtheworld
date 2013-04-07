@@ -29,7 +29,12 @@ tfoot th select[name="countries"] { width:150px; }
         </thead>
         <tfoot>
           <tr>
-            <th colspan="2"><input name="q" value="{{ q }}" placeholder="Search..."></th>
+            <th colspan="2">
+              <input name="q" value="{{ q }}" placeholder="Search...">
+              <input type="checkbox" name="signedin" value="1"
+              {% if signedin %}checked{% end %}
+              > <span style="font-weight:normal">only signed in</span>
+            </th>
             <th>&nbsp;</th>
             <th>&nbsp;</th>
             <th>&nbsp;</th>
