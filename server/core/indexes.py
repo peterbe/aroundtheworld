@@ -58,6 +58,7 @@ def run(**options):
     if options.get('clear_all_first'):
         collection.drop_indexes()
     yield ensure(collection, 'user')
+    yield ensure(collection, 'question')
 
     collection = db.Flight.collection
     if options.get('clear_all_first'):
