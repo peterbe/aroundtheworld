@@ -185,6 +185,7 @@ class Location(BaseDocument):
       'available': bool,
       'lat': float,
       'lng': float,
+      'locked': bool,
     }
 
     required_fields = [
@@ -196,6 +197,7 @@ class Location(BaseDocument):
 
     default_values = {
       'available': False,
+      'locked': False,
     }
 
     def __unicode__(self):

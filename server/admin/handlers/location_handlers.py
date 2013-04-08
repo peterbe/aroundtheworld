@@ -44,8 +44,15 @@ class LocationsAdminHandler(AmbassadorBaseHandler):
             for x in self.db.Location.find({'available': {'$exists': False}}):
                 x['available'] = False
                 x.save()
-
             filter_['available'] = _bool(data['available'])
+
+        data['locked'] = self.get_argument('locked', '')
+        if data['locked']:
+            # temporary legacy fix
+            for x in self.db.Location.find({'locked': {'$exists': False}}):
+                x['locked'] = False
+                x.save()
+            filter_['locked'] = _bool(data['locked'])
 
         args = dict(self.request.arguments)
         if 'page' in args:
@@ -59,11 +66,13 @@ class LocationsAdminHandler(AmbassadorBaseHandler):
         data['all_pages'] = range(1, data['count'] / self.LIMIT + 2)
         self.trim_all_pages(data['all_pages'], data['page'])
         data['filtering'] = bool(filter_)
-        for each in (self.db.Location
+        for each in (self.db.Location.collection
                      .find(filter_)
                      .sort('add_date', -1)  # newest first
                      .limit(self.LIMIT)
                      .skip(skip)):
+            # legacy, delete in May 2013
+            each['locked'] = each.get('locked', False)
             locations.append(each)
         data['locations'] = locations
         self.render('admin/locations.html', **data)
@@ -75,6 +84,8 @@ class LocationAdminHandler(AmbassadorBaseHandler):
     def get(self, _id, form=None):
         data = {}
         data['location'] = self.db.Location.find_one({'_id': ObjectId(_id)})
+        if 'locked' not in data['location']:
+            data['location']['locked'] = False
         if form is None:
             initial = dict(data['location'])
             form = LocationForm(**initial)
@@ -99,6 +110,7 @@ class LocationAdminHandler(AmbassadorBaseHandler):
             location['lat'] = float(form.lat.data)
             location['lng'] = float(form.lng.data)
             location['available'] = bool(form.available.data)
+            location['locked'] = bool(form.locked.data)
             location.save()
             self.redirect(self.reverse_url('admin_locations'))
         else:

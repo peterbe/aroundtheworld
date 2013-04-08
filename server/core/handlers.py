@@ -1714,7 +1714,10 @@ class FlightFinderMixin(object):
               'miles': distance.miles,
               'lat': location['lat'],
               'lng': location['lng'],
+              'locked': location.get('locked', False),
             }
+            if not user['anonymous']:
+                destination['locked'] = False
             if ticket_progress:
                 destination['ticket_info'] = 'bla coins'
                 percentage = 100.0 * user_settings['coins_total'] / economy
@@ -1734,7 +1737,8 @@ class FlightFinderMixin(object):
               'name': 'Moon',
               'cost': {'economy': 1000000},
               'miles': 238857,
-              'canafford': False
+              'canafford': False,
+              'locked': user['anonymous'],
             })
 
         if ticket_progress:
@@ -3300,6 +3304,9 @@ class FlyHandler(AirportHandler):
         state = self.get_state()
         if cost > state['user']['coins_total']:
             self.write({'error': 'CANTAFFORD'})
+            return
+        if location.get('locked', False) and user['anonymous']:
+            self.write({'error': 'LOCKED'})
             return
 
         # make the transaction

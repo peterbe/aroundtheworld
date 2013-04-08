@@ -25,6 +25,7 @@ tfoot th select[name="countries"] { width:150px; }
             <th>Country</th>
             <th>Locality</th>
             <th>Available</th>
+            <th>Locked</th>
             <th>Code</th>
             <!--<th>Airport</th>-->
             <th>Added</th>
@@ -49,6 +50,12 @@ tfoot th select[name="countries"] { width:150px; }
               <option value="no" {% if available == 'no' %}selected{% end %}>no</option>
             </select>
             </th>
+            <th><select name="locked">
+              <option value="">--</option>
+              <option value="yes" {% if locked == 'yes' %}selected{% end %}>yes</option>
+              <option value="no" {% if locked == 'no' %}selected{% end %}>no</option>
+            </select>
+            </th>
             <!--<th>&nbsp;</th>-->
             <th>&nbsp;</th>
             <th>
@@ -66,6 +73,11 @@ tfoot th select[name="countries"] { width:150px; }
             <td>{{ location['locality'] or '-' }}</td>
             <td>{% if location.get('available') %}
             <img src="{{ static_url('images/check-small.png') }}" title="You can fly to this destination" alt="You can fly to this destination">
+            {% else %}-
+            {% end %}
+            </td>
+            <td>{% if location.get('locked') %}
+            <img src="{{ static_url('images/locked.gif') }}" title="Locked till user signs in">
             {% else %}-
             {% end %}
             </td>

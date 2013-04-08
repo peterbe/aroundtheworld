@@ -24,6 +24,10 @@
     <form>
       <input type="hidden" name="code" value="">
       <input type="hidden" name="first" value="">
+      <p class="locked" style="display:none">
+        <img src="{{ static_url('images/locked.gif') }}" alt="Locked until you sign in">
+        This destination is locked until you <a href="#login" class="overlay-changer">sign in</a>.
+      </p>
       <p class="cant-afford" style="display:none">
       Sorry you <strong>can't afford that</strong> yet. You need
       <strong class="more-coins"></strong> more coins.
@@ -56,11 +60,12 @@
       <td class="number">Distance</td>
       <td class="number">Economy</td>
       <td class="number">First Class</td>
+      <td>&nbsp;</td>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td colspan="4"><p><em>Loading prices. Please wait...</em></p></td>
+      <td colspan="5"><p><em>Loading prices. Please wait...</em></p></td>
     </tr>
   </tbody>
   </table>

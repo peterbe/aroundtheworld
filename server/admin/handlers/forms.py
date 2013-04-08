@@ -251,6 +251,8 @@ class LocationForm(BaseForm):
     lng = TextField("Longitude", [validators.Required(), Floatable()])
     available = BooleanField("Available", [],
                              description="Decides if you can fly to it")
+    locked = BooleanField("Locked", [],
+                          description="Locked till user signs in")
 
 
 class BankForm(BaseForm):

@@ -280,6 +280,7 @@ var City = (function() {
                $('.destination', c).remove();
                var d_container = $('.destinations', container);
                var count = 0;
+               var destination_label, destination_title;
                $.each(response.destinations, function(i, destination) {
                  var d = $('<div>').addClass('destination');
 
@@ -291,15 +292,26 @@ var City = (function() {
                  } else {
                    dd.append($('<div>').addClass('bar').css('width', destination.percentage + '%'));
                  }
+                 destination_label = $('<span>').text(destination.name);
+                 destination_title = 'Fancy a trip to ' + destination.name + '?';
+                 if (destination.locked) {
+                   destination_label.append($('<img>')
+                                            .css('padding-left', '5px')
+                                            .attr('src', LOCK_IMG_URL)
+                                            .attr('alt', 'Locked until you sign in'));
+                   //destination_label += ' (locked)';
+                   destination_title = 'Locked until you sign in';
+                 }
                  $('<p>')
                    .append($('<a href=""></a>')
                            .addClass('overlay-changer')
                            .addClass(destination.canafford ? 'can-afford' : 'cant-afford')
                            .attr('href', '#airport,' + destination.code)
+                           .attr('title', destination_title)
                            .click(function() {
                              Loader.load_hash('#airport,' + destination.code);
                            })
-                           .text(destination.name))
+                           .append(destination_label))
                    .append($('<span>')
                            .addClass('ticket-info')
                            .text(Utils.formatCost(destination.cost.economy, true)))

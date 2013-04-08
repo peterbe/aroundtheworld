@@ -1,16 +1,21 @@
 #airport td.number {
-  text-align: right;
+    text-align: right;
 }
 
 #airport tr.cantafford td {
-  opacity: 0.6;
+    opacity: 0.6;
 }
 
+#airport tr.locked td {
+    opacity: 0.9;
+    text-decoration: line-through;
+}
 #airport .show-map a {
     font-weight: bold;
 }
 
-span.cantafford {
+span.cantafford,
+span.locked {
     color: red;
 }
 

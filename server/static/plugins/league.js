@@ -23,7 +23,7 @@ var League = (function() {
         .append($('<td>').addClass('total').text(Utils.formatCost(each.total)))
         .appendTo(c);
     });
-    if (list.length >= 1) {
+    if (list.length > 1) {
       $('.highscore .league-news', container).show();
     } else {
       $('.highscore .league-news', container).hide();

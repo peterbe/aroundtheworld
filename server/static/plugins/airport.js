@@ -26,7 +26,7 @@ var Airport = (function() {
          _once = true;
        }
      },
-     confirm: function(name, code, cost, first) {
+     confirm: function(name, code, cost, first, locked) {
        if ($('#airport:hidden').size()) {
          // was on the interactive map
          $('#airport').show();
@@ -70,10 +70,17 @@ var Airport = (function() {
            $('.choices', container).show();
          });
        });
-       if (cost > STATE.user.coins_total) {
-         $('.cant-afford', c).show('fast');
+
+       if (locked) {
+         $('.locked', c).fadeIn(300);
+         $('button[type="submit"]', c).attr('disabled', 'disabled');
+       } else if (cost > STATE.user.coins_total) {
+         $('.cant-afford', c).fadeIn(300);
          $('.cant-afford .more-coins', c).text(Utils.formatCost(cost - STATE.user.coins_total, true));
          $('button[type="submit"]', c).attr('disabled', 'disabled');
+       } else {
+         $('.locked', c).hide();
+         $('.cant-afford', c).hide();
        }
        sounds.preload('cash-2');
        $('form', c).unbind('submit').submit(function() {
@@ -92,6 +99,11 @@ var Airport = (function() {
            }
            if (response.error == 'CANTAFFORD') {
              alert("Sorry. Can't afford the ticket");
+             Loader.load_hash('#airport');
+             return;
+           }
+           if (response.error == 'LOCKED') {
+             alert("Sorry. Destination locked.");
              Loader.load_hash('#airport');
              return;
            }
@@ -126,13 +138,20 @@ var Airport = (function() {
          $.each(response.destinations, function(i, each) {
            r = $('<tr>');
            r.data('cost', each.cost);
-           if (!each.canafford) {
-             r.addClass('cantafford');
-             a_title = "You can not yet afford to fly to " + each.name;
+           if (each.locked) {
+             r.addClass('locked');
+             a_title = "Flying to " + each.name + " is locked until you sign in";
            } else {
-             r.removeClass('cantafford');
-             a_title = "You can afford to fly to " + each.name;
+             r.removeClass('locked');
+             if (!each.canafford) {
+               r.addClass('cantafford');
+               a_title = "You can not yet afford to fly to " + each.name;
+             } else {
+               r.removeClass('cantafford');
+               a_title = "You can afford to fly to " + each.name;
+             }
            }
+
            if (each.flag) {
              $('<td>')
                .append($('<img>')
@@ -156,9 +175,10 @@ var Airport = (function() {
            $('<a href="#">')
                .data('code', each.code)
                .data('first', false)
-               .text(Utils.formatCost(each.cost.economy, true)).attr('title', a_title)
+               .text(Utils.formatCost(each.cost.economy, true))
+               .attr('title', a_title)
                  .click(function() {
-                   Airport.confirm(each.name, each.code, each.cost.economy, false);
+                   Airport.confirm(each.name, each.code, each.cost.economy, false, each.locked);
                    return false;
                  }).appendTo($('<td>')
                              .addClass('cost')
@@ -169,9 +189,10 @@ var Airport = (function() {
              $('<a href="#">')
                  .data('code', each.code)
                  .data('first', true)
+                 .attr('title', 'First Class tickets are for first class people')
                  .text(Utils.formatCost(each.cost.first, true))
                    .click(function() {
-                     Airport.confirm(each.name, each.code, each.cost.first, true);
+                     Airport.confirm(each.name, each.code, each.cost.first, true, each.locked);
                      return false;
                    }).appendTo($('<td>')
                                .addClass('cost')
@@ -182,6 +203,15 @@ var Airport = (function() {
                .addClass('cost')
                  .text('not available')
                    .appendTo(r);
+           }
+           if (each.locked) {
+           $('<td>')
+             .append($('<img>')
+                     .attr('src', LOCK_IMG_URL)
+                     .attr('alt', "Locked until you sign in"))
+               .appendTo(r);
+           } else {
+             $('<td>').text(' ').appendTo(r);
            }
 
            $('.destinations', container).append($('<tbody>').append(r));
@@ -223,14 +253,16 @@ var Airport = (function() {
             content += ' (' + Utils.formatCost(each.cost.first, true) + ' First Class)';
           }
           content += '<br>';
-          if (!each.canafford) {
+          if (each.locked) {
+            content += ' <span class="locked">locked until you sign in</span><br>';
+          } else if (!each.canafford) {
             content += ' <span class="cantafford">can\'t afford it yet</span><br>';
           } else {
             content += ' <a href="#airport,' + each.code + '"';
-            content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.economy+'\',false);return false">Buy ticket</a>';
+            content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.economy+'\',false,false);return false">Buy ticket</a>';
             if (each.cost.first) {
               content += ' <a href="#airport,' + each.code + '"';
-              content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.first+'\',true);return false">First Class</a>';
+              content += ' onclick="Airport.confirm(\''+each.name+ '\',\''+each.code+ '\',\''+each.cost.first+'\',true,false);return false">First Class</a>';
             }
           }
           var infowindow = new google.maps.InfoWindow({
