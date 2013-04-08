@@ -45,3 +45,9 @@ span.locked {
 #airport .first-class img {
     float: left;
 }
+
+@media (max-width: 480px) {
+    td.distance {
+      display: none;
+    }
+}

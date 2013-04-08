@@ -159,7 +159,7 @@ span.question {
   #quizzing .question-attention {
     margin: 1px;
     padding: 2px;
-    width: 90%;
+    width: 450px;
   }
   #quizzing span.question {
     display: block;
