@@ -65,17 +65,24 @@ def run(**options):
         collection.drop_indexes()
     yield ensure(collection, 'user')
 
+    collection = db.Question.collection
+    if options.get('clear_all_first'):
+        collection.drop_indexes()
+    yield ensure(collection, [('location', 1), ('published', 1)])
+
     collection = db.Job.collection
     if options.get('clear_all_first'):
         collection.drop_indexes()
     yield ensure(collection, 'user')
     yield ensure(collection, 'category')
     yield ensure(collection, 'location')
+    yield ensure(collection, 'add_date')
 
     collection = db.Award.collection
     if options.get('clear_all_first'):
         collection.drop_indexes()
     yield ensure(collection, 'user')
+    yield ensure(collection, 'add_date')
 
     collection = db.Bank.collection
     if options.get('clear_all_first'):
