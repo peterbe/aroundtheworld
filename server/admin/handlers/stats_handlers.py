@@ -291,14 +291,18 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         date = first
         points = defaultdict(list)
         cum_points = defaultdict(int)
+        tutorial = self.db.Category.find_one({'name': 'Tutorial'})
         categories = [(x['_id'], x['name']) for x in
-                      self.db.Category.collection.find(None, ('_id', 'name'))]
+                      self.db.Category.collection
+                      .find({'_id': {'$ne': tutorial['_id']}},
+                            ('_id', 'name'))]
         _categories = dict(categories)
         while date < last:
             next = date + interval
             counts = defaultdict(int)
             for job in (self.db.Job.collection
-                         .find({'add_date': {'$gte': date, '$lt': next}},
+                         .find({'add_date': {'$gte': date, '$lt': next},
+                                'category': {'$ne': tutorial['_id']}},
                                ('category',))):
                 counts[job['category']] += 1
 
@@ -331,7 +335,11 @@ class StatsNumbersAdminHandler(SuperuserBaseHandler):
         date = first
         points = defaultdict(list)
         cum_points = defaultdict(int)
-        types = self.db.Award.collection.find().distinct('type')
+        types = (
+            self.db.Award.collection
+            .find({'type': {'$ne': 'tutorial'}})
+            .distinct('type')
+        )
         while date < last:
             next = date + interval
             for type_ in types:
