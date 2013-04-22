@@ -216,3 +216,10 @@ class TimeSince(tornado.web.UIModule):
     def render(self, date, date2=None):
         assert date
         return smartertimesince(date, date2)
+
+
+class InlineCSS(tornado.web.UIModule):
+    def render(self, *uris):
+        if 1:#if self.handler.application.settings['optimize_static_content']:
+            module = self.handler.application.ui_modules['StaticInline'](self.handler)
+            return module.render(*uris)

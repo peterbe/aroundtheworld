@@ -40,9 +40,8 @@ class Application(tornado.web.Application):
                 except TypeError:  # pragma: no cover
                     # most likely a builtin class or something
                     pass
-
         if optimize_static_content is None:
-            optimize_static_content = options.dont_optimize_static_content
+            optimize_static_content = not options.dont_optimize_static_content
 
         try:
             cdn_prefix = [x.strip() for x in open('cdn_prefix.conf')
@@ -53,6 +52,7 @@ class Application(tornado.web.Application):
 
         from tornado_utils import tornado_static
         ui_modules_map['Static'] = tornado_static.Static
+        ui_modules_map['StaticInline'] = tornado_static.StaticInline
         ui_modules_map['StaticURL'] = tornado_static.StaticURL
         ui_modules_map['Static64'] = tornado_static.Static64
         routed_handlers = route.get_routes()
@@ -68,7 +68,7 @@ class Application(tornado.web.Application):
             admin_emails=settings.ADMIN_EMAILS,
             ui_modules=ui_modules_map,
             embed_static_url_timestamp=not options.dont_embed_static_url,
-            optimize_static_content=not optimize_static_content,
+            optimize_static_content=optimize_static_content,
             cdn_prefix=cdn_prefix,
             CLOSURE_LOCATION=os.path.join(os.path.dirname(__file__),
                                           "static", "compiler.jar"),
