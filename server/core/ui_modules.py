@@ -2,7 +2,7 @@ import cgi
 import logging
 import datetime
 import os
-from time import mktime
+import time
 import settings
 import json
 from tornado_utils.thumbnailer import get_thumbnail
@@ -62,7 +62,7 @@ class JSON(tornado.web.UIModule):
 class PictureThumbnailMixin:
 
     def make_thumbnail(self, question_image, (max_width, max_height), **kwargs):
-        timestamp = int(mktime(question_image['modify_date'].timetuple()))
+        timestamp = int(time.mktime(question_image['modify_date'].timetuple()))
         image = question_image.fs.get_last_version('original')
         if image.content_type == 'image/png':
             ext = '.png'
@@ -181,12 +181,18 @@ class GetPictureThumbnailSrc(ShowPictureThumbnail):
         return attrs['src']
 
 
+script_tags_result = None
+
+
 class ScriptTags(tornado.web.UIModule):
 
     def render(self, *uris, **attrs):
         if self.handler.application.settings['optimize_static_content']:
-            module = self.handler.application.ui_modules['Static'](self.handler)
-            return module.render(*uris, **attrs)
+            global script_tags_result
+            if not script_tags_result:
+                module = self.handler.application.ui_modules['Static'](self.handler)
+                script_tags_result = module.render(*uris, **attrs)
+            return script_tags_result
 
         html = []
         for each in uris:
@@ -218,8 +224,13 @@ class TimeSince(tornado.web.UIModule):
         return smartertimesince(date, date2)
 
 
+inline_result = None
+
 class InlineCSS(tornado.web.UIModule):
+
     def render(self, *uris):
-        if 1:#if self.handler.application.settings['optimize_static_content']:
+        global inline_result
+        if not inline_result:
             module = self.handler.application.ui_modules['StaticInline'](self.handler)
-            return module.render(*uris)
+            inline_result = module.render(*uris)
+        return inline_result
