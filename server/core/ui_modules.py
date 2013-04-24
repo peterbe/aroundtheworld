@@ -181,18 +181,12 @@ class GetPictureThumbnailSrc(ShowPictureThumbnail):
         return attrs['src']
 
 
-script_tags_result = None
-
-
 class ScriptTags(tornado.web.UIModule):
 
     def render(self, *uris, **attrs):
         if self.handler.application.settings['optimize_static_content']:
-            global script_tags_result
-            if not script_tags_result:
-                module = self.handler.application.ui_modules['Static'](self.handler)
-                script_tags_result = module.render(*uris, **attrs)
-            return script_tags_result
+            module = self.handler.application.ui_modules['Static'](self.handler)
+            return module.render(*uris, **attrs)
 
         html = []
         for each in uris:
@@ -224,13 +218,8 @@ class TimeSince(tornado.web.UIModule):
         return smartertimesince(date, date2)
 
 
-inline_result = None
-
 class InlineCSS(tornado.web.UIModule):
 
     def render(self, *uris):
-        global inline_result
-        if not inline_result:
-            module = self.handler.application.ui_modules['StaticInline'](self.handler)
-            inline_result = module.render(*uris)
-        return inline_result
+        module = self.handler.application.ui_modules['StaticInline'](self.handler)
+        return module.render(*uris)
