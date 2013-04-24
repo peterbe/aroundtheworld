@@ -2605,8 +2605,10 @@ class ScreenshotsMixin(PictureThumbnailMixin):
 
         for item in query:
             uri, (width, height) = self.get_thumbnail(item, size)
+            url = self.static_url(uri.replace('/static/', ''))
+
             picture = {
-              'src': uri,
+              'src': url,
               'width': width,
               'height': height,
               'title': item['title'],

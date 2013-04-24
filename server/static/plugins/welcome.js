@@ -28,21 +28,20 @@ var Welcome = (function() {
         var cc = $('.screenshots', container);
         var _preloaded = response.pictures.length;
         $.each(response.pictures, function() {
-          var src = this.src;
-          var title = this.title;
-          Utils.preload_image(this.src, function() {
-            _preloaded--;
-            $('<img>')
-              .attr('src', src)
-                .attr('alt', title)
-                  .appendTo($('a', cc));
-            if (!_preloaded) {
-              // all thumbnails preloaded
-              cc.fadeIn(600, function() {
-                _load_some_screenshots();
-              });
-            }
-          });
+
+          $('<img>')
+            .attr('src', this.src)
+              .attr('alt', this.title)
+                .load(function() {
+                  _preloaded--;
+                  if (!_preloaded) {
+                    // all thumbnails preloaded
+                    cc.fadeIn(600, function() {
+                      _load_some_screenshots();
+                    });
+                  }
+                })
+                .appendTo($('a', cc));
         });
       });
     } else {
@@ -51,7 +50,8 @@ var Welcome = (function() {
   }
 
   function _load_some_screenshots() {
-    $.getJSON('/screenshots.json', {limit: 3}, function(response) {
+    // just preload the first one
+    $.getJSON('/screenshots.json', {limit: 1}, function(response) {
       $.each(response.pictures, function() {
         Utils.preload_image(this.src, function() {
         });
