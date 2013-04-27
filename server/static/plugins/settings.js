@@ -35,6 +35,7 @@ var Settings = (function() {
     $.post(URL, f.serializeObject(), function(response) {
       $('.saved-notification:hidden', container).hide().fadeIn(200);
       _set_form_data(response);
+      $('.username-error-text', container).hide();
       State.update();
       setTimeout(function() {
         $('.saved-notification:visible', container).fadeOut(500);
@@ -50,11 +51,11 @@ var Settings = (function() {
         $.getJSON(URL, {'check-username': username}, function(response) {
           if (response.wrong) {
             $('input[name="username"]', f).on('keydown', function() {
-              $('.username-error-text').fadeOut(300);
+              $('.username-error-text', container).fadeOut(300);
               $(this).off('keydown');
             });
-            $('.username-error-text')
-              .text("Something not right: " + response.wrong)
+            $('.username-error-text', container)
+              .text("Something's not right: " + response.wrong)
                 .hide()
                   .fadeIn(200);
           } else {

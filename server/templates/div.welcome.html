@@ -8,13 +8,13 @@
   <div class="not-logged-in alternative"
     {% if state.get('user') %}style="display:none"{% end %}>
     <img class="image-left deferred" src="." data-src="{{ static_url('images/airplane-and-bag.png') }}" alt="Airplane">
-    <a href="#login" class="overlay-changer"><img class="image-right deferred" src="." data-src="{{ static_url('images/passport.png') }}" alt="Passport"></a>
+    <a href="#signin" class="overlay-changer"><img class="image-right deferred" src="." data-src="{{ static_url('images/passport.png') }}" alt="Passport"></a>
     <h3>A game where you try to reach every destination around the world.</h3>
 
     <p class="login">
       <a href="#welcome" class="login-shortcut">Get started straight away &gt;&gt;</a>
       <br>or<br>
-      <a href="#login" class="overlay-changer">Sign in &gt;&gt;</a>
+      <a href="#signin" class="overlay-changer">Sign in &gt;&gt;</a>
     </p>
 
     <p class="screenshots" style="display:none">

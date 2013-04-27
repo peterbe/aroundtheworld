@@ -1,0 +1,43 @@
+#signin a.btn {
+    text-decoration: none;
+}
+#signin .left,
+#signin .right {
+    width:48%;
+}
+
+#signin .left h3,
+#signin .right h3 {
+    margin-top: 15px;
+}
+
+#signin .left {
+    float: left;
+}
+#signin .right {
+    float: right;
+}
+
+
+#signin .right p,
+#signin .left p {
+    margin:20px;
+}
+
+#signin .hint {
+    clear: left;
+}
+
+#signin .other-note {
+    clear: both;
+}
+
+@media (max-width: 480px) {
+  #signin .left,
+  #signin .right {
+      width: 100%;
+  }
+  #signin .left {
+      float: none;
+  }
+}

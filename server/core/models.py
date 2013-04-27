@@ -806,3 +806,17 @@ class NewsItem(BaseDocument):
     default_values = {
       'read': False,
     }
+
+
+@register
+class SigninToken(BaseDocument):
+    __collection__ = 'signintokens'
+    structure = {
+        'email': unicode,
+        'used': int,
+        'token': unicode,
+    }
+
+    default_values = {
+        'used': 0,
+    }

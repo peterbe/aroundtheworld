@@ -62,6 +62,9 @@ $(function() {
 	  {% if user_settings.get('google') %}
 	  Google
 	  {% end %}
+          {% if signin_by_email %}
+          Sign-in by email
+          {% end %}
 	{% end %}
       </dd>
 

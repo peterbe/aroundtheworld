@@ -105,7 +105,7 @@ class AuthenticatedBaseHandler(BaseHandler):
     def prepare(self):
         user = self.get_current_user()
         if not user:
-            self.redirect('/#login')
+            self.redirect('/#signin')
         elif not user['superuser']:
             # check that you're ambassador or mayor
             if self.AMBASSADOR_OK and (self.db.Ambassador

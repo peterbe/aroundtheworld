@@ -91,8 +91,8 @@ class BaseHandler(tornado.web.RequestHandler):
     PLUGINS = {
       'banks': ['css/plugins/banks.css',
                 'plugins/banks.js'],
-      'login': ['css/plugins/login.css',
-                'plugins/login.js'],
+      'signin': ['css/plugins/signin.css',
+                 'plugins/signin.js'],
       'quizzing': ['css/plugins/quizzing.css',
                    'plugins/quizzing.js'],
       'picturedetective': ['css/plugins/picturedetective.css',
@@ -1359,8 +1359,9 @@ class SettingsHandler(AuthenticatedBaseHandler):
             return "Can't contain spaces"
         if len(username) > 50:
             return "Too long"
-        search = {'username': re.compile(re.escape(username), re.I),
+        search = {'username': re.compile('^%s$' % re.escape(username), re.I),
                   '_id': {'$ne': user['_id']}}
+
         if self.db.User.find_one(search):
             return "Taken"
 
@@ -3424,6 +3425,7 @@ class BaseAuthHandler(BaseHandler):
         elif self.get_cookie('next', None):
             next = self.get_cookie('next')
             self.clear_cookie('next')
+
         return next
 
     def notify_about_new_user(self, user, extra_message=None):
@@ -3635,6 +3637,123 @@ class BaseAuthHandler(BaseHandler):
         )
 
 
+@route('/auth/email/', name='auth_email')
+class EmailAuthHandler(BaseAuthHandler):
+
+    def get(self):
+        id_ = self.get_argument('id')
+        print "ID", id_
+        signed_in = False
+        try:
+            signin_token = self.db.SigninToken.find_one({'_id': ObjectId(id_)})
+            print repr(signin_token)
+            if signin_token['used'] > 0:
+                signed_in = True
+        except InvalidId:
+            pass
+
+        self.write({'signed_in': signed_in})
+
+    def post(self):
+        email = self.get_argument('email').strip()
+        if ' ' in email or email.count('@') != 1:
+            self.write({'error': 'INVALIDEMAIL'})
+            return
+
+        signin_token = self.db.SigninToken()
+        signin_token['email'] = email
+        signin_token['token'] = unicode(uuid.uuid4())[:12]
+        signin_token.save()
+
+        user = self.db.User.find_one({'email': email})
+        if not user:
+            user = self.db.User.find_one(
+                {'email': re.compile(re.escape(email), re.I)}
+            )
+
+        url = self.reverse_url('email_signin', signin_token['token'])
+        base_url = '%s://%s' % (self.request.protocol, self.request.host)
+        full_token_url = base_url + url
+
+        from_ = getattr(settings, 'NOREPLY_EMAIL', None)
+        if not from_:
+            from_ = 'noreply@%s' % self.request.host
+        subject = u"Sign in to %s" % (settings.PROJECT_TITLE,)
+        body = []
+        body = self.render_string('email_signin.txt', **{
+            'user': user,
+            'full_token_url': full_token_url,
+        })
+        send_email(
+            self.application.settings['email_backend'],
+            subject,
+            body,
+            '%s <%s>' % (settings.PROJECT_TITLE, from_),
+            [email]
+        )
+        print body
+        self.write({
+            'subject': subject,
+            'from': from_,
+            'email': email,
+            'id': str(signin_token['_id']),
+        })
+
+
+@route('/signin/([\w-]{12})/', name='email_signin')
+class EmailSigninHandler(EmailAuthHandler):
+
+    def get(self, token):
+        signin_token = self.db.SigninToken.find_one({'token': token})
+        if not signin_token:
+            self.render('email_signin_failed.html', expired=False)
+            return
+
+        signin_token['used'] += 1
+        signin_token.save()
+        email = signin_token['email']
+
+        user = self.db.User.find_one({'email': email})
+        if not user:
+            user = self.db.User.find_one(
+                {'email': re.compile(re.escape(email), re.I)}
+            )
+
+        if not user:
+            # create a new account
+            user = self.db.User()
+            username = email.split('@')[0]
+            if self.db.User.find({'username': username}).count():
+                username += str(random.randint(10, 100))
+            user.username = username
+            user.email = email
+            #if first_name:
+            #    user.first_name = first_name
+            #if last_name:
+            #    user.last_name = last_name
+
+            user.set_password(unicode(uuid.uuid4()))
+            user.save()
+            self.notify_about_new_user(
+                user,
+                extra_message="Used Email Sign-in"
+            )
+
+        user_settings = self.get_user_settings(user)
+        if not user_settings:
+            user_settings = self.create_user_settings(user)
+        user_settings.email_verified = user.email
+        user_settings.save()
+
+        old_user = self.get_current_user()
+        self.post_login_successful(user, previous_user=old_user)
+        self.set_secure_cookie("user", str(user._id), expires_days=300)
+        default = '/city'
+        if not (user['first_name'] or user['last_name']):
+            default = '/settings'
+        self.redirect(self.get_next_url(default=default))
+
+
 @route('/auth/anonymous/', name='auth_anonymous')
 class AnonymousAuthHandler(BaseAuthHandler):
 
@@ -3707,8 +3826,9 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
         if not user:
             user = self.db.User.one({'email': email})
             if user is None:
-                user = (self.db.User.find_one({
-                          'email': re.compile(re.escape(email), re.I)}))
+                user = self.db.User.find_one(
+                    {'email': re.compile(re.escape(email), re.I)}
+                )
 
         if not user:
             # create a new account

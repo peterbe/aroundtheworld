@@ -154,23 +154,39 @@ class UserAdminHandler(SuperuserBaseHandler):
         data['user'] = user
         if form is None:
             initial = dict(user)
-            initial['ambassador'] = [x['country'] for x in
-                                     self.db.Ambassador
-                                      .find({'user': user['_id']})]
+            initial['ambassador'] = [
+                x['country'] for x in
+                self.db.Ambassador.find({'user': user['_id']})
+            ]
             form = UserForm(countries=self.countries, **initial)
         data['form'] = form
-        data['user_settings'] = (self.db.UserSettings
-                                 .find_one({'user': user['_id']}))
+        data['user_settings'] = (
+            self.db.UserSettings
+            .find_one({'user': user['_id']})
+        )
         data['total_earned'] = self.get_total_earned(user)
-        data['current_location'] = (self.db.Location
-                                 .find_one({'_id': user['current_location']}))
-        data['count_friendships'] = (self.db.Friendship
-                                     .find({'user': user['_id']})
-                                     .count())
-        data['count_mutual_friendships'] = (self.db.Friendship
-                                            .find({'user': user['_id'],
-                                                   'mutual': True})
-                                            .count())
+        data['current_location'] = (
+            self.db.Location
+            .find_one({'_id': user['current_location']})
+        )
+        data['count_friendships'] = (
+            self.db.Friendship
+            .find({'user': user['_id']})
+            .count()
+        )
+        data['count_mutual_friendships'] = (
+            self.db.Friendship
+            .find({'user': user['_id'], 'mutual': True})
+            .count()
+        )
+        signin_by_email = (
+            self.db.SigninToken.find({
+                'used': {'$gt': 0},
+                'email': user['email'],
+            })
+            .count()
+        )
+        data['signin_by_email'] = signin_by_email
         self.render('admin/user.html', **data)
 
     def post(self, _id):

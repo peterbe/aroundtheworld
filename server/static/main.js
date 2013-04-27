@@ -165,7 +165,7 @@ var State = (function() {
       _show_change(delta, animated, '.user-miles', 'miles', callback);
     },
     redirect_login: function() {
-      Loader.load_hash('#login');
+      Loader.load_hash('#signin');
     },
     redirect_to_city: function() {
       Loader.load_hash('#city');

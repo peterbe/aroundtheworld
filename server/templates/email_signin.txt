@@ -1,0 +1,13 @@
+Hi {% if user and user['first_name'] %}{{ user['first_name'] }}{% else %}there{% end %}!
+
+Did you enter your email to sign in to {{ PROJECT_TITLE }}? If so,
+follow this link:
+
+{{ full_token_url }}
+
+
+If you don't remember trying to sign in to {{ PROJECT_TITLE }} please
+just ignore this email.
+
+--
+{{ SIGNATURE }}

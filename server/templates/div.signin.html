@@ -1,9 +1,9 @@
-<div id="login" class="overlay" style="display:none">
+<div id="signin" class="overlay" style="display:none">
   <h2>Sign in and registration</h2>
 
 
   <div class="left">
-    <h3>Secure login</h3>
+    <h3>Secure Sign-in</h3>
 
     <p>
     <a class="btn btn-large auth" href="/auth/google/">
@@ -16,12 +16,31 @@
       <img src="." data-src="{{ static_url('images/twitter-bird-trans.png') }}" class="deferred" alt="Sign in with Twitter">
       Sign in with Twitter
     </a>
-    
+
     </p>
 
   </div>
 
   <div class="right">
+    <h3>By Email</h3>
+
+    <form>
+      <p>
+      <input type="email" name="email" placeholder="your@emailaddress.com">
+      <button class="btn btn-mini signin" style="display:none">Sign in</button>
+      <span class="help-block before">
+        <!--Enter your email to either register or sign in.-->
+        A verification email will be sent to you.
+      </span>
+      <span class="help-block after" style="display:none">
+      We have now sent you an email to <code class="email"></code><br>
+      from <code class="from"></code><br>
+      with the subject line: <code class="subject"></code>.
+      </span>
+      </p>
+    </form>
+
+    <div class="play-anonymously">
     <h3>Or...</h3>
 
     <p>
@@ -30,6 +49,7 @@
       Play anonymously
     </a>
     </p>
+    </div>
 
   </div>
 
@@ -41,7 +61,5 @@
 
   </div>
 
-
-  <p class="other-note">Other forms of signing in is coming in a future version.</p>
 
 </div>
