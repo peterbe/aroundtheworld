@@ -3642,11 +3642,9 @@ class EmailAuthHandler(BaseAuthHandler):
 
     def get(self):
         id_ = self.get_argument('id')
-        print "ID", id_
         signed_in = False
         try:
             signin_token = self.db.SigninToken.find_one({'_id': ObjectId(id_)})
-            print repr(signin_token)
             if signin_token['used'] > 0:
                 signed_in = True
         except InvalidId:
@@ -3691,7 +3689,7 @@ class EmailAuthHandler(BaseAuthHandler):
             '%s <%s>' % (settings.PROJECT_TITLE, from_),
             [email]
         )
-        print body
+        #print body
         self.write({
             'subject': subject,
             'from': from_,

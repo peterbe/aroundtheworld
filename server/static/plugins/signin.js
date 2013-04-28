@@ -28,6 +28,7 @@ var Login = (function() {
           $('.subject', cc).text(response.subject);
           $('.from', cc).text(response.from);
           cc.hide().fadeIn(300);
+          $('.play-anonymously', container).hide();
           waiting_signin_token_id = response.id;
           setTimeout(function() {
             Login.logged_in_yet();
