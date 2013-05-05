@@ -1371,10 +1371,12 @@ class SettingsHandler(AuthenticatedBaseHandler):
         if username:
             user['username'] = username
             if not user['anonymous']:
-                user['first_name'] = self.get_argument('first_name',
-                                                       user['first_name']).strip()
-                user['last_name'] = self.get_argument('last_name',
-                                                      user['last_name']).strip()
+                user['first_name'] = (
+                    self.get_argument('first_name', u'').strip()
+                )
+                user['last_name'] = (
+                    self.get_argument('last_name', u'').strip()
+                )
             user.save()
 
         user_settings = self.get_user_settings(user)
@@ -3689,7 +3691,7 @@ class EmailAuthHandler(BaseAuthHandler):
             '%s <%s>' % (settings.PROJECT_TITLE, from_),
             [email]
         )
-        #print body
+        print body
         self.write({
             'subject': subject,
             'from': from_,
