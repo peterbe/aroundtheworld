@@ -290,7 +290,8 @@ class Question(BaseDocument):
 
     HIGHEST_POINTS_VALUE = 5
 
-    def check_answer(self, value, alternatives_are_correct=False):
+    def check_answer(self, value, alternatives_are_correct=False,
+                     allow_typos=False):
         value = value.lower()
         correct = [self['correct'].lower()]
         if alternatives_are_correct:
@@ -306,6 +307,9 @@ class Question(BaseDocument):
 
         if len(value) < 3:
             # short answers aren't spell corrected
+            return False
+
+        if not allow_typos:
             return False
 
         for each in [x for x in correct if len(x) >= 4]:

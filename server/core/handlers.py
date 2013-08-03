@@ -2773,7 +2773,7 @@ class PictureDetectiveHandler(QuizzingHandler):
             data['timedout'] = False
             answer_obj['answer'] = answer
             answer_obj['timedout'] = False
-            if question.check_answer(answer):
+            if question.check_answer(answer, allow_typos=True):
                 answer_obj['correct'] = True
                 points = float(points_value * seconds_left)
                 answer_obj['points'] = points
