@@ -37,6 +37,8 @@ class Bing(Geocoder):
         self.url = "http://dev.virtualearth.net/REST/v1/Locations?%s"
 
     def geocode(self, string, exactly_one=True):
+        if isinstance(string, unicode):
+            string = string.encode('utf-8')
         params = {'query': self.format_string % string,
                   'key': self.api_key
                   }
@@ -71,7 +73,7 @@ class Bing(Geocoder):
             country = a.get('countryRegion', '').strip(stripchars)
             
             city_state = join_filter(", ", [city, state])
-            place = join_filter(" ", [city_state, zip])
+            place = join_filter(" ", [city_state, zipcode])
             location = join_filter(", ", [address, place, country])
             
             latitude = resource['point']['coordinates'][0] or None
