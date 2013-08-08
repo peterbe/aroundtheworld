@@ -6,7 +6,7 @@
 <title>Around The World</title>
 {% include "_stylesheets.html" %}
 {% module ScriptTags('lib/jquery-1.8.3.min.js', 'lib/jquery-ui-1.8.16-effects.min.js', 'lib/stacktrace-min-0.4.js') %}
-<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false{% if google_maps_api_key %}&amp;key={{ google_maps_api_key }}{% end %}"></script>
 </head>
 <body>
 <div id="map_canvas"></div>

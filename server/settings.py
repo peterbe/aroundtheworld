@@ -29,6 +29,7 @@ COOKIE_SECRET = ""
 PICTURE_QUESTION_WIDTH_HEIGHT = (250, 250)
 FOUR_PICTURES_WIDTH_HEIGHT = (170, 170)
 
+GOOGLE_MAPS_API_KEY = ''
 
 try:
     from local_settings import *

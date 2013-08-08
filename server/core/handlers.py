@@ -419,6 +419,7 @@ class BaseHandler(tornado.web.RequestHandler):
         if not options.get('page_title'):
             options['page_title'] = settings.PROJECT_TITLE
         options['debug'] = self.application.settings['debug']
+        options['google_maps_api_key'] = settings.GOOGLE_MAPS_API_KEY
         return super(BaseHandler, self).render(template, **options)
 
     def render_string(self, template, **options):
