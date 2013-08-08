@@ -130,7 +130,7 @@ class GeocodeAdminHandler(AmbassadorBaseHandler):
         search.append(country)
         search = ', '.join(search)
 
-        g = geocoders.Google()
+        g = geocoders.GoogleV3()
         results = []
         for place, (lat, lng) in g.geocode(search, exactly_one=False):
             results.append({
@@ -138,8 +138,7 @@ class GeocodeAdminHandler(AmbassadorBaseHandler):
               'lat': lat,
               'lng': lng,
             })
-        self.write_json({'results': results})
-        return
+        self.write({'results': results})
 
 
 @route('/admin/locations/add/', name='admin_add_location')
