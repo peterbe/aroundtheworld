@@ -194,7 +194,7 @@ var QuestionWriter = (function() {
       }
       // update title
       Utils.update_title();
-
+      $('input.location-name', container).val(STATE.location.city);
 
       // init form
       $.getJSON(URL, function(response) {
