@@ -1,3 +1,8 @@
+#quizzing .question-author {
+    float: right;
+    font-size: 80%;
+    margin-top: 10px;
+}
 #quizzing .question-attention-outer {
     position: absolute;
     top: 80px;

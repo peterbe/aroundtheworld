@@ -912,10 +912,15 @@ class QuizzingHandler(AuthenticatedBaseHandler, PictureThumbnailMixin):
         }
 
         data['question'] = {
-          'text': question['text'],
-          'alternatives': question['alternatives'],
-          'pictures': []
+            'text': question['text'],
+            'alternatives': question['alternatives'],
+            'pictures': []
         }
+        if question['author']:
+            question_author = self.db.User.find_one({'_id': question['author']})
+            if question_author and question_author['username'] != 'peterbe':
+                data['question']['author'] = question_author.get_full_name()
+
         pictures = list(question.get_pictures())
         max_width, max_height = (250, 250)
         kwargs = {}

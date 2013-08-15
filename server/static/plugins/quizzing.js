@@ -320,6 +320,7 @@ var Quiz = (function() {
        $('.question-attention', container).hide();
        $('.continue-tutorial-cantafford', container).hide();
        $('.continue-tutorial-afford', container).hide();
+       $('.question-author', container).hide();
        $('a.restart', container).attr('href', '#quizzing,' + category.replace(' ', '+'));
      },
      reset: function() {
@@ -382,6 +383,12 @@ var Quiz = (function() {
                $('.correct-answer', container).text(response.correct_answer);
              }
              $('.wrong', container).show();//fadeIn(200);
+           }
+
+           if ($('.question-author strong', container).text()) {
+             $('.question-author', container).show();
+           } else {
+             $('.question-author', container).hide();
            }
 
            if (last_question) {
@@ -506,6 +513,14 @@ var Quiz = (function() {
          .addClass('question')
            .html(question.text)
              .appendTo($('p.question', container));
+       $('.question-author', container).hide();
+       if (question.author) {
+         $('.question-author strong', container).text(question.author);
+         //$('.question-author', container).show();
+       } else {
+         $('.question-author strong', container).text('');
+         //$('.question-author', container).hide();
+       }
        $('.alternatives li', container).remove();
        $('.four-pictures', container).hide();
        $('.alternatives', container).show().css('opacity', 1.0);
