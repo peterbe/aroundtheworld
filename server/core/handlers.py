@@ -3867,6 +3867,12 @@ class GoogleAuthHandler(BaseAuthHandler, tornado.auth.GoogleMixin):
 
 @route('/auth/twitter/', name='auth_twitter')
 class TwitterAuthHandler(BaseAuthHandler, tornado.auth.TwitterMixin):
+
+    _OAUTH_REQUEST_TOKEN_URL = "https://api.twitter.com/oauth/request_token"
+    _OAUTH_ACCESS_TOKEN_URL = "https://api.twitter.com/oauth/access_token"
+    _OAUTH_AUTHORIZE_URL = "https://api.twitter.com/oauth/authorize"
+    _OAUTH_AUTHENTICATE_URL = "https://api.twitter.com/oauth/authenticate"
+
     @tornado.web.asynchronous
     def get(self):
         if self.get_argument("oauth_token", None):
